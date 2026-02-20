@@ -1,0 +1,146 @@
+
+@import "~/.cache/matugen/rofi-colors.rasi"
+
+configuration {
+    show-icons:                 true;
+    hover-select:               true;
+    kb-accept-entry:            "Return,space";
+    kb-cancel:                  "Escape";
+    
+}
+
+* {
+    background-color:           transparent;
+    text-color:                 @fg;  /* from RGBA variables */
+}
+
+
+window {
+    location:                   center;
+    anchor:                     center;
+    spacing:                    10px;
+    transparency: "real";
+    width: 70%;
+    height: 67%;
+    background-color:           @background-t90;  
+    border:                     2px;
+    border-color:               @active;         
+    border-radius:              20px;
+}
+
+mainbox {
+    padding:                    20px;
+    children:                   [listview];
+}
+
+inputbar {
+    enabled:                      true;
+    text-color:                   @foreground-t70;
+    background-color:             transparent;
+    padding:                      5px;
+    margin:                       10px;
+    children:                     [ "entry" ];
+}
+
+entry {
+    enabled:                      true;
+    text-color:                   inherit;
+    background-color:             transparent;
+}
+
+listview {
+
+    enabled:                     true;
+
+    columns:                     5;
+    lines:                       1;
+    // padding:                      20px;
+
+    cycle:                       false;
+    dynamic:                     true;
+
+    scrollbar:                   false;
+    reverse:                     false;
+    fixed-height:                true;
+    fixed-columns:               true;
+    layout: vertical;
+	flow: horizontal; 
+    border: 0px;
+    spacing:                     20px;
+}
+
+element {
+    orientation:                vertical;
+    border-radius:              12px;
+    border:                     0px;
+    border-color:               transparent;
+}
+
+
+element normal.normal {
+	background-color: transparent;
+    border-radius:    8px;
+	text-color:       @normal-foreground;
+}
+
+element normal.urgent {
+	background-color: transparent;
+    border-radius:    8px;
+	text-color:       @urgent-foreground;
+}
+
+element normal.active {
+	background-color: @bg;
+    border-radius:    8px;
+	text-color:       @active-foreground;
+}
+
+element selected.normal {
+	background-color: @acc;
+	// text-color:       @selected-normal-foreground;
+}
+
+element selected.urgent {
+	background-color: @acc;
+	// text-color:       @selected-urgent-foreground;
+}
+
+element selected.active {
+	background-color: @acc;
+	// text-color:       @selected-active-foreground;
+}
+
+element alternate.normal {
+	background-color: transparent;
+    border-radius:    8px;
+	text-color:       @normal-foreground;
+}
+
+element alternate.urgent {
+	background-color: transparent;
+    border-radius:    8px;
+	text-color:       @urgent-foreground;
+}
+
+element alternate.active {
+	background-color: transparent;
+    border-radius:    8px;
+	text-color:       @active-foreground;
+}
+
+element-icon {
+    size:                       190px; /* Adjust this to make the images larger/smaller */
+    horizontal-align:           0.5;   
+    vertical-align:             0.5;   
+    cursor:                     pointer;
+}
+
+element selected {
+    background-color:           @background-t40;
+    border-color:               @active;
+
+}
+
+element-text {
+    enabled:                    false; /* Hide filenames to show only images */
+}

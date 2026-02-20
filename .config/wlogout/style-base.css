@@ -1,0 +1,68 @@
+/* === wlogout base layout === */
+
+* {
+    background-image: none;
+    font-size: 20px;
+    font-family: "JetBrains Mono";
+}
+
+window {
+    background-image: image(url("./images/wallpaper_blurred.png"));
+}
+
+button {
+    border-radius: 20px;
+    margin: 10px;
+
+    color: var(--fg);
+    border-color: var(--fg);
+    background-color: var(--background_t50);
+
+    outline-style: none;
+    border-style: solid;
+    border-width: 0px;
+
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 20%;
+
+    box-shadow: none;
+    text-shadow: none;
+}
+
+button:hover,
+button:focus {
+    background-color: transparent;
+    color: var(--fg);
+
+    background-size: 30%;
+    transition: all 0.3s cubic-bezier(.55,0.0,.28,1.682);
+}
+
+button span {
+    font-size: 1.2em;
+}
+
+#lock {
+    background-image: image(url("./icons/lock.png"));
+}
+
+#logout {
+    background-image: image(url("./icons/logout.png"));
+}
+
+#suspend {
+    background-image: image(url("./icons/sleep.png"));
+}
+
+#shutdown {
+    background-image: image(url("./icons/power.png"));
+}
+
+#reboot {
+    background-image: image(url("./icons/restart.png"));
+}
+
+#hibernate {
+    background-image: image(url("./icons/hibernate.png"));
+}

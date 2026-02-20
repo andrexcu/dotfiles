@@ -1,0 +1,71 @@
+window {
+    padding: 20px;
+    border-radius: 12px;
+
+    background:
+    radial-gradient(circle at top left,     rgba(17,17,27, 0.10), transparent 90%),
+    radial-gradient(circle at top right,    rgba(17,17,27, 0.10), transparent 90%),
+    radial-gradient(circle at bottom left,  rgba(17,17,27, 0.10), transparent 90%),
+    radial-gradient(circle at bottom right, rgba(17,17,27, 0.10), transparent 90%),
+    rgba(28, 28, 30, 0.1); 
+    
+}
+
+
+#outer-box {
+    border: none;
+}
+#inner-box {
+    margin: 2px;
+    padding: 5px;
+    border: none;
+}
+#scroll {
+    margin: 0px;
+    padding: 20px;
+    border: none;
+}
+
+
+#input {
+    margin: 20px;
+    padding: 15px;
+    border-radius: 10px;
+    color: @foreground;
+    background-color: alpha(@background, 0.25);
+    box-shadow: 1px 1px 5px rgba(0,0,0,.5);
+}
+#input image {
+    color: @color1;
+    padding-right: 10px;
+}
+
+
+#entry {
+    border: none;
+    margin: 5px;
+    padding: 10px;
+    border-radius: 12px;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+
+#entry #text {
+    color: @foreground;
+}
+
+
+#entry:selected {
+    background-color: alpha(@color1, 0.2); 
+    border: 1px solid @color1;
+    box-shadow: 0 0 8px alpha(@color1, 0.3);
+}
+#entry:selected #text {
+    color: @color1;
+    font-weight: bold;
+}
+
+
+#entry arrow {
+    color: @color3;
+} */

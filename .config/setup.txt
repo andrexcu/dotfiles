@@ -1,0 +1,8 @@
+
+    - colors: scrachy
+    - application style: kvantum
+    - plasma style: breeze dark
+    - window decoration: juxdeco
+    - icons: yet-another-monochrome
+    - cursor: bibata-modern-classic
+

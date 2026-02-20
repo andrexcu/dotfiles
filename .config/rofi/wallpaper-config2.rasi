@@ -1,0 +1,191 @@
+
+@import "~/.cache/matugen/rofi-colors.rasi"
+
+configuration {
+    show-icons:                 true;
+    hover-select:               true;
+    kb-accept-entry:            "Return,space";
+    kb-cancel:                  "Escape";
+    modi:                       "drun,run,filebrowser,window";
+    show-icons:                 true;
+    display-drun:               "";
+    display-run:                "";
+    display-filebrowser:        "";
+    display-window:             "";
+	drun-display-format:        "{name}";
+	window-format:              "{w} · {c} · {t}";
+    kb-custom-1:                "Alt+w";
+}
+
+* {
+    background-color:           transparent;
+    text-color:                 @fg;  /* from RGBA variables */
+}
+
+
+window {
+    location:                   center;
+    anchor:                     center;
+    spacing:                    10px;
+    transparency: "real";
+    background-color:           @background-t90;  
+    border:                     2px;
+    border-color:               @active;         
+    border-radius:              20px;
+  //height: 50%;
+
+}
+
+mainbox {
+    padding:                    20px;
+    children:                   [inputbar, listview];
+}
+
+
+inputbar {
+    enabled:                      true;
+    text-color:                   @foreground-t70;
+    background-color:             transparent;
+    padding:                      5px;
+    margin:                       10px;
+    children:                     [ "textbox-prompt-colon", "entry" ];
+}
+textbox-prompt-colon {
+    enabled:                     true;
+    padding:                     4px 3px;
+    expand:                      false;
+    str:                         "";
+    background-color:            inherit;
+    text-color:                  inherit;
+}
+
+entry {
+    enabled:                      true;
+    text-color:                   inherit;
+    background-color:             transparent;
+    placeholder: "Search Images...";
+}
+
+/* num-filtered-rows {
+    enabled:                     true;
+    expand:                      false;
+    background-color:            inherit;
+    text-color:                  inherit;
+}
+textbox-num-sep {
+    enabled:                     true;
+    expand:                      false;
+    str:                         "/";
+    background-color:            inherit;
+    text-color:                  inherit;
+}
+num-rows {
+    enabled:                     true;
+    expand:                      false;
+    background-color:            inherit;
+    text-color:                  inherit;
+}
+case-indicator {
+    enabled:                     true;
+    background-color:            inherit;
+    text-color:                  inherit;
+} */
+
+
+listview {
+
+    enabled:                     true;
+
+    columns:                     5;
+    lines:                       1;
+    // padding:                      20px;
+
+    cycle:                       true;
+    dynamic:                     true;
+
+    scrollbar:                   false;
+    reverse:                     false;
+    fixed-height:                true;
+    fixed-columns:               true;
+    layout: vertical;
+    border: 0px;
+    spacing:                     20px;
+}
+
+element {
+    orientation:                vertical;
+    border-radius:              12px;
+    padding:                    10px;
+    padding:                    10px;
+    border:                     2px;
+    border-color:               transparent;
+}
+
+
+element normal.normal {
+	background-color: transparent;
+    border-radius:    8px;
+	text-color:       @normal-foreground;
+}
+
+element normal.urgent {
+	background-color: transparent;
+    border-radius:    8px;
+	text-color:       @urgent-foreground;
+}
+
+element normal.active {
+	background-color: @bg;
+    border-radius:    8px;
+	text-color:       @active-foreground;
+}
+
+element selected.normal {
+	background-color: @acc;
+	// text-color:       @selected-normal-foreground;
+}
+
+element selected.urgent {
+	background-color: @acc;
+	// text-color:       @selected-urgent-foreground;
+}
+
+element selected.active {
+	background-color: @acc;
+	// text-color:       @selected-active-foreground;
+}
+
+element alternate.normal {
+	background-color: transparent;
+    border-radius:    8px;
+	text-color:       @normal-foreground;
+}
+
+element alternate.urgent {
+	background-color: transparent;
+    border-radius:    8px;
+	text-color:       @urgent-foreground;
+}
+
+element alternate.active {
+	background-color: transparent;
+    border-radius:    8px;
+	text-color:       @active-foreground;
+}
+
+element-icon {
+    size:                       190px; /* Adjust this to make the images larger/smaller */
+    horizontal-align:           0.5;   
+    vertical-align:             0.5;   
+    cursor:                     pointer;
+}
+
+element selected {
+    background-color:           @background-t40;
+    border-color:               @active;
+
+}
+
+element-text {
+    enabled:                    false; /* Hide filenames to show only images */
+}

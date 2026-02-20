@@ -1,0 +1,76 @@
+* {
+    all: unset;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 18px;
+    text-shadow: none;
+    background-color: transparent;
+}
+
+window {
+    padding: 20px;
+    border-radius: 12px;
+
+    background:
+        radial-gradient(circle at top left,     rgba(187, 195, 255,0.35), transparent 70%),
+        radial-gradient(circle at top right,    rgba(187, 195, 255,0.35), transparent 70%),
+        radial-gradient(circle at bottom left,  rgba(187, 195, 255,0.35), transparent 70%),
+        radial-gradient(circle at bottom right, rgba(187, 195, 255,0.35), transparent 70%),
+        rgba(19, 19, 24,0.85);
+}
+
+/* === Layout === */
+#outer-box {
+    border: none;
+}
+#inner-box {
+    margin: 2px;
+    padding: 5px;
+    border: none;
+}
+#scroll {
+    margin: 0px;
+    padding: 20px;
+    border: none;
+}
+
+/* === Input field === */
+
+#input {
+    margin: 20px;
+    padding: 15px;
+    border-radius: 10px;
+    color: rgba(228, 225, 233,1);
+    background-color: rgba(19, 19, 24,0.25);
+    box-shadow: 1px 1px 5px rgba(0,0,0,0.5);
+}
+
+#input image {
+    color: rgba(187, 195, 255,1);
+    padding-right: 10px;
+}
+
+#entry {
+    border: none;
+    margin: 5px;
+    padding: 10px;
+    border-radius: 12px;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+#entry #text {
+    color: rgba(228, 225, 233,1);
+}
+
+#entry:selected {
+    background-color: rgba(187, 195, 255,0.2);
+    border: 1px solid rgba(187, 195, 255,1);
+    box-shadow: 0 0 8px rgba(187, 195, 255,0.3);
+}
+#entry:selected #text {
+    color: rgba(187, 195, 255,1);
+    font-weight: bold;
+}
+
+#entry arrow {
+    color: rgba(187, 195, 255,1);
+}
