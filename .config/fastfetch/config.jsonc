@@ -1,0 +1,126 @@
+//   _____ _____ _____ _____ _____ _____ _____ _____ _____ 
+//  |   __|  _  |   __|_   _|   __|   __|_   _|     |  |  |
+//  |   __|     |__   | | | |   __|   __| | | |   --|     |
+//  |__|  |__|__|_____| |_| |__|  |_____| |_| |_____|__|__|  HYPRLAND
+//
+//  by Reisou
+
+// /home/andrexcu/.config/fastfetch/ascii/
+// /home/andrexcu/Pictures/Fastfetch/mori_dia.pn
+{
+  "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/dev/doc/json_schema.json",
+
+    "logo": {
+      // "source": "/home/andrexcu/Pictures/Fastfetch/mori2-4.png",
+    	"source": "/home/andrexcu/Pictures/Fastfetch/moriranmarudia1.png",
+    	"height": 18,
+    	"padding": {
+    		"top": 1,
+        "right": 2
+    	}
+    },
+  "display": {
+    "separator": "",
+    "constants": [
+        // CONSTANT {$1} - COLOR BACKGROUND FOR KEY
+        // "\u001b[48;2;43;43;69m",
+        // CONSTANT {$2} - COLOR BACKGROUND FOR OUTPUT
+        // "\u001b[48;2;56;59;78m",
+          // Output color (foreground)
+        "\u001b[38;2;180;190;254m",
+        "\u001b[38;2;137;220;235m",
+        "\u001b[38;2;245;194;231m",
+        "\u001b[38;2;172;176;190m",
+        "\u001b[38;2;128;131;162m"
+        
+ 
+        
+    ],
+    "color": {
+            // "title": "#f2cdcd"   
+            // "title": "#f38ba8"
+            // "title": "#89b4fa"
+            "title": "#b4befe"
+        }
+  },
+
+  "modules": [
+    "break",
+    "break",
+	  "break",
+    "break",
+    "break",
+    "break",
+    {
+      "type": "title",
+      "keyWidth": 10,
+  
+      "format": "{$2}{1}{$4}{$5}@{$2}{2} {$5}"
+    },
+
+    {
+      "type": "custom",
+      "format": "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+    },
+
+    {
+      "type": "os",
+      "key": "{$1}> ",
+      "format": "{$5}{name} {arch} "
+    },
+
+    {
+      "type": "kernel",
+      "key": "{$1}> ",
+      "keyColor": "#89dceb",
+      "format": "{$5}{1} {2} "
+    },
+
+    {
+      "type": "packages",
+      "key": "{$1}> ",
+      "format": "{$5}{all} (pacman) ",
+      "keyColor": "#89dceb"
+    },
+
+    {
+      "type": "shell",
+      "key": "{$1}> ",
+      "keyColor": "#89dceb",
+      "format": "{$5}{1} {4} " 
+    },
+
+    {
+      "type": "terminal",
+      "key": "{$1}> ",
+      "keyColor": "#89dceb",
+      "format": "{$5}{1} {6} " 
+    },
+
+    {
+      "type": "wm",
+      "key": "{$1}> ",
+      "keyColor": "#89dceb",
+      "format": "{$5}{2} {3} " 
+    },
+
+    {
+      "type": "uptime",
+      "key": "{$1}> ",
+      "format": "{$5}{minutes} mins ",
+      "keyColor": "#89dceb"
+    },
+    {
+      "type": "media",
+      "key": "{$1}> ",
+      "keyColor": "#89dceb",
+      "format": "{$5}{title:27}... "
+    },
+    {
+      "type": "player",
+      "key": "{$1}> ",
+      "keyColor": "#89dceb",
+      "format": "{$5}{1} "
+    }
+  ]
+}
