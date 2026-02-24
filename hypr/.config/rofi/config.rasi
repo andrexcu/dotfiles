@@ -1,0 +1,79 @@
+@import "~/.cache/matugen/rofi-colors.rasi"
+
+entry {
+    placeholder: "Search Apps...";
+    text-color: @fg;
+    padding: 8px 0 8px 8px;
+}
+
+configuration {
+    font: "JetBrainsMono Nerd Font Mono 12";
+    lines: 10;
+    fixed-num-lines: true;
+    padding: 10px;
+}
+
+inputbar {
+    enabled:                      true;
+    text-color:                   @foreground-t70;
+    background-color:             transparent;
+    padding:                      5px;
+    margin:                       10px;
+    children: ["textbox-prompt-colon", "entry"];
+}
+
+textbox-prompt-colon {
+    enabled:                     true;
+    str:                         "";
+    padding: 7px 7px 7px 0px;
+    expand:                      false;
+    background-color:            inherit;
+    text-color:                  inherit;
+    font: "JetBrains Mono Nerd Font 13";
+}
+
+* {
+    separatorcolor: transparent;
+    selected-normal-background: @acc;
+    normal-background: transparent;
+    alternate-normal-background: transparent;
+}
+
+mainbox {
+    border: 2px;
+    border-color: @active;
+    border-radius: 10px;
+    padding: 10px;
+}
+
+window {
+    border-radius: 11px;
+    border: 0px;
+    //border-color: @fg;
+    background-color: @background-t90;
+    padding: 0px;
+    width: 30%;
+    height: 35%;
+}
+
+listview {
+    lines: 10;
+    dynamic: true;
+}
+
+element {
+    padding: 10px 10px;
+    height: 50px;
+    border-radius: 5px;
+    children: [ element-text, element-icon ];
+}
+
+element-text {
+    text-color: @fg;
+}
+
+#scrollbar {
+    handle-color: @fg;
+    handle-width: 4px;
+    padding: 0;
+}
