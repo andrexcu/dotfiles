@@ -2,43 +2,45 @@
 
 import Quickshell
 import QtQuick
-// import "./modules/bar"
-import "./modules/wallpaper"
-import "./colors/"
+import qs.modules.bar
+// import qs.colors
+
+// import QtQuick
+
 
 ShellRoot {
     id: root
-
-    // Instantiate your Colors object
-    Colors {
-        id: colors
-    }
-
-    Selector {}
-
-
+    Bar {}
 }
-
 // ShellRoot {
 //     id: root
 
-//     // Instantiate your Colors object
-//     Colors {
-//         id: colors
+//     // Invisible Item to catch key presses
+//     Item {
+//         id: keyCatcher
+//         anchors.fill: parent
+//         focus: true        // must have focus for Keys to work
+//         Keys.onPressed: {
+//             if (event.key === Qt.Key_B && (event.modifiers & Qt.AltModifier)) {
+//                 if (!bar) {
+//                     // lazy-load the bar
+//                     barLoader.active = true
+//                 } else {
+//                     bar.visible = !bar.visible
+//                 }
+//                 event.accepted = true
+//             }
+//         }
 //     }
 
 //     Loader {
-//         id: barLoader  
-//         active: true
+//         id: barLoader
+//         active: false      // start hidden
 //         sourceComponent: Bar {}
-//     }
-
-//     Component.onCompleted: {
-//         console.log("Color JSON text:", colors.colorFile.text())
-//         console.log("Parsed colorData:", colors.colorData)
-        
-//         if (barLoader.item) {
-//             barLoader.item.colorsPalette = colors
+//         onLoaded: {
+//             bar = item
 //         }
 //     }
+
+//     property var bar: null   // reference to the loaded Bar
 // }

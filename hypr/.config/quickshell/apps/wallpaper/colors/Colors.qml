@@ -62,7 +62,7 @@ QtObject {
     property color backgroundt90: Qt.alpha(colorData.background ?? "#1d100e", 0.92)
     property color backgroundt80: Qt.alpha(colorData.background ?? "#1d100e", 0.80)
     property color backgroundt70: Qt.alpha(colorData.background ?? "#1d100e", 0.70)
-    // property color baseColor: Qt.color(colorData.background ?? "#1d100e")
+    property color backgroundText70: Qt.alpha(colorData.backgroundText ?? "#1d100e", 0.70)
 
     // property color backgroundt70: Qt.hsla(
     //     Qt.hsla(baseColor).hslSaturation * 0.5,
