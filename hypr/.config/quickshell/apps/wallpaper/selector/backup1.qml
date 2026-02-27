@@ -85,6 +85,9 @@ FloatingWindow {
 	property bool hasFfmpeg: false
 	property bool hasMatugen: false
 	property bool settingsOpen: false
+	property bool selectorOpen: false
+	// property bool animating: false
+	property bool showDelegateBorder: true
 	property int currentIndex: 0
 	
 
@@ -104,49 +107,49 @@ FloatingWindow {
 			appSettings.savedThumbnailDir = thumbnailDir
 		}
 	}
-	SequentialAnimation {
-			id: wsTransition
-			PropertyAnimation {
-				target: wsHighlight
-				property: "highlightOpacity"
-				to: 0.4
-				duration: 50
-				easing.type: Easing.OutQuad
+	// SequentialAnimation {
+	// 		id: wsTransition
+	// 		PropertyAnimation {
+	// 			target: wsHighlight
+	// 			property: "highlightOpacity"
+	// 			to: 0.4
+	// 			duration: 50
+	// 			easing.type: Easing.OutQuad
+	// 		}
+	// 		ScriptAction {
+	// 			script: bar.activeWsId = bar.targetWsId
+	// 		}
+	// 		ParallelAnimation {
+	// 			PropertyAnimation {
+	// 				target: wsHighlight
+	// 				property: "highlightOpacity"
+	// 				to: 1
+	// 				duration: 300
+	// 				easing.type: Easing.OutCubic
+	// 			}
+	// 			PropertyAnimation {
+	// 				target: wsHighlight
+	// 				property: "highlightScale"
+	// 				from: 0.9
+	// 				to: 1.0
+	// 				duration: 300
+	// 				easing.type: Easing.OutBack
+	// 				easing.overshoot: 1.5
+	// 			}
+	// 		}
+	// 	}
+		function startListing() {
+			if (!wallpaperDir) {
+				lastError = "Wallpaper directory not set"
+				return
 			}
-			ScriptAction {
-				script: bar.activeWsId = bar.targetWsId
-			}
-			ParallelAnimation {
-				PropertyAnimation {
-					target: wsHighlight
-					property: "highlightOpacity"
-					to: 1
-					duration: 300
-					easing.type: Easing.OutCubic
-				}
-				PropertyAnimation {
-					target: wsHighlight
-					property: "highlightScale"
-					from: 0.9
-					to: 1.0
-					duration: 300
-					easing.type: Easing.OutBack
-					easing.overshoot: 1.5
-				}
-			}
+			// Use ls for faster listing (faster than find for single directory)
+			listProcess.exec(["sh", "-c", "ls -1 '" + wallpaperDir + "' 2>/dev/null | grep -iE '\\.(jpg|jpeg|png|webp|bmp)$' | sort"])
 		}
-	function startListing() {
-		if (!wallpaperDir) {
-			lastError = "Wallpaper directory not set"
-			return
-		}
-		// Use ls for faster listing (faster than find for single directory)
-		listProcess.exec(["sh", "-c", "ls -1 '" + wallpaperDir + "' 2>/dev/null | grep -iE '\\.(jpg|jpeg|png|webp|bmp)$' | sort"])
-	}
 
-		function showNotification(title, message, icon) {
-		console.log("[" + title + "] " + message)
-	}
+			function showNotification(title, message, icon) {
+			console.log("[" + title + "] " + message)
+		}
 
 		function applyWallpaper(wallpaperName) {
 			selectedWallpaper = wallpaperName
@@ -234,28 +237,45 @@ FloatingWindow {
 					)
 				})
 			}
-				Keys.onPressed: function(event) {
-					const cols = Math.floor(wallpaperGridView.width / wallpaperGridView.cellWidth)
-					const maxIndex = filteredWallpapers.length - 1
-					let nextIndex = wallpaperGridView.currentIndex
 
-					if (event.key === Qt.Key_Right && nextIndex < maxIndex) nextIndex++
-					else if (event.key === Qt.Key_Left && nextIndex > 0) nextIndex--
-					else if (event.key === Qt.Key_Down && nextIndex + cols <= maxIndex) nextIndex += cols
-					else if (event.key === Qt.Key_Up && nextIndex - cols >= 0) nextIndex -= cols
-					else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-						// ✅ Use the model data directly
-						if (filteredWallpapers.length > 0) {
-							applyWallpaper(filteredWallpapers[wallpaperGridView.currentIndex])
-						}
-						event.accepted = true
-						return
-					} else return
+				  Keys.onPressed: function(event) {
+            if (wallpaperGridView.count === 0) return
 
-					updateHighlightAtIndex(nextIndex)
-					wallpaperGridView.forceActiveFocus()
-					event.accepted = true
-				}
+            const cellW = wallpaperGridView.cellWidth
+            const cellH = wallpaperGridView.cellHeight
+            const cols = Math.floor(wallpaperGridView.width / cellW)
+            const maxIndex = filteredWallpapers.length - 1
+
+            let nextIndex = wallpaperGridView.currentIndex
+            let row = Math.floor(nextIndex / cols)
+            let col = nextIndex % cols
+
+            switch(event.key) {
+                case Qt.Key_Right:
+                    if (col < cols - 1 && nextIndex < maxIndex) nextIndex++
+                    break
+                case Qt.Key_Left:
+                    if (col > 0) nextIndex--
+                    break
+                case Qt.Key_Down:
+                    if ((row + 1) * cols + col <= maxIndex) nextIndex += cols
+                    break
+                case Qt.Key_Up:
+                    if (row > 0) nextIndex -= cols
+                    break
+                case Qt.Key_Return:
+                case Qt.Key_Enter:
+                    applyWallpaper(filteredWallpapers[nextIndex])
+                    event.accepted = true
+                    return
+                default:
+                    return
+            }
+
+            wallpaperGridView.currentIndex = nextIndex
+            wallpaperGridView.forceActiveFocus()
+            event.accepted = true
+        }
 
 
 	// Process for getting home directory
@@ -549,68 +569,120 @@ FloatingWindow {
 		
 		ScrollView {
 			id: wallpaperScroll
+			// anchors.fill: parent
 			Layout.fillWidth: true
 			Layout.fillHeight: true
+			// layout.fill: parent
 			ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
-	
+			clip: false
 			Item {
-				anchors.fill: wallpaperGridView
-				z: 10
-				Rectangle {
-					id: wallpaperHighlight
+				id: wallpaperContainer
+				anchors.fill: parent
+				property int columns: 5
+    			property var rowWidths: []
+					Rectangle {
+						id: wallpaperHighlight
+						radius: 10
 
-					radius: 10
-					border.width: 2
-					border.color: colorsPalette.primary
-					color: "transparent"
+						color: "transparent"
+						
 
-					property real targetX: 0
-					property real targetY: 0
-					property real targetWidth: wallpaperGridView.cellWidth
-					property real targetHeight: wallpaperGridView.cellHeight
+						property real targetX: 0
+						property real targetY: 0
+						property real targetWidth: wallpaperGridView.cellWidth
+						property real targetHeight: wallpaperGridView.cellHeight
+						property real animatedBorderWidth: 0
+						property bool isNeighbor: false
 
-					x: targetX
-					y: targetY
-					width: targetWidth
-					height: targetHeight
+						x: targetX
+						y: targetY
+						width: targetWidth
+						height: targetHeight
+						transformOrigin: Item.Center
 
-					opacity: 1.0
-					scale: 1.0
-					transformOrigin: Item.Center
 
-					Behavior on x { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
-					Behavior on y { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
-					Behavior on width { NumberAnimation { duration: 200 } }
-					Behavior on height { NumberAnimation { duration: 200 } }
-					Behavior on scale {
-						NumberAnimation {
-							duration: 250
-							easing.type: Easing.OutBack
-							easing.overshoot: 1.4
+						border.width: animatedBorderWidth
+			
+						border.color: colorsPalette.primary
+
+						Behavior on animatedBorderWidth {
+							NumberAnimation { duration: 250; easing.type: Easing.OutQuad }
 						}
-					}
-				}
-				 SequentialAnimation {
-					id: wallpaperTransition
+							// Call this whenever currentIndex changes
+						function showHighlightBorder() {
+							animatedBorderWidth = 2  
+						}
 
-					PropertyAnimation {
-						target: wallpaperHighlight
-						property: "opacity"
-						to: 0.5
-						duration: 80
-						easing.type: Easing.OutQuad
-					}
+						function hideHighlightBorder() {
+							animatedBorderWidth = 0  
+						}
 
-					PropertyAnimation {
-						target: wallpaperHighlight
-						property: "opacity"
-						to: 1.0
-						duration: 200
-						easing.type: Easing.OutCubic
-					}
-				}
+						opacity: 0.0   // start invisible
 
-			}
+						Behavior on x { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
+						Behavior on y { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
+						Behavior on width { NumberAnimation { duration: 200 } }
+						Behavior on height { NumberAnimation { duration: 200 } }
+						Behavior on scale {
+							NumberAnimation { duration: 250; easing.type: Easing.OutBack; easing.overshoot: 1.4 }
+						}
+						
+						Behavior on opacity { NumberAnimation { duration: 300; easing.type: Easing.OutQuad } }
+
+						Timer {
+							id: fadeTimer
+							interval: 800  
+							running: false
+							repeat: false
+							onTriggered: {
+								wallpaperHighlight.opacity = 0.0
+								wallpaperGridView.showDelegateBorder = true
+							}
+
+						}
+						// Fade-in/out animation
+						SequentialAnimation {
+							id: fadeAnim
+							running: false
+							property int startDelay: 0
+
+							PropertyAnimation {
+							target: wallpaperHighlight
+							property: "opacity"
+							to: 1.0
+							duration: 200
+							easing.type: Easing.OutQuad
+						}
+
+						PauseAnimation { duration: 250 }
+
+						PropertyAnimation {
+							target: wallpaperHighlight
+							property: "opacity"
+							to: 0.0
+							duration: 250
+							easing.type: Easing.InQuad
+						}
+
+						onStarted: { 
+							
+							wallpaperGridView.navigating = true 
+						    // console.log("navigating:", wallpaperGridView.navigating) 
+						}
+
+						onFinished: { wallpaperGridView.navigating = false 
+						// console.log("navigating:", wallpaperGridView.navigating) 
+						}
+						}
+
+						function showHighlight() {
+							fadeAnim.stop()
+							fadeAnim.start()
+						}
+
+					}
+				
+			
 				GridView {
 					id: wallpaperGridView
 					anchors.fill: parent
@@ -622,49 +694,82 @@ FloatingWindow {
 					highlightFollowsCurrentItem: true
 					boundsBehavior: Flickable.StopAtBounds
 					flow: GridView.FlowLeftToRight
-					
-
-
-					onCurrentIndexChanged: {
-						var item = wallpaperGridView.currentItem
-						if (!item) return
-
-						var pos = item.mapToItem(wallpaperGridView, 0, 0)
-
-						wallpaperHighlight.targetX = pos.x
-						wallpaperHighlight.targetY = pos.y
-						wallpaperHighlight.targetWidth = item.width
-						wallpaperHighlight.targetHeight = item.height
-
-						// small scale animation like workspace
-						wallpaperHighlight.scale = 0.92
-						wallpaperHighlight.scale = 1.0
-
-						wallpaperTransition.restart()
-					}
+					property bool navigating: false
 					
 					delegate: Rectangle {
+						// z: isCurrent ? 10 : 0
+						property bool isSameRow: {
+							const current = wallpaperGridView.currentIndex
+							if (current < 0) return false
 
-						width: wallpaperGridView.cellWidth
+							const row = Math.floor(index / columns)
+							const currentRow = Math.floor(current / columns)
+
+							return row === currentRow
+						}
+						    // Random width for each image on creation
+						property real randomWidth: wallpaperGridView.cellWidth * (0.7 + Math.random() * 0.6)
+						// This will give widths from ~70% to ~130% of normal
+
+						width: randomWidth
+						// width: wallpaperGridView.cellWidth
+						//  width: isCurrent 
+						// ? wallpaperGridView.cellWidth * 1.1 
+						// : (isSameRow ? wallpaperGridView.cellWidth * 0.95 : wallpaperGridView.cellWidth)
 						height: wallpaperGridView.cellHeight
+						// width: isCurrent ? wallpaperGridView.cellWidth * 1.1 : wallpaperGridView.cellWidth
+   						// height: isCurrent ? wallpaperGridView.cellHeight * 1.1 : wallpaperGridView.cellHeight
 						color: "transparent"
 						radius: 10
-						 // Animate border color when current item changes
-						// border.color: model.index === wallpaperGridView.currentIndex ? "red" : "transparent"
-						Behavior on border.color { ColorAnimation { duration: 150 } }
-					
-						// Optional: Animate scale when selected
+						property bool isCurrent: model.index === wallpaperGridView.currentIndex
+						property bool showBorder: !wallpaperGridView.navigating && isCurrent
+						property int columns: Math.floor(wallpaperGridView.width / wallpaperGridView.cellWidth)
+
+						Behavior on width { NumberAnimation { duration: 250; easing.type: Easing.OutQuad } }
+						Behavior on height { NumberAnimation { duration: 250; easing.type: Easing.OutQuad } }
+						property bool isNeighbor: {
+        					const current = wallpaperGridView.currentIndex
+							const row = Math.floor(model.index / columns)
+							const col = model.index % columns
+							const currentRow = Math.floor(current / columns)
+							const currentCol = current % columns
+
+							// Check if it's exactly above, below, left, or right
+							return (row === currentRow && Math.abs(col - currentCol) === 1) ||  // left/right
+								(col === currentCol && Math.abs(row - currentRow) === 1)      // top/bottom
+						}
 						
+						//     function updateNeighborStatus() {
+						// 	const current = wallpaperGridView.currentIndex
+						// 	const row = Math.floor(model.index / columns)
+						// 	const col = model.index % columns
+						// 	const currentRow = Math.floor(current / columns)
+						// 	const currentCol = current % columns
+
+						// 	isNeighbor = (row === currentRow && Math.abs(col - currentCol) === 1) ||
+						// 				(col === currentCol && Math.abs(row - currentRow) === 1)
+
+						// 	animatedBorderWidth = isNeighbor ? 2 : 0
+						// }
+						// border.width: (isCurrent && !wallpaperGridView.navigating) ? 2 : 0
+
+						border.width: isCurrent ? 2 : 0
+						// border.width: 0
+						// border.width: model.index === wallpaperGridView.currentIndex && wallpaperHighlight.opacity === 0 ? 2 : 0
+						border.color: colorsPalette.primary
+
+						Behavior on border.width { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+						Behavior on border.color { ColorAnimation { duration: 180; easing.type: Easing.OutCubic } }
 						
-				
 						ClippingRectangle {
 							anchors.fill: parent
 							radius: 10
 							antialiasing: true 
 							color: "transparent"
+							opacity: 10
 							anchors.margins: 2
 							// border.color: model.index === wallpaperGridView.currentIndex ? colorsPalette.primary : "transparent"
-							// border.width: 2
+							border.width: 0
 							// Wallpaper preview - optimized with pre-calculated paths
 							Image {
 								id: wallpaperImage
@@ -677,12 +782,52 @@ FloatingWindow {
 								asynchronous: false
 								cache: true
 								mipmap: true
-
+								
 								onStatusChanged: {
 									if (status === Image.Error && source !== "") {
 										source = "file://" + wallpaperDir + "/" + modelData
 									}
 								}
+								property bool isNeighbor: {
+									const current = wallpaperGridView.currentIndex
+									if (current < 0) return false
+
+									const row = Math.floor(index / columns)
+									const col = index % columns
+
+									const currentRow = Math.floor(current / columns)
+									const currentCol = current % columns
+
+									const rowDiff = Math.abs(row - currentRow)
+									const colDiff = Math.abs(col - currentCol)
+
+									// Adjacent in ANY direction (including diagonals)
+									return (rowDiff <= 1 && colDiff <= 1) && !(rowDiff === 0 && colDiff === 0)
+								}
+								// property bool isSameRow: {
+								// const current = wallpaperGridView.currentIndex
+								// if (current < 0) return false
+
+								// const row = Math.floor(index / columns)
+								// const currentRow = Math.floor(current / columns)
+
+								// return row === currentRow
+								// }
+								opacity: isNeighbor || isCurrent ? 1 : 0.5
+								 Behavior on opacity { 
+									NumberAnimation { 
+										duration: 250        // adjust speed
+										easing.type: Easing.InOutQuad 
+									} 
+								}
+								// ImageOpacity {
+								// 	anchors.centerIn: parent
+								// 	width: 40
+								// 	height: 40
+								// 	visible: true
+								// 	z: 1
+								// }
+
 								BusyIndicator {
 									anchors.centerIn: parent
 									width: 40
@@ -709,34 +854,66 @@ FloatingWindow {
 								}
 							}
 						}
+						// Component.onCompleted: {
+                        // if (model.index === wallpaperGridView.currentIndex) {
+                        //     Qt.callLater(() => updateHighlightAtIndex(model.index))
+                        //    }
+                        //  }
+					}
+
+					 onCurrentIndexChanged: {
+						var item = wallpaperGridView.currentItem
+						if (!item) return
+
+						// Map the delegate to the container's coordinates
+						var pos = item.mapToItem(wallpaperContainer, 0, 0)
+
+						// Move the highlight rectangle
+						wallpaperHighlight.targetX = pos.x
+						wallpaperHighlight.targetY = pos.y
+						wallpaperHighlight.targetWidth = item.width
+						wallpaperHighlight.targetHeight = item.height
+						wallpaperHighlight.scale = 0.92
+						wallpaperHighlight.scale = 1.0
+						wallpaperTransition.restart()
+						wallpaperHighlight.showHighlight()
+						wallpaperHighlight.showHighlightBorder()
+						// Scroll only if outside viewport
+						const margin = 16
+						const viewTop = wallpaperScroll.contentY
+						const viewBottom = viewTop + wallpaperScroll.height
+						const itemTop = pos.y
+						const itemBottom = pos.y + item.height
+
+						if (itemTop < viewTop + margin)
+							wallpaperScroll.contentY = itemTop - margin
+						else if (itemBottom > viewBottom - margin)
+							wallpaperScroll.contentY = itemBottom - wallpaperScroll.height + margin
 						
 					}
+					
+					 Component.onCompleted: forceActiveFocus()
 				}
-			
-			Connections {
-				target: keyRoot
-				onCurrentIndexChanged: {
-					if (wallpaperGridView.count === 0) return
+				}
+			SequentialAnimation {
+					id: wallpaperTransition
 
-					// Get the item at currentIndex directly
-					let item = wallpaperGridView.itemAt(currentIndex)
-					if (!item) return
+					PropertyAnimation {
+						target: wallpaperHighlight
+						property: "opacity"
+						to: 0.5
+						duration: 80
+						easing.type: Easing.OutQuad
+					}
 
-					// Compute item's top and bottom relative to the ScrollView
-					let itemTop = item.y
-					let itemBottom = item.y + item.height
-					let viewTop = wallpaperScroll.contentY
-					let viewBottom = wallpaperScroll.contentY + wallpaperScroll.height
-					let margin = 16
-
-					// Scroll if not fully visible
-					if (itemTop < viewTop) {
-						wallpaperScroll.contentY = itemTop - margin
-					} else if (itemBottom > viewBottom) {
-						wallpaperScroll.contentY = itemBottom - wallpaperScroll.height + margin
+					PropertyAnimation {
+						target: wallpaperHighlight
+						property: "opacity"
+						to: 1.0
+						duration: 200
+						easing.type: Easing.OutCubic
 					}
 				}
-			}
 			
 		}
 
