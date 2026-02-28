@@ -2,7 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
 import QtQuick.Dialogs
-import Qt.labs.settings as Labs
+// import Qt.labs.settings as Labs
 import QtCore
 import Quickshell
 import Quickshell.Io as Io
@@ -10,6 +10,10 @@ import Quickshell.Hyprland
 import QtQuick.Window
 import Quickshell.Widgets
 import qs.colors
+
+// import QtGraphicalEffects 
+
+// import QtQuick.Shapes
 // import QtQuick.Window
 // import QtQuick.Controls
 // | Opacity % | Alpha Hex | Color Code  | Transparency %   |
@@ -26,26 +30,15 @@ import qs.colors
 // | 10%       | 1A        | `#1A000000` | 90% transparent  |
 // | 0%        | 00        | `#00000000` | 100% transparent |
 FloatingWindow {
-    
+
 	id: wallpaperWindow
 	title: "WallpaperWindow"
 	implicitWidth: 1280
 	implicitHeight: 570
-	
     // focus: true             // allow it to accept key events
     // Add shortcut to handle Escape key
 	// color: "#ae151217"
 	color: "#33000000"
-
-	HyprlandFocusGrab {
-		windows: [ wallpaperWindow ]
-		active: wallpaperWindow.visible
-	}
-	// HyprlandFocusGrab {
-    //     id: grab
-    //     windows: [ window ]   
-    //     active: wallpaperWindow.visible 
-    // }
 	QtObject {
     	id: utils
 
@@ -57,7 +50,19 @@ FloatingWindow {
 			}
 			return arr;
 		}
+		
+		
 	}
+	HyprlandFocusGrab {
+		windows: [ wallpaperWindow ]
+		active: wallpaperWindow.visible
+	}
+	// HyprlandFocusGrab {
+    //     id: grab
+    //     windows: [ window ]   
+    //     active: wallpaperWindow.visible 
+    // }
+
 	Shortcut {
         sequence: "Escape"
         onActivated: {
@@ -87,7 +92,6 @@ FloatingWindow {
 	property bool settingsOpen: false
 	property bool selectorOpen: false
 	// property bool animating: false
-	// property bool navigating: false
 	property bool showDelegateBorder: true
 	property int currentIndex: 0
 	
@@ -103,6 +107,7 @@ FloatingWindow {
 			appSettings.savedWallpaperDir = wallpaperDir
 		}
 	}
+
 	onThumbnailDirChanged: {
 		if (thumbnailDir && thumbnailDir !== appSettings.savedThumbnailDir) {
 			appSettings.savedThumbnailDir = thumbnailDir
@@ -139,18 +144,18 @@ FloatingWindow {
 	// 			}
 	// 		}
 	// 	}
-	function startListing() {
-		if (!wallpaperDir) {
-			lastError = "Wallpaper directory not set"
-			return
+		function startListing() {
+			if (!wallpaperDir) {
+				lastError = "Wallpaper directory not set"
+				return
+			}
+			// Use ls for faster listing (faster than find for single directory)
+			listProcess.exec(["sh", "-c", "ls -1 '" + wallpaperDir + "' 2>/dev/null | grep -iE '\\.(jpg|jpeg|png|webp|bmp)$' | sort"])
 		}
-		// Use ls for faster listing (faster than find for single directory)
-		listProcess.exec(["sh", "-c", "ls -1 '" + wallpaperDir + "' 2>/dev/null | grep -iE '\\.(jpg|jpeg|png|webp|bmp)$' | sort"])
-	}
 
-		function showNotification(title, message, icon) {
-		console.log("[" + title + "] " + message)
-	}
+			function showNotification(title, message, icon) {
+			console.log("[" + title + "] " + message)
+		}
 
 		function applyWallpaper(wallpaperName) {
 			selectedWallpaper = wallpaperName
@@ -196,20 +201,26 @@ FloatingWindow {
         anchors.fill: parent
         focus: true
         Keys.enabled: true
-
+		
         // Component.onCompleted: keyRoot.forceActiveFocus()
-		Labs.Settings {
-		id: appSettings
-		category: "WallpaperPicker"
-		property string savedWallpaperDir: ""
-		property string savedThumbnailDir: ""
-		}
+		Settings {
+			id: appSettings
+
+			category: "WallpaperPicker"
+			property string savedWallpaperDir: ""
+			property string savedThumbnailDir: ""
+			
+		}	
+		
 		Component.onCompleted: {
 		// Focus
-			
+				
+		
+
 			// Get home directory first, then start listing
 			homeProcess.exec(["sh", "-c", "echo $HOME"])
 			keyRoot.forceActiveFocus()
+
 		}
 			function updateHighlightAtIndex(index) {
 				wallpaperGridView.currentIndex = index
@@ -430,11 +441,14 @@ FloatingWindow {
 				}
 				
 				if (wallpapers.length === 0) {
-					lastError = "No wallpapers found in " + wallpaperDir
-					showNotification("Error", lastError, "dialog-error")
+					// lastError = "No wallpapers found in " + wallpaperDir
+					// showNotification("Error", lastError, "dialog-error")
 				} else {
 					// Generate missing thumbnails in parallel (using xargs -P for parallel processing)
+					// ffmpeg
 					let setupCmd = "mkdir -p '" + thumbnailDir + "' && find '" + wallpaperDir + "' -maxdepth 1 -type f \\( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' -o -iname '*.bmp' \\) -print0 | xargs -0 -P 4 -I {} bash -c 'base=$(basename \"{}\"); name=\"${base%.*}\"; thumb=\"" + thumbnailDir + "/${name}.png\"; [ ! -f \"$thumb\" ] && ffmpeg -i \"{}\" -vf \"scale=250:140:force_original_aspect_ratio=decrease,pad=250:140:(ow-iw)/2:(oh-ih)/2\" -q:v 5 -frames:v 1 \"$thumb\" 2>/dev/null || true'"
+					// // magick
+					// let setupCmd = "mkdir -p '" + thumbnailDir + "' && find '" + wallpaperDir + "' -maxdepth 1 -type f \\( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' -o -iname '*.bmp' \\) -print0 | xargs -0 -P 4 -I {} bash -c 'base=$(basename \"{}\"); name=\"${base%.*}\"; thumb=\"" + thumbnailDir + "/${name}.png\"; [ ! -f \"$thumb\" ] && /usr/bin/magick \"{}\" -resize 250x140^ -gravity center -extent 250x140 \"$thumb\" || true'"
 					thumbnailProcess.exec(["sh", "-c", setupCmd])
 				}
 			}
@@ -579,14 +593,16 @@ FloatingWindow {
 			Item {
 				id: wallpaperContainer
 				anchors.fill: parent
-				
+				// property int columns: 5
+    			// property var rowWidths: []
 					Rectangle {
 						id: wallpaperHighlight
 						radius: 10
 
 						color: "transparent"
-						
-
+						// anchors.top: wallpaperGridView.contentItem.top
+    					// anchors.left: wallpaperGridView.contentItem.left
+						parent: wallpaperGridView.contentItem
 						property real targetX: 0
 						property real targetY: 0
 						property real targetWidth: wallpaperGridView.cellWidth
@@ -594,15 +610,30 @@ FloatingWindow {
 						property real animatedBorderWidth: 0
 						property bool isNeighbor: false
 
-						x: targetX
-						y: targetY
-						width: targetWidth
-						height: targetHeight
+						// x: targetX
+						// y: targetY
+						    x: wallpaperGridView.currentItem
+							? wallpaperGridView.currentItem.x
+							: 0
+							y: wallpaperGridView.currentItem
+							? wallpaperGridView.currentItem.y
+							: 0
+						// width: targetWidth
+						// height: targetHeight
+						    width: wallpaperGridView.currentItem
+						? wallpaperGridView.currentItem.width
+						: 0
+							height: wallpaperGridView.currentItem
+							? wallpaperGridView.currentItem.height
+							: 0
 						transformOrigin: Item.Center
 
 
-						border.width: 2
+						border.width: 0
+	
 						border.color: colorsPalette.primary
+						
+
 
 						Behavior on animatedBorderWidth {
 							NumberAnimation { duration: 250; easing.type: Easing.OutQuad }
@@ -615,19 +646,65 @@ FloatingWindow {
 						function hideHighlightBorder() {
 							animatedBorderWidth = 0  
 						}
-
-						opacity: 0.0   // start invisible
-
+	
+						opacity: 0   // start invisible
+						
 						Behavior on x { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
 						Behavior on y { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
-						Behavior on width { NumberAnimation { duration: 200 } }
-						Behavior on height { NumberAnimation { duration: 200 } }
+						Behavior on width  { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+						Behavior on height { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+				
 						Behavior on scale {
-							NumberAnimation { duration: 250; easing.type: Easing.OutBack; easing.overshoot: 1.4 }
-						}
-						
+							NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
+						}	
 						Behavior on opacity { NumberAnimation { duration: 300; easing.type: Easing.OutQuad } }
 
+
+						property real progress: 0
+
+						// // mask container
+						Rectangle {
+	
+							id: borderMask
+							anchors.fill: parent
+							radius: wallpaperHighlight.radius
+							color: "transparent"
+							border.width: 3
+							border.color: "transparent"
+							clip: true
+							layer.enabled: true
+    					    layer.smooth: true
+							visible: isCurrent
+							// rotating gradient "energy"
+
+		
+							Rectangle {
+								id: rotatingGlow
+								width: parent.width * 2
+								height: parent.height * 2
+								anchors.centerIn: parent
+								rotation: wallpaperHighlight.progress * 360
+
+							gradient: Gradient {
+								GradientStop { position: 0.0; color: "transparent" }
+								GradientStop { position: 0.35; color: "transparent" }
+								GradientStop { position: 0.4; color: colorsPalette.primary }
+								GradientStop { position: 0.6; color: colorsPalette.primary }
+								GradientStop { position: 0.65; color: "transparent" }
+								GradientStop { position: 1.0; color: "transparent" }
+							}
+							}
+						}
+
+						NumberAnimation on progress {
+							from: 0
+							to: 1
+							duration: 2000
+							loops: Animation.Infinite
+							running: true
+						}
+
+		
 						Timer {
 							id: fadeTimer
 							interval: 800  
@@ -649,21 +726,29 @@ FloatingWindow {
 							target: wallpaperHighlight
 							property: "opacity"
 							to: 1.0
-							duration: 20
+							duration: 250
 							easing.type: Easing.OutQuad
 						}
 
-						PauseAnimation { duration: 250 }
+						PauseAnimation { duration: 0 }
 
 						PropertyAnimation {
 							target: wallpaperHighlight
 							property: "opacity"
 							to: 0.0
-							duration: 250
+							duration: 400
 							easing.type: Easing.InQuad
 						}
-							onStarted: wallpaperGridView.navigating = true
-							onFinished: wallpaperGridView.navigating = false
+
+						onStarted: { 
+							
+							wallpaperGridView.navigating = true 
+						    // console.log("navigating:", wallpaperGridView.navigating) 
+						}
+
+						onFinished: { wallpaperGridView.navigating = false 
+						// console.log("navigating:", wallpaperGridView.navigating) 
+						}
 						}
 
 						function showHighlight() {
@@ -681,22 +766,45 @@ FloatingWindow {
 					cellWidth: 249.5
 					cellHeight: 260 * 9 / 16 + 16   // aspect ratio + spacing
 					clip: true
-
+					  property int columns: Math.floor(width / cellWidth)
 					highlightFollowsCurrentItem: true
 					boundsBehavior: Flickable.StopAtBounds
 					flow: GridView.FlowLeftToRight
 					property bool navigating: false
 					
 					delegate: Rectangle {
+						// z: isCurrent ? 10 : 0
+						property bool isSameRow: {
+							const current = wallpaperGridView.currentIndex
+							if (current < 0) return false
+
+							const row = Math.floor(index / columns)
+							const currentRow = Math.floor(current / columns)
+
+							return row === currentRow
+						}
+
+						
+						    // Random width for each image on creation
+						// property real randomWidth: wallpaperGridView.cellWidth * (0.7 + Math.random() * 0.6)
+						// This will give widths from ~70% to ~130% of normal
+
 						width: wallpaperGridView.cellWidth
+						// width: wallpaperGridView.cellWidth
+						//  width: isCurrent 
+						// ? wallpaperGridView.cellWidth * 1.1 
+						// : (isSameRow ? wallpaperGridView.cellWidth * 0.95 : wallpaperGridView.cellWidth)
 						height: wallpaperGridView.cellHeight
+						// width: isCurrent ? wallpaperGridView.cellWidth * 1.1 : wallpaperGridView.cellWidth
+   						// height: isCurrent ? wallpaperGridView.cellHeight * 1.1 : wallpaperGridView.cellHeight
 						color: "transparent"
 						radius: 10
 						property bool isCurrent: model.index === wallpaperGridView.currentIndex
 						property bool showBorder: !wallpaperGridView.navigating && isCurrent
 						property int columns: Math.floor(wallpaperGridView.width / wallpaperGridView.cellWidth)
 
-
+						Behavior on width { NumberAnimation { duration: 250; easing.type: Easing.OutQuad } }
+						Behavior on height { NumberAnimation { duration: 250; easing.type: Easing.OutQuad } }
 						property bool isNeighbor: {
         					const current = wallpaperGridView.currentIndex
 							const row = Math.floor(model.index / columns)
@@ -709,22 +817,52 @@ FloatingWindow {
 								(col === currentCol && Math.abs(row - currentRow) === 1)      // top/bottom
 						}
 						
-						    function updateNeighborStatus() {
-							const current = wallpaperGridView.currentIndex
-							const row = Math.floor(model.index / columns)
-							const col = model.index % columns
-							const currentRow = Math.floor(current / columns)
-							const currentCol = current % columns
+						Rectangle {
+						id: wallpaperHighlight
+						anchors.fill: parent
+						radius: 10
+						color: "transparent"
+						border.width: 0
+						clip: true
+						visible: isCurrent && !wallpaperGridView.navigating
+				
+						property real progressTop: 0
+						property real progressBottom: 0
+						readonly property real borderWidth: 3
 
-							isNeighbor = (row === currentRow && Math.abs(col - currentCol) === 1) ||
-										(col === currentCol && Math.abs(row - currentRow) === 1)
 
-							animatedBorderWidth = isNeighbor ? 2 : 0
+						// Top-left growing line
+						Rectangle {
+							anchors.right: parent.right
+							anchors.top: parent.top
+							width: (parent.width / 2 + parent.width * 0.5) * wallpaperHighlight.progressTop
+							height: (parent.height / 2 + parent.height * 0.5) * wallpaperHighlight.progressTop
+							color: "transparent"
+							border.width: wallpaperHighlight.borderWidth
+							border.color: colorsPalette.primary
+							radius: wallpaperHighlight.radius
 						}
-						border.width: isCurrent ? 0 : 0
-						// border.width: isCurrent || isNeighbor ? 2 : 0
-						// border.width: model.index === wallpaperGridView.currentIndex && wallpaperHighlight.opacity === 0 ? 2 : 0
-						border.color: colorsPalette.primary
+
+						// Bottom-right growing line
+						Rectangle {
+							anchors.left: parent.left
+							anchors.bottom: parent.bottom
+							width: (parent.width / 2 + parent.width * 0.5) * wallpaperHighlight.progressBottom
+							height: (parent.height / 2 + parent.height * 0.5) * wallpaperHighlight.progressBottom
+							color: "transparent"
+							border.width: wallpaperHighlight.borderWidth
+							border.color: colorsPalette.primary
+							radius: wallpaperHighlight.radius
+						}
+
+						ParallelAnimation {
+							running: isCurrent && !wallpaperGridView.navigating
+							loops: 1
+							PropertyAnimation { target: wallpaperHighlight; property: "progressTop"; from: 0; to: 1; duration: 600 }
+							PropertyAnimation { target: wallpaperHighlight; property: "progressBottom"; from: 0; to: 1; duration: 600 }
+						}
+						}
+
 
 						Behavior on border.width { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
 						Behavior on border.color { ColorAnimation { duration: 180; easing.type: Easing.OutCubic } }
@@ -756,7 +894,39 @@ FloatingWindow {
 										source = "file://" + wallpaperDir + "/" + modelData
 									}
 								}
-								opacity: isCurrent ? 1 : 1
+								property bool isNeighbor: {
+									const current = wallpaperGridView.currentIndex
+									if (current < 0) return false
+
+									const row = Math.floor(index / columns)
+									const col = index % columns
+
+									const currentRow = Math.floor(current / columns)
+									const currentCol = current % columns
+
+									const rowDiff = Math.abs(row - currentRow)
+									const colDiff = Math.abs(col - currentCol)
+
+									// Adjacent in ANY direction (including diagonals)
+									return (rowDiff <= 1 && colDiff <= 1) && !(rowDiff === 0 && colDiff === 0)
+								}
+								// property bool isSameRow: {
+								// const current = wallpaperGridView.currentIndex
+								// if (current < 0) return false
+
+								// const row = Math.floor(index / columns)
+								// const currentRow = Math.floor(current / columns)
+
+								// return row === currentRow
+								// }
+								opacity: 1
+								// opacity: isNeighbor || isCurrent ? 1 : 0.5
+								//  Behavior on opacity { 
+								// 	NumberAnimation { 
+								// 		duration: 250        // adjust speed
+								// 		easing.type: Easing.InOutQuad 
+								// 	} 
+								// }
 								// ImageOpacity {
 								// 	anchors.centerIn: parent
 								// 	width: 40
@@ -863,95 +1033,96 @@ FloatingWindow {
 		// }
 		
 		// Settings dialog
-		Dialog {
-			id: settingsDialog
-			visible: settingsOpen
-			modal: true
-			title: "Settings"
-			width: 720
-			height: 460
-			padding: 16
-			onVisibleChanged: if (!visible) settingsOpen = false
-			background: Rectangle {
-				radius: 12
-				color: colorSurface
-				border.color: colorOutline
-				border.width: 1
-			}
-			onAccepted: {
-				// Apply directories from fields and persist
-				wallpaperDir = wallDirField.text.trim()
-				thumbnailDir = thumbDirField.text.trim()
-				// Re-validate and rescan
-				mkdirThumbsProcess.exec(["sh","-c","mkdir -p '" + thumbnailDir + "'"])
-			}
-			contentItem: ColumnLayout {
-				spacing: 12
-				RowLayout {
-					Layout.fillWidth: true
-					Label { text: "Wallpaper directory:"; color: colorOnSurface }
-					TextField { id: wallDirField; text: wallpaperDir; Layout.fillWidth: true }
-					Button {
-						id: browseWallBtn
-						text: "Browse"
-						background: Rectangle { radius: 8; color: browseWallBtn.down ? Qt.darker(colorSurfaceContainer, 1.3) : (browseWallBtn.hovered ? Qt.lighter(colorSurfaceContainer, 1.2) : colorSurfaceContainer); border.color: colorOutline; border.width: 1 }
-						contentItem: Text { text: browseWallBtn.text; color: colorOnSurface; font.pixelSize: 14; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
-						onClicked: wallpaperFolderDialog.open()
-					}
-				}
-				RowLayout {
-					Layout.fillWidth: true
-					Label { text: "Thumbnail directory:"; color: colorOnSurface }
-					TextField { id: thumbDirField; text: thumbnailDir; Layout.fillWidth: true }
-					Button {
-						id: browseThumbBtn
-						text: "Browse"
-						background: Rectangle { radius: 8; color: browseThumbBtn.down ? Qt.darker(colorSurfaceContainer, 1.3) : (browseThumbBtn.hovered ? Qt.lighter(colorSurfaceContainer, 1.2) : colorSurfaceContainer); border.color: colorOutline; border.width: 1 }
-						contentItem: Text { text: browseThumbBtn.text; color: colorOnSurface; font.pixelSize: 14; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
-						onClicked: thumbnailFolderDialog.open()
-					}
-				}
-				RowLayout {
-					spacing: 16
-					Text { text: hasFfmpeg ? "ffmpeg: OK" : "ffmpeg: not found"; color: hasFfmpeg ? "#84e1a7" : colorError }
-					Text { text: hasMatugen ? "matugen: OK" : "matugen: not found"; color: hasMatugen ? "#84e1a7" : colorError }
-				}
-			}
-			footer: DialogButtonBox {
-				alignment: Qt.AlignRight
-				Button {
-					id: cancelBtn
-					text: "Cancel"
-					DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
-					background: Rectangle { radius: 8; color: cancelBtn.down ? Qt.darker(colorSurfaceContainer, 1.3) : (cancelBtn.hovered ? Qt.lighter(colorSurfaceContainer, 1.2) : colorSurfaceContainer); border.color: colorOutline; border.width: 1 }
-					contentItem: Text { text: cancelBtn.text; color: colorOnSurface; font.pixelSize: 14; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
-				}
-				Button {
-					id: saveBtn
-					text: "Save"
-					DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
-					background: Rectangle { radius: 8; color: saveBtn.down ? Qt.darker(colorSurfaceContainer, 1.3) : (saveBtn.hovered ? Qt.lighter(colorSurfaceContainer, 1.2) : colorSurfaceContainer); border.color: colorOutline; border.width: 1 }
-					contentItem: Text { text: saveBtn.text; color: colorOnSurface; font.pixelSize: 14; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
-				}
-			}
-		}
+		// Dialog {
+		// 	id: settingsDialog
+		// 	visible: settingsOpen
+		// 	modal: true
+		// 	title: "Settings"
+		// 	width: 720
+		// 	height: 460
+		// 	padding: 16
+		// 	onVisibleChanged: if (!visible) settingsOpen = false
+		// 	background: Rectangle {
+		// 		radius: 12
+		// 		color: colorSurface
+		// 		border.color: colorOutline
+		// 		border.width: 1
+		// 	}
+		// 	onAccepted: {
+		// 		// Apply directories from fields and persist
+		// 		wallpaperDir = wallDirField.text.trim()
+		// 		thumbnailDir = thumbDirField.text.trim()
+		// 		// Re-validate and rescan
+		// 		mkdirThumbsProcess.exec(["sh","-c","mkdir -p '" + thumbnailDir + "'"])
+		// 	}
+		// 	contentItem: ColumnLayout {
+		// 		spacing: 12
+		// 		RowLayout {
+		// 			Layout.fillWidth: true
+		// 			Label { text: "Wallpaper directory:"; color: colorOnSurface }
+		// 			TextField { id: wallDirField; text: wallpaperDir; Layout.fillWidth: true }
+		// 			Button {
+		// 				id: browseWallBtn
+		// 				text: "Browse"
+		// 				background: Rectangle { radius: 8; color: browseWallBtn.down ? Qt.darker(colorSurfaceContainer, 1.3) : (browseWallBtn.hovered ? Qt.lighter(colorSurfaceContainer, 1.2) : colorSurfaceContainer); border.color: colorOutline; border.width: 1 }
+		// 				contentItem: Text { text: browseWallBtn.text; color: colorOnSurface; font.pixelSize: 14; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
+		// 				onClicked: wallpaperFolderDialog.open()
+		// 			}
+		// 		}
+		// 		RowLayout {
+		// 			Layout.fillWidth: true
+		// 			Label { text: "Thumbnail directory:"; color: colorOnSurface }
+		// 			TextField { id: thumbDirField; text: thumbnailDir; Layout.fillWidth: true }
+		// 			Button {
+		// 				id: browseThumbBtn
+		// 				text: "Browse"
+		// 				background: Rectangle { radius: 8; color: browseThumbBtn.down ? Qt.darker(colorSurfaceContainer, 1.3) : (browseThumbBtn.hovered ? Qt.lighter(colorSurfaceContainer, 1.2) : colorSurfaceContainer); border.color: colorOutline; border.width: 1 }
+		// 				contentItem: Text { text: browseThumbBtn.text; color: colorOnSurface; font.pixelSize: 14; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
+		// 				onClicked: thumbnailFolderDialog.open()
+		// 			}
+		// 		}
+		// 		RowLayout {
+		// 			spacing: 16
+		// 			Text { text: hasFfmpeg ? "ffmpeg: OK" : "ffmpeg: not found"; color: hasFfmpeg ? "#84e1a7" : colorError }
+		// 			Text { text: hasMatugen ? "matugen: OK" : "matugen: not found"; color: hasMatugen ? "#84e1a7" : colorError }
+		// 		}
+		// 	}
+		// 	footer: DialogButtonBox {
+		// 		alignment: Qt.AlignRight
+		// 		Button {
+		// 			id: cancelBtn
+		// 			text: "Cancel"
+		// 			DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
+		// 			background: Rectangle { radius: 8; color: cancelBtn.down ? Qt.darker(colorSurfaceContainer, 1.3) : (cancelBtn.hovered ? Qt.lighter(colorSurfaceContainer, 1.2) : colorSurfaceContainer); border.color: colorOutline; border.width: 1 }
+		// 			contentItem: Text { text: cancelBtn.text; color: colorOnSurface; font.pixelSize: 14; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
+		// 		}
+		// 		Button {
+		// 			id: saveBtn
+		// 			text: "Save"
+		// 			DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
+		// 			background: Rectangle { radius: 8; color: saveBtn.down ? Qt.darker(colorSurfaceContainer, 1.3) : (saveBtn.hovered ? Qt.lighter(colorSurfaceContainer, 1.2) : colorSurfaceContainer); border.color: colorOutline; border.width: 1 }
+		// 			contentItem: Text { text: saveBtn.text; color: colorOnSurface; font.pixelSize: 14; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
+		// 		}
+		// 	}
+		// }
 
-		FolderDialog {
-			id: wallpaperFolderDialog
-			title: "Choose wallpaper directory"
-			onAccepted: {
-				wallpaperDir = wallpaperFolderDialog.selectedFolder
-				settingsOpen = true
-			}
-		}
-		FolderDialog {
-			id: thumbnailFolderDialog
-			title: "Choose thumbnail directory"
-			onAccepted: {
-				thumbnailDir = thumbnailFolderDialog.selectedFolder
-				settingsOpen = true
-			}
-		}
+		// FolderDialog {
+		// 	id: wallpaperFolderDialog
+		// 	title: "Choose wallpaper directory"
+		// 	onAccepted: {
+		// 		wallpaperDir = wallpaperFolderDialog.selectedFolder
+		// 		settingsOpen = true
+		// 	}
+		// }
+		// FolderDialog {
+		// 	id: thumbnailFolderDialog
+		// 	title: "Choose thumbnail directory"
+		// 	onAccepted: {
+		// 		thumbnailDir = thumbnailFolderDialog.selectedFolder
+		// 		settingsOpen = true
+		// 	}
+		// }
 	}
 	}
+
 }
