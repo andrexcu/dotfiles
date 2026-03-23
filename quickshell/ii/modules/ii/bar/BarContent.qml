@@ -1,4 +1,4 @@
-import "./weather"
+import qs.modules.ii.bar.weather
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
@@ -8,7 +8,6 @@ import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
 import qs.modules.common.functions
-import qs.colors
 
 Item { // Bar content region
     id: root
@@ -17,8 +16,7 @@ Item { // Bar content region
     property var brightnessMonitor: Brightness.getMonitorForScreen(screen)
     property real useShortenedForm: (Appearance.sizes.barHellaShortenScreenWidthThreshold >= screen?.width) ? 2 : (Appearance.sizes.barShortenScreenWidthThreshold >= screen?.width) ? 1 : 0
     readonly property int centerSideModuleWidth: (useShortenedForm == 2) ? Appearance.sizes.barCenterSideModuleWidthHellaShortened : (useShortenedForm == 1) ? Appearance.sizes.barCenterSideModuleWidthShortened : Appearance.sizes.barCenterSideModuleWidth
-    property var colorsPalette: Colors {}
-    
+
     component VerticalBarSeparator: Rectangle {
         Layout.topMargin: Appearance.sizes.baseBarHeight / 3
         Layout.bottomMargin: Appearance.sizes.baseBarHeight / 3
@@ -29,46 +27,26 @@ Item { // Bar content region
 
     // Background shadow
     Loader {
-        active: Config.options.bar.showBackground && Config.options.bar.cornerStyle === 1
+        active: Config.options.bar.showBackground && Config.options.bar.cornerStyle === 1 && Config.options.bar.floatStyleShadow
         anchors.fill: barBackground
         sourceComponent: StyledRectangularShadow {
-            anchors.fill: undefined
+            anchors.fill: undefined // The loader's anchors act on this, and this should not have any anchor
             target: barBackground
         }
     }
-
     // Background
-    // Rectangle {
-    //     id: barBackground
-    //     anchors {
-    //         fill: parent
-    //         margins: Config.options.bar.cornerStyle === 1 ? (Appearance.sizes.hyprlandGapsOut) : 0
-    //     }
-    //     color: "#B3000000"
-    //     radius: Config.options.bar.cornerStyle === 1 ? Appearance.rounding.windowRounding : 0
-    //     border.width: 2
-    //     border.color: "red"
-    // }
-        Rectangle {
+    Rectangle {
         id: barBackground
-        anchors.fill: parent
-        color: colorsPalette.backgroundt70
-        // radius: Config.options.bar.cornerStyle === 1 ? Appearance.rounding.windowRounding : 0
-        radius: 0
-        clip: true   // This ensures children don't draw outside rounded corners
-
-        // Bottom border as a separate rectangle
-        Rectangle {
-            id: bottomBorder
-            height: 0
-            // color: colorsPalette.primary
-            color: "red"
-
-            x: Appearance.rounding.windowRounding  // inset from left
-            width: barBackground.width - (Appearance.rounding.windowRounding * 2)  // inset from right
-            y: barBackground.height - height
+        anchors {
+            fill: parent
+            margins: Config.options.bar.cornerStyle === 1 ? (Appearance.sizes.hyprlandGapsOut) : 0 // idk why but +1 is needed
         }
+        color: Config.options.bar.showBackground ? Appearance.colors.colLayer0 : "transparent"
+        radius: Config.options.bar.cornerStyle === 1 ? Appearance.rounding.windowRounding : 0
+        border.width: Config.options.bar.cornerStyle === 1 ? 1 : 0
+        border.color: Appearance.colors.colLayer0Border
     }
+
     FocusedScrollMouseArea { // Left side | scroll to change brightness
         id: barLeftSideMouseArea
 
@@ -90,36 +68,38 @@ Item { // Bar content region
         }
 
         // Visual content
-        // ScrollHint {
-        //     reveal: barLeftSideMouseArea.hovered
-        //     icon: "light_mode"
-        //     tooltipText: Translation.tr("Scroll to change brightness")
-        //     side: "left"
-        //     anchors.left: parent.left
-        //     anchors.verticalCenter: parent.verticalCenter
-        // }
+        ScrollHint {
+            reveal: barLeftSideMouseArea.hovered
+            icon: "light_mode"
+            tooltipText: Translation.tr("Scroll to change brightness")
+            side: "left"
+            anchors.left: parent.left
+            anchors.verticalCenter: parent.verticalCenter
+        }
 
         RowLayout {
             id: leftSectionRowLayout
             anchors.fill: parent
-            spacing: 10
+            spacing: 0
 
-            LeftSidebarButton {
+            LeftSidebarButton { // Left sidebar button
+                id: leftSidebarButton
                 Layout.alignment: Qt.AlignVCenter
                 Layout.leftMargin: Appearance.rounding.screenRounding
                 colBackground: barLeftSideMouseArea.hovered ? Appearance.colors.colLayer1Hover : ColorUtils.transparentize(Appearance.colors.colLayer1Hover, 1)
             }
 
             ActiveWindow {
-                visible: root.useShortenedForm === 0
+                Layout.leftMargin: 10 + (leftSidebarButton.visible ? 0 : Appearance.rounding.screenRounding)
                 Layout.rightMargin: Appearance.rounding.screenRounding
                 Layout.fillWidth: true
-                Layout.fillHeight: false
+                Layout.fillHeight: true
+                visible: root.useShortenedForm === 0
             }
         }
     }
 
-    RowLayout { // Middle section
+    Row { // Middle section
         id: middleSection
         anchors {
             top: parent.top
@@ -130,34 +110,34 @@ Item { // Bar content region
 
         BarGroup {
             id: leftCenterGroup
-            Layout.preferredWidth: root.centerSideModuleWidth
-            Layout.fillHeight: false
-            Layout.alignment: Qt.AlignVCenter
-            implicitHeight: Appearance.sizes.baseBarHeight * 0.8
-           visible: true
+            anchors.verticalCenter: parent.verticalCenter
+            implicitWidth: root.centerSideModuleWidth
+
+            Resources {
+                alwaysShowAllResources: root.useShortenedForm === 2
+                Layout.fillWidth: root.useShortenedForm === 2
+            }
+
             Media {
-                visible: true
+                visible: root.useShortenedForm < 2
                 Layout.fillWidth: true
             }
         }
 
         VerticalBarSeparator {
-            // visible: Config.options?.bar.borderless
-            visible: false
+            visible: Config.options?.bar.borderless
         }
 
         BarGroup {
             id: middleCenterGroup
+            anchors.verticalCenter: parent.verticalCenter
             padding: workspacesWidget.widgetPadding
-            Layout.fillHeight: false
-            Layout.alignment: Qt.AlignVCenter
-            implicitHeight: Appearance.sizes.baseBarHeight * 0.8
+
             Workspaces {
                 id: workspacesWidget
                 Layout.fillHeight: true
-                
-                  
                 MouseArea {
+                    // Right-click to toggle overview
                     anchors.fill: parent
                     acceptedButtons: Qt.RightButton
 
@@ -176,12 +156,10 @@ Item { // Bar content region
 
         MouseArea {
             id: rightCenterGroup
-            implicitWidth: rightCenterGroupContent.implicitWidth
-            // implicitHeight: rightCenterGroupContent.implicitHeight
-            Layout.preferredWidth: root.centerSideModuleWidth
-            Layout.fillHeight: false
-            Layout.alignment: Qt.AlignVCenter
-            implicitHeight: Appearance.sizes.baseBarHeight * 0.8
+            anchors.verticalCenter: parent.verticalCenter
+            implicitWidth: root.centerSideModuleWidth
+            implicitHeight: rightCenterGroupContent.implicitHeight
+
             onPressed: {
                 GlobalStates.sidebarRightOpen = !GlobalStates.sidebarRightOpen;
             }
@@ -202,7 +180,7 @@ Item { // Bar content region
                 }
 
                 BatteryIndicator {
-                    visible: (root.useShortenedForm < 2 && UPower.displayDevice.isLaptopBattery)
+                    visible: (root.useShortenedForm < 2 && Battery.available)
                     Layout.alignment: Qt.AlignVCenter
                 }
             }
@@ -221,16 +199,8 @@ Item { // Bar content region
         implicitWidth: rightSectionRowLayout.implicitWidth
         implicitHeight: Appearance.sizes.baseBarHeight
 
-        onScrollDown: {
-            const currentVolume = Audio.value;
-            const step = currentVolume < 0.1 ? 0.01 : 0.02 || 0.2;
-            Audio.sink.audio.volume -= step;
-        }
-        onScrollUp: {
-            const currentVolume = Audio.value;
-            const step = currentVolume < 0.1 ? 0.01 : 0.02 || 0.2;
-            Audio.sink.audio.volume = Math.min(1, Audio.sink.audio.volume + step);
-        }
+        onScrollDown: Audio.decrementVolume();
+        onScrollUp: Audio.incrementVolume();
         onMovedAway: GlobalStates.osdVolumeOpen = false;
         onPressed: event => {
             if (event.button === Qt.LeftButton) {
@@ -247,6 +217,7 @@ Item { // Bar content region
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
         }
+
         RowLayout {
             id: rightSectionRowLayout
             anchors.fill: parent
@@ -297,7 +268,7 @@ Item { // Bar content region
                         MaterialSymbol {
                             text: "volume_off"
                             iconSize: Appearance.font.pixelSize.larger
-                            color: "red"
+                            color: rightSidebarButton.colText
                         }
                     }
                     Revealer {
@@ -310,7 +281,7 @@ Item { // Bar content region
                         MaterialSymbol {
                             text: "mic_off"
                             iconSize: Appearance.font.pixelSize.larger
-                            color: "red"
+                            color: rightSidebarButton.colText
                         }
                     }
                     HyprlandXkbIndicator {
@@ -368,6 +339,5 @@ Item { // Bar content region
                 }
             }
         }
-
     }
 }

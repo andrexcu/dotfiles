@@ -12,7 +12,7 @@ Item {
 
     ColumnLayout {
         id: layout
-
+        
         anchors.fill: parent
         spacing: Appearance.spacing.normal
 

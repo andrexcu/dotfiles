@@ -72,13 +72,14 @@ Item {
         id: content
 
         anchors.top: parent.top
-        anchors.bottom: parent.bottom
+        // anchors.bottom: parent.bottom
         anchors.right: parent.right
+        anchors.left: parent.left
 
         active: root.shouldBeVisible || root.visible
 
         sourceComponent: Bar {
-            visible: false
+            visible: true
             width: root.contentWidth
             screen: root.screen
             visibilities: root.visibilities

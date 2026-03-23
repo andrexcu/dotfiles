@@ -5,11 +5,13 @@ import qs.config
 import "popouts" as BarPopouts
 import Quickshell
 import QtQuick
+import Quickshell.Wayland
+import Quickshell.Hyprland
 
 Item {
     id: root
 
-    required property ShellScreen screen
+    // required property ShellScreen screen
     required property PersistentProperties visibilities
     required property BarPopouts.Wrapper popouts
     required property bool disabled
@@ -72,19 +74,20 @@ Item {
     Loader {
         id: content
 
-        // anchors.top: parent.top
-        // anchors.bottom: parent.bottom
-        anchors.left: parent.left
-        anchors.right: parent.right
+        anchors.top: parent.top
+ 
+        active: true
 
-        active: root.shouldBeVisible || root.visible
 
         sourceComponent: Bar {
             width: root.contentWidth
-            screen: root.screen
+            height: root.contentWidth
+            // screen: root.screen
             visibilities: root.visibilities
-            visible: false
+            visible: true
             popouts: root.popouts
+            
         }
+        
     }
 }

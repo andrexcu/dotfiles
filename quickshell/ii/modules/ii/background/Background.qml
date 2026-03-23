@@ -21,7 +21,7 @@ import qs.modules.ii.background.widgets.weather
 Variants {
     id: root
     model: Quickshell.screens
-    
+
     PanelWindow {
         id: bgRoot
 
@@ -30,8 +30,8 @@ Variants {
         // Hide when fullscreen
         property list<HyprlandWorkspace> workspacesForMonitor: Hyprland.workspaces.values.filter(workspace => workspace.monitor && workspace.monitor.name == monitor.name)
         property var activeWorkspaceWithFullscreen: workspacesForMonitor.filter(workspace => ((workspace.toplevels.values.filter(window => window.wayland?.fullscreen)[0] != undefined) && workspace.active))[0]
-        // visible: GlobalStates.screenLocked || (!(activeWorkspaceWithFullscreen != undefined)) || !Config?.options.background.hideWhenFullscreen
-        visible: false
+        visible: GlobalStates.screenLocked || (!(activeWorkspaceWithFullscreen != undefined)) || !Config?.options.background.hideWhenFullscreen
+
         // Workspaces
         property HyprlandMonitor monitor: Hyprland.monitorFor(modelData)
         property list<var> relevantWindows: HyprlandData.windowList.filter(win => win.monitor == monitor?.id && win.workspace.id >= 0).sort((a, b) => a.workspace.id - b.workspace.id)
@@ -53,7 +53,7 @@ Variants {
         property int wallpaperHeight: modelData.height // Some reasonable init value, to be updated
         property real movableXSpace: ((wallpaperWidth / wallpaperToScreenRatio * effectiveWallpaperScale) - screen.width) / 2
         property real movableYSpace: ((wallpaperHeight / wallpaperToScreenRatio * effectiveWallpaperScale) - screen.height) / 2
-        // readonly property bool verticalParallax: (Config.options.background.parallax.autoVertical && wallpaperHeight > wallpaperWidth) || Config.options.background.parallax.vertical
+        readonly property bool verticalParallax: (Config.options.background.parallax.autoVertical && wallpaperHeight > wallpaperWidth) || Config.options.background.parallax.vertical
         // Colors
         property bool shouldBlur: (GlobalStates.screenLocked && Config.options.lock.blur.enable)
         property color dominantColor: Appearance.colors.colPrimary // Default, to be changed
@@ -84,14 +84,14 @@ Variants {
                 return "transparent";
             return CF.ColorUtils.mix(Appearance.colors.colLayer0, Appearance.colors.colPrimary, 0.75);
         }
-        // Behavior on color {
-        //     animation: Appearance.animation.elementMoveFast.colorAnimation.createObject(this)
-        // }
+        Behavior on color {
+            animation: Appearance.animation.elementMoveFast.colorAnimation.createObject(this)
+        }
 
-        // onWallpaperPathChanged: {
-        //     bgRoot.updateZoomScale();
-        //     // Clock position gets updated after zoom scale is updated
-        // }
+        onWallpaperPathChanged: {
+            bgRoot.updateZoomScale();
+            // Clock position gets updated after zoom scale is updated
+        }
 
         // Wallpaper zoom scale
         function updateZoomScale() {
@@ -209,33 +209,33 @@ Variants {
 
             WidgetCanvas {
                 id: widgetCanvas
-                // anchors {
-                //     left: wallpaper.left
-                //     right: wallpaper.right
-                //     top: wallpaper.top
-                //     bottom: wallpaper.bottom
-                //     horizontalCenter: undefined
-                //     verticalCenter: undefined
-                //     readonly property real parallaxFactor: Config.options.background.parallax.widgetsFactor
-                //     leftMargin: {
-                //         const xOnWallpaper = bgRoot.movableXSpace;
-                //         const extraMove = (wallpaper.effectiveValueX * 2 * bgRoot.movableXSpace) * (parallaxFactor - 1);
-                //         return xOnWallpaper - extraMove;
-                //     }
-                //     topMargin: {
-                //         const yOnWallpaper = bgRoot.movableYSpace;
-                //         const extraMove = (wallpaper.effectiveValueY * 2 * bgRoot.movableYSpace) * (parallaxFactor - 1);
-                //         return yOnWallpaper - extraMove;
-                //     }
-                //     Behavior on leftMargin {
-                //         animation: Appearance.animation.elementMove.numberAnimation.createObject(this)
-                //     }
-                //     Behavior on topMargin {
-                //         animation: Appearance.animation.elementMove.numberAnimation.createObject(this)
-                //     }
-                // }
-                // width: wallpaper.width
-                // height: wallpaper.height
+                anchors {
+                    left: wallpaper.left
+                    right: wallpaper.right
+                    top: wallpaper.top
+                    bottom: wallpaper.bottom
+                    horizontalCenter: undefined
+                    verticalCenter: undefined
+                    readonly property real parallaxFactor: Config.options.background.parallax.widgetsFactor
+                    leftMargin: {
+                        const xOnWallpaper = bgRoot.movableXSpace;
+                        const extraMove = (wallpaper.effectiveValueX * 2 * bgRoot.movableXSpace) * (parallaxFactor - 1);
+                        return xOnWallpaper - extraMove;
+                    }
+                    topMargin: {
+                        const yOnWallpaper = bgRoot.movableYSpace;
+                        const extraMove = (wallpaper.effectiveValueY * 2 * bgRoot.movableYSpace) * (parallaxFactor - 1);
+                        return yOnWallpaper - extraMove;
+                    }
+                    Behavior on leftMargin {
+                        animation: Appearance.animation.elementMove.numberAnimation.createObject(this)
+                    }
+                    Behavior on topMargin {
+                        animation: Appearance.animation.elementMove.numberAnimation.createObject(this)
+                    }
+                }
+                width: wallpaper.width
+                height: wallpaper.height
                 states: State {
                     name: "centered"
                     when: GlobalStates.screenLocked || bgRoot.wallpaperSafetyTriggered
@@ -275,20 +275,20 @@ Variants {
                     sourceComponent: WeatherWidget {
                         screenWidth: bgRoot.screen.width
                         screenHeight: bgRoot.screen.height
-                        // scaledScreenWidth: bgRoot.screen.width / bgRoot.effectiveWallpaperScale
-                        // scaledScreenHeight: bgRoot.screen.height / bgRoot.effectiveWallpaperScale
-                        // wallpaperScale: bgRoot.effectiveWallpaperScale
-                         scaledScreenWidth: bgRoot.screen.width
-                        scaledScreenHeight: bgRoot.screen.height
-                        wallpaperScale: 1.0
+                        scaledScreenWidth: bgRoot.screen.width / bgRoot.effectiveWallpaperScale
+                        scaledScreenHeight: bgRoot.screen.height / bgRoot.effectiveWallpaperScale
+                        wallpaperScale: bgRoot.effectiveWallpaperScale
                     }
                 }
 
                 FadeLoader {
-                    shown: false
+                    shown: Config.options.background.widgets.clock.enable
                     sourceComponent: ClockWidget {
                         screenWidth: bgRoot.screen.width
                         screenHeight: bgRoot.screen.height
+                        scaledScreenWidth: bgRoot.screen.width / bgRoot.effectiveWallpaperScale
+                        scaledScreenHeight: bgRoot.screen.height / bgRoot.effectiveWallpaperScale
+                        wallpaperScale: bgRoot.effectiveWallpaperScale
                         wallpaperSafetyTriggered: bgRoot.wallpaperSafetyTriggered
                     }
                 }

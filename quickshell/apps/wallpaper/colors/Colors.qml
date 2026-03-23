@@ -10,9 +10,7 @@ QtObject {
         preload: true
         watchChanges: true
         onFileChanged: this.reload()
-        
     }
-
     property var colorData: {
         try {
             return JSON.parse(colorFile.text())
@@ -31,7 +29,7 @@ QtObject {
     property color secondary: colorData.secondary ?? "#ffb4ab"
     property color secondaryText: colorData.secondaryText ?? "#5b1915"
     property color secondaryContainer: colorData.secondaryContainer ?? "#792f29"
-    property color secondaryContainerText: colorData.secondaryContainerText ?? "#ffd7d2"
+    property color secondaryContainerText: colorData.secondaryContainerText ?? "#85372d"
     
     property color tertiary: colorData.tertiary ?? "#8bceff"
     property color tertiaryText: colorData.tertiaryText ?? "#00344e"

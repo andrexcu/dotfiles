@@ -11,14 +11,14 @@ import Quickshell.Wayland
 import Quickshell.Hyprland
 import QtQuick
 import QtQuick.Effects
-
+import qs.modules.baritems
 Variants {
     model: Quickshell.screens
 
     Scope {
         id: scope
 
-        required property ShellScreen modelData
+        // required property ShellScreen modelData
         readonly property bool barDisabled: Strings.testRegexList(Config.bar.excludedScreens, modelData.name)
 
         Exclusions {
@@ -51,7 +51,7 @@ Variants {
                 visibilities.dashboard = false;
             }
 
-            screen: scope.modelData
+            // screen: scope.modelData
             name: "drawers"
             WlrLayershell.exclusionMode: ExclusionMode.Ignore
             WlrLayershell.keyboardFocus: visibilities.launcher || visibilities.session ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
@@ -77,7 +77,7 @@ Variants {
                 model: panels.children
 
                 Region {
-                    required property Item modelData
+                    // required property Item modelData
 
                     x: modelData.x + bar.implicitWidth
                     y: modelData.y + Config.border.thickness
@@ -115,12 +115,12 @@ Variants {
             Item {
                 anchors.fill: parent
                 // opacity: Colours.transparency.enabled ? Colours.transparency.base : 1
-                opacity: 0.8
+                opacity: 0.82
                 layer.enabled: true
                 layer.effect: MultiEffect {
                     shadowEnabled: true
                     blurMax: 15
-                    shadowColor: Qt.alpha(Colours.palette.m3shadow, 0.7)
+                    shadowColor: Qt.alpha(Colours.palette.m3shadow, 0.8)
                 }
 
                 Border {
@@ -144,7 +144,7 @@ Variants {
                 property bool utilities
                 property bool sidebar
 
-                Component.onCompleted: Visibilities.load(scope.modelData, this)
+                // Component.onCompleted: Visibilities.load(scope.modelData, this)
             }
 
             Interactions {
@@ -165,18 +165,25 @@ Variants {
                 BarWrapper {
                     id: bar
 
-                    anchors.top: parent.top
-                    anchors.bottom: parent.bottom
+                    // anchors.top: parent.top
+                    // anchors.bottom: parent.bottom
+                    anchors.left: parent.left
+                    anchors.right: parent.right
 
-                    screen: scope.modelData
+                    // screen: scope.modelData
                     visibilities: visibilities
                     popouts: panels.popouts
 
-                    disabled: scope.barDisabled
+                    // disabled: scope.barDisabled
+                    disabled: false
 
                     Component.onCompleted: Visibilities.bars.set(scope.modelData, this)
-                }
+                }      
+
+                
+              
             }
+           
         }
     }
 }

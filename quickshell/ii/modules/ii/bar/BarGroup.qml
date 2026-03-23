@@ -19,8 +19,7 @@ Item {
             leftMargin: root.vertical ? 4 : 0
             rightMargin: root.vertical ? 4 : 0
         }
-        // color: Config.options?.bar.borderless ? "transparent" : Appearance.colors.colLayer1
-        color: Appearance.m3colors.m3surfaceContainerLow
+        color: Config.options?.bar.borderless ? "transparent" : Appearance.colors.colLayer1
         radius: Appearance.rounding.small
     }
 

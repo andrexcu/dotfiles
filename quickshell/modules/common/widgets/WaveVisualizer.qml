@@ -11,6 +11,7 @@ Canvas { // Visualizer
     property real maxVisualizerValue: 1000
     property int smoothing: 2
     property bool live: true
+    property bool blurred: true
     property color color: Appearance.m3colors.m3primary
 
     onPointsChanged: () => {
@@ -62,7 +63,7 @@ Canvas { // Visualizer
         ctx.fill();
     }
 
-    layer.enabled: true
+    layer.enabled: blurred
     layer.effect: MultiEffect { // Blur a bit to obscure away the points
         source: root
         saturation: 0.2

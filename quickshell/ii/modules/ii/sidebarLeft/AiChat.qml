@@ -314,7 +314,10 @@ Inline w/ backslash and round brackets \\(e^{i\\pi} + 1 = 0\\)
                 implicitWidth: statusRowLayout.implicitWidth + 10 * 2
                 implicitHeight: Math.max(statusRowLayout.implicitHeight, 38)
                 radius: Appearance.rounding.normal - root.padding
-                color: Appearance.colors.colLayer2
+                color: messageListView.atYBeginning ? Appearance.colors.colLayer2 : Appearance.colors.colLayer2Base
+                Behavior on color {
+                    animation: Appearance.animation.elementMoveFast.colorAnimation.createObject(this)
+                }
                 RowLayout {
                     id: statusRowLayout
                     anchors.centerIn: parent
@@ -471,7 +474,7 @@ Inline w/ backslash and round brackets \\(e^{i\\pi} + 1 = 0\\)
             property real spacing: 5
             Layout.fillWidth: true
             radius: Appearance.rounding.normal - root.padding
-            color: "#181818"
+            color: Appearance.colors.colLayer2
             implicitHeight: Math.max(inputFieldRowLayout.implicitHeight + inputFieldRowLayout.anchors.topMargin + commandButtonsRow.implicitHeight + commandButtonsRow.anchors.bottomMargin + spacing, 45) + (attachedFileIndicator.implicitHeight + spacing + attachedFileIndicator.anchors.topMargin)
             clip: true
 

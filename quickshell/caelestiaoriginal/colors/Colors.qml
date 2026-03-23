@@ -2,7 +2,7 @@
 import QtQuick
 import Quickshell
 import Quickshell.Io
-
+import qs.modules.common.functions
 
 
 QtObject {
@@ -64,6 +64,6 @@ QtObject {
     property color backgroundt90: Qt.alpha(colorData.background ?? "#1d100e", 0.92)
     property color backgroundt80: Qt.alpha(colorData.background ?? "#1d100e", 0.80)
     property color backgroundt70: Qt.alpha(colorData.background ?? "#1d100e", 0.70)
-    // property color inactiveText: ColorUtils.transparentize(colorData.backgroundText, 0.4)
+    property color inactiveText: ColorUtils.transparentize(colorData.backgroundText, 0.4)
    
 }

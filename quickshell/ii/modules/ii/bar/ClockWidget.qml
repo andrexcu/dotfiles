@@ -10,7 +10,7 @@ Item {
     property bool showDate: Config.options.bar.verbose
     implicitWidth: rowLayout.implicitWidth
     implicitHeight: Appearance.sizes.barHeight
-    visible: true
+
     RowLayout {
         id: rowLayout
         anchors.centerIn: parent
@@ -42,8 +42,8 @@ Item {
         anchors.fill: parent
         hoverEnabled: !Config.options.bar.tooltips.clickToShow
 
-        // ClockWidgetPopup {
-        //     hoverTarget: mouseArea
-        // }
+        ClockWidgetPopup {
+            hoverTarget: mouseArea
+        }
     }
 }

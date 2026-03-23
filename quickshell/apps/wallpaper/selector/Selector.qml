@@ -113,14 +113,14 @@ FloatingWindow {
 
 	// Keep settings in sync
 	onWallpaperDirChanged: {
-		if (wallpaperDir && wallpaperDir !== appSettings.savedWallpaperDir) {
-			appSettings.savedWallpaperDir = wallpaperDir
+		if (wallpaperDir && wallpaperDir !== keyRoot.savedWallpaperDir) {
+			keyRoot.savedWallpaperDir = wallpaperDir
 		}
 	}
 
 	onThumbnailDirChanged: {
-		if (thumbnailDir && thumbnailDir !== appSettings.savedThumbnailDir) {
-			appSettings.savedThumbnailDir = thumbnailDir
+		if (thumbnailDir && thumbnailDir !== keyRoot.savedThumbnailDir) {
+			keyRoot.savedThumbnailDir = thumbnailDir
 		}
 	}
 	// SequentialAnimation {
@@ -167,56 +167,135 @@ FloatingWindow {
 			console.log("[" + title + "] " + message)
 		}
 
+
 		// function applyWallpaper(wallpaperName) {
 		// 	selectedWallpaper = wallpaperName
 		// 	let fullPath = wallpaperDir + "/" + wallpaperName
 		// 	let scriptPath = homeDir + "/Scripts/matugen.sh"
-
-		// 	// Run matugen.sh normally (waits, triggers onExited)
-		// 	matugenProcess.exec(["bash", scriptPath, fullPath])
-
-		// 	// Run awww immediately to apply wallpaper with transitions
+		// 	let applyWallpaperPath = homeDir + "/.config/quickshell/scripts/colors/switchwall.sh"
+		// 	// --- Step 1: Run matugen.sh normally ---
+		// 	// matugenProcess.exec(["bash", scriptPath, fullPath])
+		// 	matugenProcess.exec([
+		// 	"bash",
+		// 	scriptPath,
+		// 	fullPath,
+		// 	"--source-color-index", "0"
+		// 	])
+		// 	// --- Step 2: Run awww for transition ---
 		// 	let awwwArgs = [
 		// 		"img",
-		// 		fullPath,
+		// 		`"${fullPath}"`,
 		// 		"--transition-fps", "60",
 		// 		"--transition-type", "any",
 		// 		"--transition-duration", "1.4",
 		// 		"--transition-bezier", "0,0,1,1"
 		// 	]
 		// 	awwwProcess.exec(["sh", "-c", ["awww"].concat(awwwArgs).join(" ")])
-		// 	// Immediately hide window (Qt.quit will be called by matugenProcess.onExited)
+
+		// 	// --- Step 3: Trigger QuickShell notification when awww finishes ---
+		// 	awwwProcess.onExited.connect(function() {
+		// 	notifyProcess.command = ["notify-send", "Wallpaper Applied", wallpaperName]
+		// 	notifyProcess.running = true
+		// 	})
+
+		// 	// --- Step 4: Hide the wallpaper picker window ---
 		// 	wallpaperWindow.visible = false
+		// }
+		
+
+		// function applyWallpaper(wallpaperName) {
+		// 	selectedWallpaper = wallpaperName
+		// 	let fullPath = wallpaperDir + "/" + wallpaperName
+		// 	let matugenPath = homeDir + "/Scripts/matugen.sh"
+		// 	let switchwallPath = homeDir + "/.config/quickshell/scripts/colors/switchwall.sh"
+
+		// 	// Step 1: Run matugen
+		// 	matugenProcess.exec(["bash", matugenPath, fullPath])
+
+		// 	// Step 2: When matugen finishes, run switchwall
+		// 	matugenProcess.onExited.connect(function(exitCode) {
+		// 		if (exitCode !== 0) {
+		// 			showNotification("Error", "matugen.sh failed", "dialog-error")
+		// 			return
+		// 		}
+
+		// 		switchwallProcess.exec(["bash", switchwallPath, "--image", fullPath])
+		// 	})
+
+		// 	// Step 3: When switchwall finishes, run transition
+		// 	switchwallProcess.onExited.connect(function(exitCode) {
+		// 		if (exitCode !== 0) {
+		// 			showNotification("Error", "switchwall.sh failed", "dialog-error")
+		// 			return
+		// 		}
+
+		// 		let awwwArgs = [
+		// 			"img",
+		// 			`"${fullPath}"`,
+		// 			"--transition-fps", "60",
+		// 			"--transition-type", "any",
+		// 			"--transition-duration", "1.4",
+		// 			"--transition-bezier", "0,0,1,1"
+		// 		]
+		// 		awwwProcess.exec(["sh", "-c", ["awww"].concat(awwwArgs).join(" ")])
+		// 	})
+
+		// 	// Step 4: Notify when transition finishes
+		// 	awwwProcess.onExited.connect(function() {
+		// 		showNotification("Wallpaper Applied", wallpaperName + " applied", "dialog-information")
+		// 		wallpaperWindow.visible = false
+		// 		Qt.quit() 
+		// 	})
+			
 		// }
 		function applyWallpaper(wallpaperName) {
 			selectedWallpaper = wallpaperName
 			let fullPath = wallpaperDir + "/" + wallpaperName
-			let scriptPath = homeDir + "/Scripts/matugen.sh"
+			let matugenPath = homeDir + "/Scripts/matugen.sh"
+			let switchwallPath = homeDir + "/.config/quickshell/scripts/colors/switchwall.sh"
 
-			// --- Step 1: Run matugen.sh normally ---
-			matugenProcess.exec(["bash", scriptPath, fullPath])
-
-			// --- Step 2: Run awww for transition ---
+			// --- Step 0: Start wallpaper transition immediately ---
 			let awwwArgs = [
 				"img",
-				fullPath,
+				`"${fullPath}"`,
 				"--transition-fps", "60",
 				"--transition-type", "any",
-				"--transition-duration", "1.4",
+				"--transition-duration", "1.4", // faster transition
 				"--transition-bezier", "0,0,1,1"
 			]
 			awwwProcess.exec(["sh", "-c", ["awww"].concat(awwwArgs).join(" ")])
 
-			// --- Step 3: Trigger QuickShell notification when awww finishes ---
-			awwwProcess.onExited.connect(function() {
-			notifyProcess.command = ["notify-send", "Wallpaper Applied", wallpaperName]
-			notifyProcess.running = true
-		})
+			// --- Step 1: Run matugen asynchronously ---
+			matugenProcess.exec(["bash", matugenPath, fullPath])
 
-			// --- Step 4: Hide the wallpaper picker window ---
-			wallpaperWindow.visible = false
+			matugenProcess.onExited.connect(function(exitCode) {
+				if (exitCode !== 0) {
+					showNotification("Error", "matugen.sh failed", "dialog-error")
+					return
+				}
+
+				// --- Step 2: Run switchwall asynchronously after matugen finishes ---
+				switchwallProcess.exec(["bash", switchwallPath, "--image", fullPath,])
+			})
+
+			
+
+			// --- Step 3: Notify and quit after wallpaper transition ---
+			awwwProcess.onExited.connect(function() {
+				showNotification("Wallpaper Applied", wallpaperName + " applied", "dialog-information")
+				wallpaperWindow.visible = false
+				
+			})
+
+			// --- Step 4: Optional: notify if switchwall fails ---
+			switchwallProcess.onExited.connect(function(exitCode) {
+				if (exitCode !== 0) {
+					showNotification("Error", "switchwall.sh failed", "dialog-error")
+				}
+				Qt.quit()
+			})
 		}
-		
+
 		function randomWallpaper() {
 			if (filteredWallpapers.length === 0) return;
 
@@ -242,54 +321,51 @@ FloatingWindow {
         Keys.enabled: true
 		
         // Component.onCompleted: keyRoot.forceActiveFocus()
-		Settings {
-			id: appSettings
-
-			category: "WallpaperPicker"
-			property string savedWallpaperDir: ""
-			property string savedThumbnailDir: ""
+		// Settings {
+		// 	id: appSettings
+		// 	category: "WallpaperPicker"
+		// 	property string savedWallpaperDir: ""
+		// 	property string savedThumbnailDir: ""
 			
-		}	
-		
+		// }	
+		property string savedWallpaperDir: ""
+		property string savedThumbnailDir: ""
 		Component.onCompleted: {
 		// Focus
-				
-		
-
 			// Get home directory first, then start listing
 			homeProcess.exec(["sh", "-c", "echo $HOME"])
 			keyRoot.forceActiveFocus()
 
 		}
-			function updateHighlightAtIndex(index) {
-				wallpaperGridView.currentIndex = index
-				wallpaperGridView.positionViewAtIndex(index, GridView.Visible)
+			// function updateHighlightAtIndex(index) {
+			// 	wallpaperGridView.currentIndex = index
+			// 	wallpaperGridView.positionViewAtIndex(index, GridView.Visible)
 
-				// wait until the item is created
-				Qt.callLater(function() {
-					let item = wallpaperGridView.itemAt(index)
-					if (!item) return
+			// 	// wait until the item is created
+			// 	Qt.callLater(function() {
+			// 		let item = wallpaperGridView.itemAt(index)
+			// 		if (!item) return
 
-					let pos = item.mapToItem(wallpaperScroll.contentItem, 0, 0)
-					wallpaperHighlightBorder.targetX = pos.x
-					wallpaperHighlightBorder.targetY = pos.y
-					wallpaperHighlightBorder.targetWidth = item.width
-					wallpaperHighlightBorder.targetHeight = item.height
-					wallpaperHighlightBorder.scale = 0.92
-					wallpaperHighlightBorder.scale = 1.0
-					wallpaperTransition.restart()
+			// 		let pos = item.mapToItem(wallpaperScroll.contentItem, 0, 0)
+			// 		wallpaperHighlightBorder.targetX = pos.x
+			// 		wallpaperHighlightBorder.targetY = pos.y
+			// 		wallpaperHighlightBorder.targetWidth = item.width
+			// 		wallpaperHighlightBorder.targetHeight = item.height
+			// 		wallpaperHighlightBorder.scale = 0.92
+			// 		wallpaperHighlightBorder.scale = 1.0
+			// 		wallpaperTransition.restart()
 
-					// optional
-					selectedWallpaper = filteredWallpapers[index]
+			// 		// optional
+			// 		selectedWallpaper = filteredWallpapers[index]
 
-					wallpaperScroll.contentY = Math.min(
-						Math.max(pos.y - wallpaperScroll.height / 2 + item.height / 2, 0),
-						wallpaperScroll.contentHeight - wallpaperScroll.height
-					)
-				})
-			}
+			// 		wallpaperScroll.contentY = Math.min(
+			// 			Math.max(pos.y - wallpaperScroll.height / 2 + item.height / 2, 0),
+			// 			wallpaperScroll.contentHeight - wallpaperScroll.height
+			// 		)
+			// 	})
+			// }
 
-				  Keys.onPressed: function(event) {
+			Keys.onPressed: function(event) {
             if (wallpaperGridView.count === 0) return
 
             const cellW = wallpaperGridView.cellWidth
@@ -343,8 +419,8 @@ FloatingWindow {
 				let defaultWall = homeDir + "/Pictures/Wallpaper"
 				let defaultThumb = homeDir + "/.cache/wallpaper-picker"
 				// Load saved settings if present
-				wallpaperDir = appSettings.savedWallpaperDir && appSettings.savedWallpaperDir.length > 0 ? appSettings.savedWallpaperDir : defaultWall
-				thumbnailDir = appSettings.savedThumbnailDir && appSettings.savedThumbnailDir.length > 0 ? appSettings.savedThumbnailDir : defaultThumb
+				wallpaperDir = keyRoot.savedWallpaperDir && keyRoot.savedWallpaperDir.length > 0 ? keyRoot.savedWallpaperDir : defaultWall
+				thumbnailDir = keyRoot.savedThumbnailDir && keyRoot.savedThumbnailDir.length > 0 ? keyRoot.savedThumbnailDir : defaultThumb
 				// Check dependencies first, then continue
 				depsProcess.exec(["sh","-c","(command -v ffmpeg >/dev/null 2>&1 && echo FFOK); (command -v matugen >/dev/null 2>&1 && echo MTOK)"])
 			} else {
@@ -373,7 +449,21 @@ FloatingWindow {
 				if (exitCode === 0) {
 					showNotification("Wallpaper Applied", "Wallpaper '" + selectedWallpaper + "' applied successfully", "dialog-information")
 					wallpaperWindow.visible = false
-					Qt.quit()   // <-- quit only after the process actually finishes
+					// Qt.quit()   // <-- quit only after the process actually finishes
+				} else {
+					lastError = "Failed to apply wallpaper"
+					showNotification("Error", lastError, "dialog-error")
+				}
+			}
+		}
+		Io.Process {
+			id: switchwallProcess
+			command: []
+			onExited: function(exitCode, exitStatus) {
+				if (exitCode === 0) {
+					showNotification("Wallpaper Applied", "Wallpaper '" + selectedWallpaper + "' applied successfully", "dialog-information")
+					wallpaperWindow.visible = false
+					// Qt.quit()   // <-- quit only after the process actually finishes
 				} else {
 					lastError = "Failed to apply wallpaper"
 					showNotification("Error", lastError, "dialog-error")
@@ -1366,7 +1456,7 @@ FloatingWindow {
 						wallpaperHighlight.targetHeight = item.height
 						wallpaperHighlight.scale = 0.92
 						wallpaperHighlight.scale = 1.0
-						wallpaperTransition.restart()
+						// wallpaperTransition.restart()
 						 // Reset progress
 				
 						var item = wallpaperGridView.currentItem
@@ -1407,25 +1497,25 @@ FloatingWindow {
 					 Component.onCompleted: forceActiveFocus()
 				}
 				}
-			SequentialAnimation {
-					id: wallpaperTransition
+			    // SequentialAnimation {
+				// 	id: wallpaperTransition
 
-					PropertyAnimation {
-						target: wallpaperHighlightBorder
-						property: "opacity"
-						to: 0.5
-						duration: 80
-						easing.type: Easing.OutQuad
-					}
+				// 	PropertyAnimation {
+				// 		target: wallpaperHighlightBorder
+				// 		property: "opacity"
+				// 		to: 0.5
+				// 		duration: 80
+				// 		easing.type: Easing.OutQuad
+				// 	}
 
-					PropertyAnimation {
-						target: wallpaperHighlightBorder
-						property: "opacity"
-						to: 1.0
-						duration: 200
-						easing.type: Easing.OutCubic
-					}
-				}
+				// 	PropertyAnimation {
+				// 		target: wallpaperHighlightBorder
+				// 		property: "opacity"
+				// 		to: 1.0
+				// 		duration: 200
+				// 		easing.type: Easing.OutCubic
+				// 	}
+				// }
 			
 		}
 

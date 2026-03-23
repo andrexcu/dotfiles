@@ -55,8 +55,8 @@ Item {
         anchors.left: parent.left
         anchors.margins: Appearance.padding.large
         anchors.bottomMargin: 0
-
-        active: true
+        visible: false
+        active: false
         Component.onCompleted: active = Qt.binding(() => (root.visibilities.sidebar && Config.sidebar.enabled) || root.visible)
 
         sourceComponent: Content {

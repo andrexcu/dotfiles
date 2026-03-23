@@ -9,6 +9,11 @@ RippleButton {
 
     property bool showPing: false
 
+    property bool aiChatEnabled: Config.options.policies.ai !== 0
+    property bool translatorEnabled: Config.options.sidebar.translator.enable
+    property bool animeEnabled: Config.options.policies.weeb !== 0
+    visible: aiChatEnabled || translatorEnabled || animeEnabled
+
     property real buttonPadding: 5
     implicitWidth: distroIcon.width + buttonPadding * 2
     implicitHeight: distroIcon.height + buttonPadding * 2
@@ -52,8 +57,7 @@ RippleButton {
         anchors.centerIn: parent
         width: 19.5
         height: 19.5
-        // source: Config.options.bar.topLeftIcon == 'distro' ? SystemInfo.distroIcon : `${Config.options.bar.topLeftIcon}-symbolic`
-        source: `${Config.options.bar.topLeftIcon}-symbolic`
+        source: Config.options.bar.topLeftIcon == 'distro' ? SystemInfo.distroIcon : `${Config.options.bar.topLeftIcon}-symbolic`
         colorize: true
         color: Appearance.colors.colOnLayer0
 

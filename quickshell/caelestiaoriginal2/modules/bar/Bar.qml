@@ -9,7 +9,7 @@ import Quickshell
 import QtQuick
 import QtQuick.Layouts
 
-ColumnLayout {
+RowLayout {
     id: root
 
     required property ShellScreen screen
@@ -110,62 +110,63 @@ ColumnLayout {
 
         DelegateChooser {
             role: "id"
-
-            DelegateChoice {
-                roleValue: "spacer"
-                delegate: WrappedLoader {
-                    Layout.fillHeight: enabled
-                }
-            }
+            // DelegateChoice {
+            //     roleValue: "spacer"
+            //     delegate: WrappedLoader {
+            //         Layout.fillHeight: enabled
+            //     }
+            // }
             DelegateChoice {
                 roleValue: "logo"
                 delegate: WrappedLoader {
                     sourceComponent: OsIcon {}
                 }
             }
-            DelegateChoice {
+           DelegateChoice {
                 roleValue: "workspaces"
                 delegate: WrappedLoader {
+                    Layout.fillHeight: true            // important for topbar
+                    Layout.preferredWidth: implicitWidth
                     sourceComponent: Workspaces {
                         screen: root.screen
                     }
                 }
             }
-            DelegateChoice {
-                roleValue: "activeWindow"
-                delegate: WrappedLoader {
-                    sourceComponent: ActiveWindow {
-                        bar: root
-                        monitor: Brightness.getMonitorForScreen(root.screen)
-                    }
-                }
-            }
-            DelegateChoice {
-                roleValue: "tray"
-                delegate: WrappedLoader {
-                    sourceComponent: Tray {}
-                }
-            }
-            DelegateChoice {
-                roleValue: "clock"
-                delegate: WrappedLoader {
-                    sourceComponent: Clock {}
-                }
-            }
-            DelegateChoice {
-                roleValue: "statusIcons"
-                delegate: WrappedLoader {
-                    sourceComponent: StatusIcons {}
-                }
-            }
-            DelegateChoice {
-                roleValue: "power"
-                delegate: WrappedLoader {
-                    sourceComponent: Power {
-                        visibilities: root.visibilities
-                    }
-                }
-            }
+            // DelegateChoice {
+            //     roleValue: "activeWindow"
+            //     delegate: WrappedLoader {
+            //         sourceComponent: ActiveWindow {
+            //             bar: root
+            //             monitor: Brightness.getMonitorForScreen(root.screen)
+            //         }
+            //     }
+            // }
+            // DelegateChoice {
+            //     roleValue: "tray"
+            //     delegate: WrappedLoader {
+            //         sourceComponent: Tray {}
+            //     }
+            // }
+            // DelegateChoice {
+            //     roleValue: "clock"
+            //     delegate: WrappedLoader {
+            //         sourceComponent: Clock {}
+            //     }
+            // }
+            // DelegateChoice {
+            //     roleValue: "statusIcons"
+            //     delegate: WrappedLoader {
+            //         sourceComponent: StatusIcons {}
+            //     }
+            // }
+            // DelegateChoice {
+            //     roleValue: "power"
+            //     delegate: WrappedLoader {
+            //         sourceComponent: Power {
+            //             visibilities: root.visibilities
+            //         }
+            //     }
+            // }
         }
     }
 

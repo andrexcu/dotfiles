@@ -17,21 +17,24 @@ StyledClippingRect {
     readonly property int activeWsId: Config.bar.workspaces.perMonitorWorkspaces ? (Hypr.monitorFor(screen).activeWorkspace?.id ?? 1) : Hypr.activeWsId
 
     readonly property var occupied: Hypr.workspaces.values.reduce((acc, curr) => {
-        acc[curr.id] = curr.lastIpcObject.windows > 0;
-        return acc;
+        acc[curr.id] = curr.lastIpcObject.windows > 0
+        return acc
     }, {})
+
     readonly property int groupOffset: Math.floor((activeWsId - 1) / Config.bar.workspaces.shown) * Config.bar.workspaces.shown
 
     property real blur: onSpecial ? 1 : 0
 
-    implicitWidth: Config.bar.sizes.innerWidth
+    implicitWidth: layout.implicitWidth + Appearance.padding.small * 2
     implicitHeight: layout.implicitHeight + Appearance.padding.small * 2
 
     color: Colours.tPalette.m3surfaceContainer
     radius: Appearance.rounding.full
 
+
     Item {
         anchors.fill: parent
+
         scale: root.onSpecial ? 0.8 : 1
         opacity: root.onSpecial ? 0.5 : 1
 
@@ -41,6 +44,7 @@ StyledClippingRect {
             blur: root.blur
             blurMax: 32
         }
+
 
         Loader {
             active: Config.bar.workspaces.occupiedBg
@@ -55,7 +59,8 @@ StyledClippingRect {
             }
         }
 
-        ColumnLayout {
+
+        Row {
             id: layout
 
             anchors.centerIn: parent
@@ -63,7 +68,6 @@ StyledClippingRect {
 
             Repeater {
                 id: workspaces
-
                 model: Config.bar.workspaces.shown
 
                 Workspace {
@@ -74,8 +78,9 @@ StyledClippingRect {
             }
         }
 
+
         Loader {
-            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.verticalCenter: parent.verticalCenter
             active: Config.bar.workspaces.activeIndicator
 
             sourceComponent: ActiveIndicator {
@@ -85,25 +90,25 @@ StyledClippingRect {
             }
         }
 
+
         MouseArea {
             anchors.fill: layout
+
             onClicked: event => {
-                const ws = layout.childAt(event.x, event.y).ws;
+                const ws = layout.childAt(event.x, event.y).ws
+
                 if (Hypr.activeWsId !== ws)
-                    Hypr.dispatch(`workspace ${ws}`);
+                    Hypr.dispatch(`workspace ${ws}`)
                 else
-                    Hypr.dispatch("togglespecialworkspace special");
+                    Hypr.dispatch("togglespecialworkspace special")
             }
         }
 
-        Behavior on scale {
-            Anim {}
-        }
 
-        Behavior on opacity {
-            Anim {}
-        }
+        Behavior on scale { Anim {} }
+        Behavior on opacity { Anim {} }
     }
+
 
     Loader {
         id: specialWs
@@ -120,14 +125,10 @@ StyledClippingRect {
             screen: root.screen
         }
 
-        Behavior on scale {
-            Anim {}
-        }
-
-        Behavior on opacity {
-            Anim {}
-        }
+        Behavior on scale { Anim {} }
+        Behavior on opacity { Anim {} }
     }
+
 
     Behavior on blur {
         Anim {

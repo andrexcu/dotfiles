@@ -237,6 +237,7 @@ Singleton {
             },
             sizes: {
                 innerWidth: bar.sizes.innerWidth,
+                innerHeight: bar.sizes.innerHeight,
                 windowPreviewSize: bar.sizes.windowPreviewSize,
                 trayMenuWidth: bar.sizes.trayMenuWidth,
                 batteryWidth: bar.sizes.batteryWidth,

@@ -231,7 +231,7 @@ Singleton {
                 "wght": 450,
             })
             property var title: ({ // Slightly bold weight for title
-                "wght": 550, // Weight (Lowered to compensate for increased grade)
+                "wght": 550, // Weight (Lowe5 to compensate for increased grade)
             })
         }
         property QtObject pixelSize: QtObject {

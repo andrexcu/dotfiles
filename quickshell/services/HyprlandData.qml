@@ -79,6 +79,19 @@ Singleton {
         }, null);
     }
 
+    function secondBiggestWindowForWorkspace(workspaceId) {
+        const windows = HyprlandData.windowList
+            .filter(w => w.workspace.id == workspaceId)
+            .sort((a, b) => {
+                const aArea = (a?.size?.[0] ?? 0) * (a?.size?.[1] ?? 0);
+                const bArea = (b?.size?.[0] ?? 0) * (b?.size?.[1] ?? 0);
+                return bArea - aArea;
+            });
+
+        return windows.length > 1 ? windows[1] : null;
+    }
+
+
     Component.onCompleted: {
         updateAll();
     }

@@ -18,14 +18,13 @@ Scope {
         [RoundCorner.CornerEnum.TopRight]: () => GlobalStates.sidebarRightOpen = !GlobalStates.sidebarRightOpen,
         [RoundCorner.CornerEnum.BottomRight]: () => GlobalStates.sidebarRightOpen = !GlobalStates.sidebarRightOpen
     })
-    
+
     component CornerPanelWindow: PanelWindow {
         id: cornerPanelWindow
         property var screen: QsWindow.window?.screen
         property var brightnessMonitor: Brightness.getMonitorForScreen(screen)
         property bool fullscreen
-        // visible: (Config.options.appearance.fakeScreenRounding === 1 || (Config.options.appearance.fakeScreenRounding === 2 && !fullscreen))
-        visible: false
+        visible: (Config.options.appearance.fakeScreenRounding === 1 || (Config.options.appearance.fakeScreenRounding === 2 && !fullscreen))
         property var corner
 
         exclusionMode: ExclusionMode.Ignore
@@ -34,7 +33,7 @@ Scope {
         }
         WlrLayershell.namespace: "quickshell:screenCorners"
         WlrLayershell.layer: WlrLayer.Overlay
-        color: "red"
+        color: "transparent"
 
         anchors {
             top: cornerWidget.isTopLeft || cornerWidget.isTopRight
@@ -140,7 +139,7 @@ Scope {
 
     Variants {
         model: Quickshell.screens
-        
+
         Scope {
             id: monitorScope
             required property var modelData

@@ -21,7 +21,7 @@ Shape {
     
     anchors.fill: parent
     anchors.margins: Config.border.thickness
-    anchors.leftMargin: bar.implicitWidth
+    // anchors.topMargin: bar.implicitWidth
     // anchors.topMargin: topOffset
     anchors.topMargin: bar.implicitWidth   // push wrapper below top bar
     preferredRendererType: Shape.CurveRenderer

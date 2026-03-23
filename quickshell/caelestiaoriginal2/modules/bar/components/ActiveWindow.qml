@@ -13,35 +13,37 @@ Item {
     required property Brightness.Monitor monitor
     property color colour: Colours.palette.m3primary
 
-    readonly property int maxHeight: {
-        const otherModules = bar.children.filter(c => c.id && c.item !== this && c.id !== "spacer");
-        const otherHeight = otherModules.reduce((acc, curr) => acc + (curr.item.nonAnimHeight ?? curr.height), 0);
-        // Length - 2 cause repeater counts as a child
-        return bar.height - otherHeight - bar.spacing * (bar.children.length - 1) - bar.vPadding * 2;
-    }
+    readonly property int maxWidth: root.implicitWidth * 0.8
     property Title current: text1
 
     clip: true
-    implicitWidth: Math.max(icon.implicitWidth, current.implicitHeight)
-    implicitHeight: icon.implicitHeight + current.implicitWidth + current.anchors.topMargin
 
-    MaterialIcon {
-        id: icon
+    implicitWidth: row.implicitWidth
+    implicitHeight: row.implicitHeight
 
-        anchors.horizontalCenter: parent.horizontalCenter
 
-        animate: true
-        text: Icons.getAppCategoryIcon(Hypr.activeToplevel?.lastIpcObject.class, "desktop_windows")
-        color: root.colour
+    Row {
+        id: row
+        anchors.verticalCenter: parent.verticalCenter
+        spacing: Appearance.spacing.small
+
+        MaterialIcon {
+            id: icon
+            animate: true
+            text: Icons.getAppCategoryIcon(Hypr.activeToplevel?.lastIpcObject.class, "desktop_windows")
+            color: root.colour
+        }
+
+        Item {
+            id: textContainer
+            height: icon.height
+            implicitWidth: current.implicitWidth
+
+            Title { id: text1 }
+            Title { id: text2 }
+        }
     }
 
-    Title {
-        id: text1
-    }
-
-    Title {
-        id: text2
-    }
 
     TextMetrics {
         id: metrics
@@ -50,48 +52,37 @@ Item {
         font.pointSize: Appearance.font.size.smaller
         font.family: Appearance.font.family.mono
         elide: Qt.ElideRight
-        elideWidth: root.maxHeight - icon.height
+        elideWidth: root.maxWidth
 
         onTextChanged: {
-            const next = root.current === text1 ? text2 : text1;
-            next.text = elidedText;
-            root.current = next;
+            const next = root.current === text1 ? text2 : text1
+            next.text = elidedText
+            root.current = next
         }
+
         onElideWidthChanged: root.current.text = elidedText
     }
 
-    Behavior on implicitHeight {
+
+    Behavior on implicitWidth {
         Anim {
             duration: Appearance.anim.durations.expressiveDefaultSpatial
             easing.bezierCurve: Appearance.anim.curves.expressiveDefaultSpatial
         }
     }
 
-    component Title: StyledText {
-        id: text
 
-        anchors.horizontalCenter: icon.horizontalCenter
-        anchors.top: icon.bottom
-        anchors.topMargin: Appearance.spacing.small
+    component Title: StyledText {
+        anchors.verticalCenter: parent.verticalCenter
 
         font.pointSize: metrics.font.pointSize
         font.family: metrics.font.family
         color: root.colour
+
         opacity: root.current === this ? 1 : 0
 
-        transform: [
-            Translate {
-                x: Config.bar.activeWindow.inverted ? -implicitWidth + text.implicitHeight : 0
-            },
-            Rotation {
-                angle: Config.bar.activeWindow.inverted ? 270 : 90
-                origin.x: text.implicitHeight / 2
-                origin.y: text.implicitHeight / 2
-            }
-        ]
-
-        width: implicitHeight
-        height: implicitWidth
+        width: implicitWidth
+        height: implicitHeight
 
         Behavior on opacity {
             Anim {}

@@ -61,7 +61,6 @@ ShellRoot {
     // Shortcuts
     IpcHandler {
         target: "panelFamily"
-
         function cycle(): void {
             root.cyclePanelFamily()
         }
@@ -70,7 +69,6 @@ ShellRoot {
     GlobalShortcut {
         name: "panelFamilyCycle"
         description: "Cycles panel family"
-
         onPressed: root.cyclePanelFamily()
     }
 }

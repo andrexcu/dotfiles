@@ -6,7 +6,7 @@ JsonObject {
     property int dragThreshold: 20
     property ScrollActions scrollActions: ScrollActions {}
     property Popouts popouts: Popouts {}
-    property Workspaces workspaces: Workspaces {}
+    // property Workspaces workspaces: Workspaces {}
     property ActiveWindow activeWindow: ActiveWindow {}
     property Tray tray: Tray {}
     property Status status: Status {}
@@ -19,10 +19,10 @@ JsonObject {
             id: "logo",
             enabled: true
         },
-        {
-            id: "workspaces",
-            enabled: true
-        },
+        // {
+        //     id: "workspaces",
+        //     enabled: true
+        // },
         {
             id: "spacer",
             enabled: true
@@ -54,7 +54,7 @@ JsonObject {
     ]
 
     component ScrollActions: JsonObject {
-        property bool workspaces: true
+        // property bool workspaces: true
         property bool volume: true
         property bool brightness: true
     }
@@ -72,12 +72,12 @@ JsonObject {
         property bool showWindows: true
         property bool showWindowsOnSpecialWorkspaces: showWindows
         property bool activeTrail: false
-        property bool perMonitorWorkspaces: true
+        // property bool perMonitorWorkspaces: true
         property string label: "  " // if empty, will show workspace name's first letter
         property string occupiedLabel: "󰮯"
         property string activeLabel: "󰮯"
         property string capitalisation: "preserve" // upper, lower, or preserve - relevant only if label is empty
-        property list<var> specialWorkspaceIcons: []
+        // property list<var> specialWorkspaceIcons: []
     }
 
     component ActiveWindow: JsonObject {
@@ -107,7 +107,7 @@ JsonObject {
     }
 
     component Sizes: JsonObject {
-        property int innerWidth: 40
+        property int innerWidth: 0
         property int windowPreviewSize: 400
         property int trayMenuWidth: 300
         property int batteryWidth: 250

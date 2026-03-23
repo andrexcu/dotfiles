@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import qs.modules.common
+import qs.modules.common.utils
 import qs.modules.common.functions
 import qs.modules.common.widgets
 import qs.services
@@ -10,6 +11,7 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
 import Quickshell.Hyprland
+
 PanelWindow {
     id: root
     visible: false
@@ -24,23 +26,19 @@ PanelWindow {
         top: true
         bottom: true
     }
-    // TODO: Ask: sidebar AI; Ocr: tesseract
+
+    // TODO: Ask: sidebar AI
     enum SnipAction { Copy, Edit, Search, CharRecognition, Record, RecordWithSound } 
     enum SelectionMode { RectCorners, Circle }
     property var action: RegionSelection.SnipAction.Copy
     property var selectionMode: RegionSelection.SelectionMode.RectCorners
     signal dismiss()
-    
-    property string saveScreenshotDir: Config.options.screenSnip.savePath !== ""
-                                       ? Config.options.screenSnip.savePath
-                                       : ""
+
     property string screenshotDir: Directories.screenshotTemp
-    property string imageSearchEngineBaseUrl: Config.options.search.imageSearch.imageSearchEngineBaseUrl
-    property string fileUploadApiEndpoint: "https://uguu.se/upload"
-    property color overlayColor: "#88111111"
-    property color brightText: Appearance.colors.colOnLayer0
-    property color brightSecondary: Appearance.colors.colSecondary
-    property color brightTertiary: Appearance.colors.colTertiary
+    property color overlayColor: ColorUtils.transparentize("#000000", 0.4)
+    property color brightText: Appearance.m3colors.darkmode ? Appearance.colors.colOnLayer0 : Appearance.colors.colLayer0
+    property color brightSecondary: Appearance.m3colors.darkmode ? Appearance.colors.colSecondary : Appearance.colors.colOnSecondary
+    property color brightTertiary: Appearance.m3colors.darkmode ? Appearance.colors.colTertiary : Qt.lighter(Appearance.colors.colPrimary)
     property color selectionBorderColor: ColorUtils.mix(brightText, brightSecondary, 0.5)
     property color selectionFillColor: "#33ffffff"
     property color windowBorderColor: brightSecondary
@@ -55,6 +53,7 @@ PanelWindow {
     })
     readonly property var layers: HyprlandData.layers
     readonly property real falsePositivePreventionRatio: 0.5
+
     readonly property HyprlandMonitor hyprlandMonitor: Hyprland.monitorFor(screen)
     readonly property real monitorScale: hyprlandMonitor.scale
     readonly property real monitorOffsetX: hyprlandMonitor.x
@@ -105,12 +104,14 @@ PanelWindow {
         });
         return offsetAdjustedLayers;
     }
+
     property bool isCircleSelection: (root.selectionMode === RegionSelection.SelectionMode.Circle)
     property bool enableWindowRegions: Config.options.regionSelector.targetRegions.windows && !isCircleSelection
     property bool enableLayerRegions: Config.options.regionSelector.targetRegions.layers && !isCircleSelection
     property bool enableContentRegions: Config.options.regionSelector.targetRegions.content
     property real targetRegionOpacity: Config.options.regionSelector.targetRegions.opacity
     property bool contentRegionOpacity: Config.options.regionSelector.targetRegions.contentRegionOpacity
+
     property real targetedRegionX: -1
     property real targetedRegionY: -1
     property real targetedRegionWidth: 0
@@ -125,6 +126,7 @@ PanelWindow {
         root.regionWidth = root.targetedRegionWidth + padding * 2;
         root.regionHeight = root.targetedRegionHeight + padding * 2;
     }
+
     function updateTargetedRegion(x, y) {
         // Image regions
         const clickedRegion = root.imageRegions.find(region => {
@@ -137,6 +139,7 @@ PanelWindow {
             root.targetedRegionHeight = clickedRegion.size[1];
             return;
         }
+
         // Layer regions
         const clickedLayer = root.layerRegions.find(region => {
             return region.at[0] <= x && x <= region.at[0] + region.size[0] && region.at[1] <= y && y <= region.at[1] + region.size[1];
@@ -148,6 +151,7 @@ PanelWindow {
             root.targetedRegionHeight = clickedLayer.size[1];
             return;
         }
+
         // Window regions
         const clickedWindow = root.windowRegions.find(region => {
             return region.at[0] <= x && x <= region.at[0] + region.size[0] && region.at[1] <= y && y <= region.at[1] + region.size[1];
@@ -159,19 +163,24 @@ PanelWindow {
             root.targetedRegionHeight = clickedWindow.size[1];
             return;
         }
+
         root.targetedRegionX = -1;
         root.targetedRegionY = -1;
         root.targetedRegionWidth = 0;
         root.targetedRegionHeight = 0;
     }
+
     property real regionWidth: Math.abs(draggingX - dragStartX)
     property real regionHeight: Math.abs(draggingY - dragStartY)
     property real regionX: Math.min(dragStartX, draggingX)
     property real regionY: Math.min(dragStartY, draggingY)
-    Process {
+
+    TempScreenshotProcess {
         id: screenshotProc
         running: true
-        command: ["bash", "-c", `mkdir -p '${StringUtils.shellSingleQuoteEscape(root.screenshotDir)}' && grim -o '${StringUtils.shellSingleQuoteEscape(root.screen.name)}' '${StringUtils.shellSingleQuoteEscape(root.screenshotPath)}'`]
+        screen: root.screen
+        screenshotDir: root.screenshotDir
+        screenshotPath: root.screenshotPath
         onExited: (exitCode, exitStatus) => {
             if (root.enableContentRegions) imageDetectionProcess.running = true;
             root.preparationDone = !checkRecordingProc.running;
@@ -198,6 +207,7 @@ PanelWindow {
         }
         root.visible = true;
     }
+
     Process {
         id: imageDetectionProcess
         command: ["bash", "-c", `${Directories.scriptPath}/images/find-regions-venv.sh ` 
@@ -215,95 +225,88 @@ PanelWindow {
             }
         }
     }
+
+    function getScreenshotAction() {
+        switch(root.action) {
+            case RegionSelection.SnipAction.Copy:
+                return ScreenshotAction.Action.Copy;
+            case RegionSelection.SnipAction.Edit:
+                return ScreenshotAction.Action.Edit;
+            case RegionSelection.SnipAction.Search:
+                return ScreenshotAction.Action.Search;
+            case RegionSelection.SnipAction.CharRecognition:
+                return ScreenshotAction.Action.CharRecognition;
+            case RegionSelection.SnipAction.Record:
+                return ScreenshotAction.Action.Record;
+            case RegionSelection.SnipAction.RecordWithSound:
+                return ScreenshotAction.Action.RecordWithSound;
+            default:
+                console.warn("[Region Selector] Unknown snip action, skipping snip.");
+                root.dismiss();
+                return;
+        }
+    }
+
     function snip() {
         // Validity check
         if (root.regionWidth <= 0 || root.regionHeight <= 0) {
             console.warn("[Region Selector] Invalid region size, skipping snip.");
             root.dismiss();
         }
+
         // Clamp region to screen bounds
         root.regionX = Math.max(0, Math.min(root.regionX, root.screen.width - root.regionWidth));
         root.regionY = Math.max(0, Math.min(root.regionY, root.screen.height - root.regionHeight));
         root.regionWidth = Math.max(0, Math.min(root.regionWidth, root.screen.width - root.regionX));
         root.regionHeight = Math.max(0, Math.min(root.regionHeight, root.screen.height - root.regionY));
+
         // Adjust action
         if (root.action === RegionSelection.SnipAction.Copy || root.action === RegionSelection.SnipAction.Edit) {
             root.action = root.mouseButton === Qt.RightButton ? RegionSelection.SnipAction.Edit : RegionSelection.SnipAction.Copy;
         }
-        // Set command for action
-        const rx = Math.round(root.regionX * root.monitorScale);
-        const ry = Math.round(root.regionY * root.monitorScale);
-        const rw = Math.round(root.regionWidth * root.monitorScale);
-        const rh = Math.round(root.regionHeight * root.monitorScale);
-        const cropBase = `magick ${StringUtils.shellSingleQuoteEscape(root.screenshotPath)} `
-            + `-crop ${rw}x${rh}+${rx}+${ry}`
-        const cropToStdout = `${cropBase} -`
-        const cropInPlace = `${cropBase} '${StringUtils.shellSingleQuoteEscape(root.screenshotPath)}'`
-        const cleanup = `rm '${StringUtils.shellSingleQuoteEscape(root.screenshotPath)}'`
-        const slurpRegion = `${rx},${ry} ${rw}x${rh}`
-        const uploadAndGetUrl = (filePath) => {
-            return `curl -sF files[]=@'${StringUtils.shellSingleQuoteEscape(filePath)}' ${root.fileUploadApiEndpoint} | jq -r '.files[0].url'`
-        }
-        switch (root.action) {
-            case RegionSelection.SnipAction.Copy:
-                if (saveScreenshotDir === "") {
-                    // not saving the screenshot, just copy to clipboard
-                    snipProc.command = ["bash", "-c", `${cropToStdout} | wl-copy && ${cleanup}`]
-                    break;
-                }
-                const savePathBase = root.saveScreenshotDir
-                snipProc.command = [
-                    "bash", "-c",
-                    `mkdir -p '${StringUtils.shellSingleQuoteEscape(savePathBase)}' && \
-                    saveFileName="screenshot-$(date '+%Y-%m-%d_%H.%M.%S').png" && \
-                    savePath="${savePathBase}/$saveFileName" && \
-                    ${cropToStdout} | tee >(wl-copy) > "$savePath" && \
-                    ${cleanup}`
-                ]
-                break;
-            case RegionSelection.SnipAction.Edit:
-                snipProc.command = ["bash", "-c", `${cropToStdout} | swappy -f - && ${cleanup}`]
-                break;
-            case RegionSelection.SnipAction.Search:
-                snipProc.command = ["bash", "-c", `${cropInPlace} && xdg-open "${root.imageSearchEngineBaseUrl}$(${uploadAndGetUrl(root.screenshotPath)})" && ${cleanup}`]
-                break;
-            case RegionSelection.SnipAction.CharRecognition:
-                snipProc.command = ["bash", "-c", `${cropInPlace} && tesseract '${StringUtils.shellSingleQuoteEscape(root.screenshotPath)}' stdout -l $(tesseract --list-langs | awk 'NR>1{print $1}' | tr '\\n' '+' | sed 's/\\+$/\\n/') | wl-copy && ${cleanup}`]
-                break;
-            case RegionSelection.SnipAction.Record:
-                snipProc.command = ["bash", "-c", `${Directories.recordScriptPath} --region '${slurpRegion}'`]
-                break;
-            case RegionSelection.SnipAction.RecordWithSound:
-                snipProc.command = ["bash", "-c", `${Directories.recordScriptPath} --region '${slurpRegion}' --sound`]
-                break;
-            default:
-                console.warn("[Region Selector] Unknown snip action, skipping snip.");
-                root.dismiss();
-                return;
-        }
+        
+        const screenshotDir = Config.options.screenSnip.savePath !== "" ? //
+            Config.options.screenSnip.savePath : "";
+        var screenshotAction = root.getScreenshotAction();
+        const command = ScreenshotAction.getCommand(
+            root.regionX * root.monitorScale, //
+            root.regionY * root.monitorScale, //
+            root.regionWidth * root.monitorScale,// 
+            root.regionHeight * root.monitorScale, //
+            root.screenshotPath, //
+            screenshotAction, //
+            screenshotDir
+        )
+        snipProc.command = command;
+
         // Image post-processing
         snipProc.startDetached();
         root.dismiss();
     }
+
     Process {
         id: snipProc
     }
+
     ScreencopyView {
         anchors.fill: parent
         live: false
         captureSource: root.screen
+
         focus: root.visible
         Keys.onPressed: (event) => { // Esc to close
             if (event.key === Qt.Key_Escape) {
                 root.dismiss();
             }
         }
+
         MouseArea {
             id: mouseArea
             anchors.fill: parent
             cursorShape: Qt.CrossCursor
             acceptedButtons: Qt.LeftButton | Qt.RightButton
             hoverEnabled: true
+
             // Controls
             onPressed: (mouse) => {
                 root.dragStartX = mouse.x;
@@ -360,6 +363,7 @@ PanelWindow {
                     overlayColor: root.overlayColor
                 }
             }
+
             Loader {
                 z: 2
                 anchors.fill: parent
@@ -370,6 +374,15 @@ PanelWindow {
                     points: root.points
                 }
             }
+
+            CursorGuide {
+                z: 9999
+                x: root.dragging ? root.regionX + root.regionWidth : mouseArea.mouseX
+                y: root.dragging ? root.regionY + root.regionHeight : mouseArea.mouseY
+                action: root.action
+                selectionMode: root.selectionMode
+            }
+
             // Window regions
             Repeater {
                 model: ScriptModel {
@@ -385,6 +398,7 @@ PanelWindow {
                         && root.targetedRegionY === modelData.at[1]
                         && root.targetedRegionWidth === modelData.size[0]
                         && root.targetedRegionHeight === modelData.size[1])
+
                     opacity: root.draggedAway ? 0 : root.targetRegionOpacity
                     borderColor: root.windowBorderColor
                     fillColor: targeted ? root.windowFillColor : "transparent"
@@ -392,6 +406,7 @@ PanelWindow {
                     radius: Appearance.rounding.windowRounding
                 }
             }
+
             // Layer regions
             Repeater {
                 model: ScriptModel {
@@ -406,6 +421,7 @@ PanelWindow {
                         && root.targetedRegionY === modelData.at[1]
                         && root.targetedRegionWidth === modelData.size[0]
                         && root.targetedRegionHeight === modelData.size[1])
+
                     opacity: root.draggedAway ? 0 : root.targetRegionOpacity
                     borderColor: root.windowBorderColor
                     fillColor: targeted ? root.windowFillColor : "transparent"
@@ -413,6 +429,7 @@ PanelWindow {
                     radius: Appearance.rounding.windowRounding
                 }
             }
+
             // Content regions
             Repeater {
                 model: ScriptModel {
@@ -427,16 +444,18 @@ PanelWindow {
                         && root.targetedRegionY === modelData.at[1]
                         && root.targetedRegionWidth === modelData.size[0]
                         && root.targetedRegionHeight === modelData.size[1])
+
                     opacity: root.draggedAway ? 0 : root.contentRegionOpacity
                     borderColor: root.imageBorderColor
                     fillColor: targeted ? root.imageFillColor : "transparent"
                     text: Translation.tr("Content region")
                 }
             }
+
             // Controls
             Row {
                 id: regionSelectionControls
-                z: 9999
+                z: 10
                 anchors {
                     horizontalCenter: parent.horizontalCenter
                     bottom: parent.bottom
@@ -458,6 +477,7 @@ PanelWindow {
                     animation: Appearance.animation.elementMove.numberAnimation.createObject(this)
                 }
                 spacing: 6
+
                 OptionsToolbar {
                     Synchronizer on action {
                         property alias source: root.action

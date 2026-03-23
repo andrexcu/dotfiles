@@ -23,6 +23,10 @@ QtObject {
             return {}
         }
     }
+
+    // Component.onCompleted: {
+    //     console.log("Quickshell HOME:", Quickshell.env("HOME"))
+    // }
     
     property color primary: colorData.primary ?? "#ffb4ab"
     property color primaryText: colorData.primaryText ?? "#690005"
@@ -65,6 +69,10 @@ QtObject {
     property color backgroundt90: Qt.alpha(colorData.background ?? "#1d100e", 0.92)
     property color backgroundt80: Qt.alpha(colorData.background ?? "#1d100e", 0.80)
     property color backgroundt70: Qt.alpha(colorData.background ?? "#1d100e", 0.70)
+    property color backgroundt60: Qt.alpha(colorData.background ?? "#1d100e", 0.60)
+    property color backgroundt50: Qt.alpha(colorData.background ?? "#1d100e", 0.50)
+    property color backgroundt40: Qt.alpha(colorData.background ?? "#1d100e", 0.40)
+    property color backgroundt30: Qt.alpha(colorData.background ?? "#1d100e", 0.30)
+    property color backgroundt20: Qt.alpha(colorData.background ?? "#1d100e", 0.20)
     property color inactiveText: ColorUtils.transparentize(colorData.backgroundText, 0.4)
-   
 }

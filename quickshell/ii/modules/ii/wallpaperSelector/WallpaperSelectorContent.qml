@@ -9,35 +9,26 @@ import QtQuick.Layouts
 import Qt5Compat.GraphicalEffects
 import Quickshell
 import Quickshell.Io
+
 MouseArea {
     id: root
     property int columns: 4
     property real previewCellAspectRatio: 4 / 3
-    property bool useDarkMode: true
-    
-    // Agregar esta propiedad para controlar si ya se estableció el directorio inicial
-    property bool initialDirectorySet: false
-    
-    Component.onCompleted: {
-        // Establecer el directorio inicial a Documents/Wallpapers/
-        if (!initialDirectorySet) {
-            const wallpapersPath = `${Directories.documents}/Walls`;
-            Wallpapers.setDirectory(wallpapersPath);
-            initialDirectorySet = true;
-        }
-    }
-    
+    property bool useDarkMode: Appearance.m3colors.darkmode
+
     function updateThumbnails() {
         const totalImageMargin = (Appearance.sizes.wallpaperSelectorItemMargins + Appearance.sizes.wallpaperSelectorItemPadding) * 2
         const thumbnailSizeName = Images.thumbnailSizeNameForDimensions(grid.cellWidth - totalImageMargin, grid.cellHeight - totalImageMargin)
         Wallpapers.generateThumbnail(thumbnailSizeName)
     }
+
     Connections {
         target: Wallpapers
         function onDirectoryChanged() {
             root.updateThumbnails()
         }
     }
+
     function handleFilePasting(event) {
         const currentClipboardEntry = Cliphist.entries[0]
         if (/^\d+\tfile:\/\/\S+/.test(currentClipboardEntry)) {
@@ -48,12 +39,14 @@ MouseArea {
             event.accepted = false; // No image, let text pasting proceed
         }
     }
+
     function selectWallpaperPath(filePath) {
         if (filePath && filePath.length > 0) {
-            Wallpapers.select(filePath, true);
+            Wallpapers.select(filePath, root.useDarkMode);
             filterField.text = "";
         }
     }
+
     acceptedButtons: Qt.BackButton | Qt.ForwardButton
     onPressed: event => {
         if (event.button === Qt.BackButton) {
@@ -62,6 +55,7 @@ MouseArea {
             Wallpapers.navigateForward();
         }
     }
+
     Keys.onPressed: event => {
         if (event.key === Qt.Key_Escape) {
             GlobalStates.wallpaperSelectorOpen = false;
@@ -113,8 +107,10 @@ MouseArea {
             event.accepted = true;
         }
     }
+
     implicitHeight: mainLayout.implicitHeight
     implicitWidth: mainLayout.implicitWidth
+
     StyledRectangularShadow {
         target: wallpaperGridBackground
     }
@@ -127,15 +123,19 @@ MouseArea {
         focus: true
         border.width: 1
         border.color: Appearance.colors.colLayer0Border
-        color: "#181818"
+        color: Appearance.colors.colLayer0
         radius: Appearance.rounding.screenRounding - Appearance.sizes.hyprlandGapsOut + 1
+
         property int calculatedRows: Math.ceil(grid.count / grid.columns)
+
         implicitWidth: gridColumnLayout.implicitWidth
         implicitHeight: gridColumnLayout.implicitHeight
+
         RowLayout {
             id: mainLayout
             anchors.fill: parent
             spacing: -4
+
             Rectangle {
                 Layout.fillHeight: true
                 Layout.margins: 4
@@ -143,10 +143,12 @@ MouseArea {
                 implicitHeight: quickDirColumnLayout.implicitHeight
                 color: Appearance.colors.colLayer1
                 radius: wallpaperGridBackground.radius - Layout.margins
+
                 ColumnLayout {
                     id: quickDirColumnLayout
                     anchors.fill: parent
                     spacing: 0
+
                     StyledText {
                         Layout.margins: 12
                         font {
@@ -186,6 +188,7 @@ MouseArea {
                             colRippleToggled: Appearance.colors.colSecondaryContainerActive
                             buttonRadius: height / 2
                             implicitHeight: 38
+
                             contentItem: RowLayout {
                                 MaterialSymbol {
                                     color: quickDirButton.toggled ? Appearance.colors.colOnSecondaryContainer : Appearance.colors.colOnLayer1
@@ -204,10 +207,12 @@ MouseArea {
                     }
                 }
             }
+
             ColumnLayout {
                 id: gridColumnLayout
                 Layout.fillWidth: true
                 Layout.fillHeight: true
+
                 AddressBar {
                     id: addressBar
                     Layout.margins: 4
@@ -219,10 +224,12 @@ MouseArea {
                     }
                     radius: wallpaperGridBackground.radius - Layout.margins
                 }
+
                 Item {
                     id: gridDisplayRegion
                     Layout.fillWidth: true
                     Layout.fillHeight: true
+
                     StyledIndeterminateProgressBar {
                         id: indeterminateProgressBar
                         visible: Wallpapers.thumbnailGenerationRunning && value == 0
@@ -234,17 +241,21 @@ MouseArea {
                             rightMargin: 4
                         }
                     }
+
                     StyledProgressBar {
                         visible: Wallpapers.thumbnailGenerationRunning && value > 0
                         value: Wallpapers.thumbnailGenerationProgress
                         anchors.fill: indeterminateProgressBar
                     }
+
                     GridView {
                         id: grid
                         visible: Wallpapers.folderModel.count > 0
+
                         readonly property int columns: root.columns
                         readonly property int rows: Math.max(1, Math.ceil(count / columns))
                         property int currentIndex: 0
+
                         anchors.fill: parent
                         cellWidth: width / root.columns
                         cellHeight: cellWidth / root.previewCellAspectRatio
@@ -254,17 +265,21 @@ MouseArea {
                         boundsBehavior: Flickable.StopAtBounds
                         bottomMargin: extraOptions.implicitHeight
                         ScrollBar.vertical: StyledScrollBar {}
+
                         Component.onCompleted: {
                             root.updateThumbnails()
                         }
+
                         function moveSelection(delta) {
                             currentIndex = Math.max(0, Math.min(grid.model.count - 1, currentIndex + delta));
                             positionViewAtIndex(currentIndex, GridView.Contain);
                         }
+
                         function activateCurrent() {
                             const filePath = grid.model.get(currentIndex, "filePath")
                             root.selectWallpaperPath(filePath);
                         }
+
                         model: Wallpapers.folderModel
                         onModelChanged: currentIndex = 0
                         delegate: WallpaperDirectoryItem {
@@ -275,6 +290,7 @@ MouseArea {
                             height: grid.cellHeight
                             colBackground: (index === grid?.currentIndex || containsMouse) ? Appearance.colors.colPrimary : (fileModelData.filePath === Config.options.background.wallpaperPath) ? Appearance.colors.colSecondaryContainer : ColorUtils.transparentize(Appearance.colors.colPrimaryContainer)
                             colText: (index === grid.currentIndex || containsMouse) ? Appearance.colors.colOnPrimary : (fileModelData.filePath === Config.options.background.wallpaperPath) ? Appearance.colors.colOnSecondaryContainer : Appearance.colors.colOnLayer0
+
                             onEntered: {
                                 grid.currentIndex = index;
                             }
@@ -283,6 +299,7 @@ MouseArea {
                                 root.selectWallpaperPath(fileModelData.filePath);
                             }
                         }
+
                         layer.enabled: true
                         layer.effect: OpacityMask {
                             maskSource: Rectangle {
@@ -292,6 +309,7 @@ MouseArea {
                             }
                         }
                     }
+
                     Toolbar {
                         id: extraOptions
                         anchors {
@@ -299,22 +317,24 @@ MouseArea {
                             horizontalCenter: parent.horizontalCenter
                             bottomMargin: 8
                         }
-                        // IconToolbarButton {
-                        //     implicitWidth: height
-                        //     onClicked: {
-                        //         Wallpapers.openFallbackPicker(root.useDarkMode);
-                        //         GlobalStates.wallpaperSelectorOpen = false;
-                        //     }
-                        //     altAction: () => {
-                        //         Wallpapers.openFallbackPicker(root.useDarkMode);
-                        //         GlobalStates.wallpaperSelectorOpen = false;
-                        //         Config.options.wallpaperSelector.useSystemFileDialog = true
-                        //     }
-                        //     text: "open_in_new"
-                        //     StyledToolTip {
-                        //         text: Translation.tr("Use the system file picker instead\nRight-click to make this the default behavior")
-                        //     }
-                        // }
+
+                        IconToolbarButton {
+                            implicitWidth: height
+                            onClicked: {
+                                Wallpapers.openFallbackPicker(root.useDarkMode);
+                                GlobalStates.wallpaperSelectorOpen = false;
+                            }
+                            altAction: () => {
+                                Wallpapers.openFallbackPicker(root.useDarkMode);
+                                GlobalStates.wallpaperSelectorOpen = false;
+                                Config.options.wallpaperSelector.useSystemFileDialog = true
+                            }
+                            text: "open_in_new"
+                            StyledToolTip {
+                                text: Translation.tr("Use the system file picker instead\nRight-click to make this the default behavior")
+                            }
+                        }
+
                         IconToolbarButton {
                             implicitWidth: height
                             onClicked: {
@@ -326,16 +346,28 @@ MouseArea {
                             }
                         }
 
+                        IconToolbarButton {
+                            implicitWidth: height
+                            onClicked: root.useDarkMode = !root.useDarkMode
+                            text: root.useDarkMode ? "dark_mode" : "light_mode"
+                            StyledToolTip {
+                                text: Translation.tr("Click to toggle light/dark mode\n(applied when wallpaper is chosen)")
+                            }
+                        }
+
                         ToolbarTextField {
                             id: filterField
                             placeholderText: focus ? Translation.tr("Search wallpapers") : Translation.tr("Hit \"/\" to search")
+
                             // Style
                             clip: true
                             font.pixelSize: Appearance.font.pixelSize.small
+
                             // Search
                             onTextChanged: {
                                 Wallpapers.searchQuery = text;
                             }
+
                             Keys.onPressed: event => {
                                 if ((event.modifiers & Qt.ControlModifier) && event.key === Qt.Key_V) { // Intercept Ctrl+V to handle "paste to go to" in pickers
                                     root.handleFilePasting(event);
@@ -357,6 +389,7 @@ MouseArea {
                                 event.accepted = false;
                             }
                         }
+
                         IconToolbarButton {
                             implicitWidth: height
                             onClicked: {
@@ -372,6 +405,7 @@ MouseArea {
             }
         }
     }
+
     Connections {
         target: GlobalStates
         function onWallpaperSelectorOpenChanged() {
@@ -380,6 +414,7 @@ MouseArea {
             }
         }
     }
+
     Connections {
         target: Wallpapers
         function onChanged() {
