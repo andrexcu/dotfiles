@@ -132,7 +132,7 @@ Item {
         property bool cardStyle: Config.options?.sidebar?.cardStyle ?? false
         readonly property bool angelEverywhere: Appearance.angelEverywhere
         readonly property bool auroraEverywhere: Appearance.auroraEverywhere
-        readonly property bool gameModeMinimal: Appearance.gameModeMinimal
+        readonly property bool gameModeMinimal: Appearance.gameModeMinimal ?? false
         readonly property string wallpaperUrl: {
             const _dep1 = WallpaperListener.multiMonitorEnabled
             const _dep2 = WallpaperListener.effectivePerMonitor

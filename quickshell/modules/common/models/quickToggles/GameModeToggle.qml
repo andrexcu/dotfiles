@@ -1,3 +1,5 @@
+
+import qs.modules.common.models.hyprland
 import QtQuick
 import Quickshell
 import Quickshell.Io
@@ -10,24 +12,39 @@ import qs.modules.common.widgets
 QuickToggleModel {
     id: root
     name: Translation.tr("Game mode")
-    toggled: toggled
-    icon: "gamepad"
+    icon: "sports_esports"
+
+    // THIS is your state
+    // no need to redefine it
 
     mainAction: () => {
-        root.toggled = !root.toggled
-        if (root.toggled) {
-            Quickshell.execDetached(["bash", "-c", `hyprctl --batch "keyword animations:enabled 0; keyword decoration:shadow:enabled 0; keyword decoration:blur:enabled 0; keyword general:gaps_in 0; keyword general:gaps_out 0; keyword general:border_size 1; keyword decoration:rounding 0; keyword general:allow_tearing 1"`])
+        const next = !root.toggled
+        root.toggled = next
+
+        if (next) {
+            Quickshell.execDetached(["hyprctl", "--batch",
+                "keyword animations:enabled 0;" +
+                "keyword decoration:shadow:enabled 0;" +
+                "keyword decoration:blur:enabled 0;" +
+                "keyword general:gaps_in 0;" +
+                "keyword general:gaps_out 0;" +
+                "keyword general:border_size 1;" +
+                "keyword decoration:rounding 0;" +
+                "keyword general:allow_tearing 1"
+            ])
         } else {
-            Quickshell.execDetached(["hyprctl", "reload"])
+            Quickshell.execDetached(["hyprctl", "--batch",
+                "keyword animations:enabled 1;" +
+                "keyword decoration:shadow:enabled 1;" +
+                "keyword decoration:blur:enabled 1;" +
+                "keyword general:gaps_in 5;" +
+                "keyword general:gaps_out 10;" +
+                "keyword general:border_size 2;" +
+                "keyword decoration:rounding 8;" +
+                "keyword general:allow_tearing 0"
+            ])
         }
     }
-    Process {
-        id: fetchActiveState
-        running: true
-        command: ["bash", "-c", `test "$(hyprctl getoption animations:enabled -j | jq ".int")" -ne 0`]
-        onExited: (exitCode, exitStatus) => {
-            root.toggled = exitCode !== 0 // Inverted because enabled = nonzero exit
-        }
-    }
+
     tooltipText: Translation.tr("Game mode")
 }

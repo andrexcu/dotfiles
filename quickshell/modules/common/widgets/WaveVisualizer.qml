@@ -58,8 +58,9 @@ Canvas { // Visualizer
             root.color.r,
             root.color.g,
             root.color.b,
-            0.15
+            root.blurred ? 0.15 : 0.45
         );
+
         ctx.fill();
     }
 

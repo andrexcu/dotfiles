@@ -6,6 +6,8 @@ import Quickshell.Wayland
 import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
+import qs.modules.screenCorners
+import qs.modules.onScreenDisplay
 import "."
 
 Item {
@@ -20,7 +22,10 @@ Item {
    
     // PanelLoader { identifier: "iiScreenCorners"; component: ScreenCorners {} }
     // PanelLoader { identifier: "iiSessionScreen"; component: SessionScreen {} }
+    
     PanelLoader { identifier: "iiSidebarLeft"; component: SidebarLeft {} }
+    PanelLoader { identifier: "iiScreenCorners"; component: ScreenCorners {} }
+    PanelLoader { identifier: "iiOnScreenDisplay"; component: OnScreenDisplay {} }
     // PanelLoader { identifier: "iiSidebarRight"; component: SidebarRight {} }
 
     

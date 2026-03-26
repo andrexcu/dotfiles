@@ -133,7 +133,7 @@ Item { // Bar content region
             Layout.fillHeight: false
             Layout.alignment: Qt.AlignVCenter
             implicitHeight: Appearance.sizes.baseBarHeight * 0.8
-           visible: true
+        //    visible: true
             Media {
                 visible: true
                 Layout.fillWidth: true

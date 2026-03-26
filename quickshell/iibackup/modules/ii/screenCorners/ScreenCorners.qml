@@ -52,7 +52,18 @@ Scope {
         RoundCorner {
             id: cornerWidget
             anchors.fill: parent
-            corner: cornerPanelWindow.corner
+            // corner: cornerPanelWindow.corner
+            corner: {
+                switch (cornerPanelWindow.corner) {
+                case RoundCorner.CornerEnum.TopLeft:
+                case RoundCorner.CornerEnum.BottomLeft:
+                    return RoundCorner.CornerEnum.BottomLeft;
+
+                case RoundCorner.CornerEnum.TopRight:
+                case RoundCorner.CornerEnum.BottomRight:
+                    return RoundCorner.CornerEnum.BottomRight;
+                }
+            }
             rightVisualMargin: (Config.options.interactions.deadPixelWorkaround.enable && cornerPanelWindow.anchors.right) * 1
             bottomVisualMargin: (Config.options.interactions.deadPixelWorkaround.enable && cornerPanelWindow.anchors.bottom) * 1
 

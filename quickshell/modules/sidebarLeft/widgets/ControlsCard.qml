@@ -8,7 +8,7 @@ import qs.modules.common.widgets
 import qs.modules.common.functions
 import qs.services
 import QtQuick.Controls
-
+import qs.modules.common.models.quickToggles
 Item {
     id: root
     implicitHeight: row.implicitHeight
@@ -53,14 +53,31 @@ Item {
             onClicked: Hyprsunset.toggle()
             visible: Config.options?.sidebar?.widgets?.controlsCard?.showNightLight ?? true
         }
-        // Toggle { 
-        //     btnIcon: "sports_esports"
-        //     tip: GameMode.active ? Translation.tr("Game mode (active)") : Translation.tr("Game mode")
-        //     active: GameMode.active ?? false
-        //     onClicked: GameMode.toggle()
-        //     visible: Config.options?.sidebar?.widgets?.controlsCard?.showGameMode ?? true
+        Toggle { 
+            btnIcon: "sports_esports"
+            tip: GameMode.active ? "Game mode (active)" : "Game mode"
+            active: GameMode.active
+            onClicked: GameMode.toggle()
+            visible: Config.options?.sidebar?.widgets?.controlsCard?.showGameMode ?? true
+        }
+        // GameModeToggle {
+        //     id: hyprGameMode
         // }
 
+        // Toggle {
+        //     btnIcon: hyprGameMode.icon
+        //     tip: hyprGameMode.tooltipText
+        //     active: hyprGameMode.toggled
+        //     onClicked: hyprGameMode.mainAction()
+        // }
+
+    //  Toggle { 
+    //         btnIcon: ""
+    //         tip: GameMode.active ? Translation.tr("Game mode (active)") : Translation.tr("Game mode")
+    //         active: GameMode.active ?? false
+    //         onClicked: GameMode.toggle()
+    //         visible: Config.options?.sidebar?.widgets?.controlsCard?.showGameMode ?? true
+    //     }
         Rectangle { 
             width: 1
             height: 24

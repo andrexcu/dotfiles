@@ -46,36 +46,36 @@ Item {
                 spacing: 6
 
                 // GameMode indicator
-                // RippleButton {
-                //     implicitWidth: 36
-                //     implicitHeight: 36
-                //     buttonRadius: Appearance.rounding.full
-                //     colBackground: Appearance.colors.colTertiaryContainer
-                //     colRipple: Appearance.colors.colTertiaryContainer
-                //     visible: GameMode.active
-                //     // visible: GameMode.active && (Config.options?.sidebar?.widgets?.glance?.showGameMode ?? true)
-                //     onClicked: GameMode.toggle()
+                RippleButton {
+                    implicitWidth: 36
+                    implicitHeight: 36
+                    buttonRadius: Appearance.rounding.full
+                    colBackground: Appearance.colors.colTertiaryContainer
+                    colRipple: Appearance.colors.colTertiaryContainer
+                    visible: GameMode.active
+                    // visible: GameMode.active && (Config.options?.sidebar?.widgets?.glance?.showGameMode ?? true)
+                    onClicked: GameMode.toggle()
 
-                //     contentItem: Item {
-                //         MaterialSymbol {
-                //             anchors.centerIn: parent
-                //             text: "sports_esports"
-                //             iconSize: 18
-                //             fill: 1
-                //             color: Appearance.colors.colOnTertiaryContainer
-                //         }
-                //     }
+                    contentItem: Item {
+                        MaterialSymbol {
+                            anchors.centerIn: parent
+                            text: "sports_esports"
+                            iconSize: 18
+                            fill: 1
+                            color: Appearance.colors.colOnTertiaryContainer
+                        }
+                    }
                    
-                //     // StyledToolTip { 
-                //     //     text: Translation.tr("Game mode active - click to disable") 
-                //     // }
+                    StyledToolTip { 
+                        text: Translation.tr("Game mode active - click to disable") 
+                    }
                    
                     // ToolTip.delay: 300
                     // ToolTip.visible: hovered
                     // ToolTip.text: qsTr("Game mode active - click to disable")
                     
                     
-                // }
+                }
                 // DND indicator
                 RippleButton {
                     implicitWidth: 36

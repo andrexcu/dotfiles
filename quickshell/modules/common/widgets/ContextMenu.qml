@@ -19,7 +19,7 @@ Loader {
     property bool noSmoothClosing: false
     property bool closeOnFocusLost: true
     property bool closeOnHoverLost: true
-    property int closeOnHoverLostDelay: 500  // ms before closing when hover lost (waffle uses 500)
+    property int closeOnHoverLostDelay: 3000  // ms before closing when hover lost (waffle uses 500)
     property bool anchorHovered: false
     signal focusCleared()
 
@@ -57,7 +57,7 @@ Loader {
         Component.onCompleted: {
             openAnim.start();
             Qt.callLater(() => keyHandler.forceActiveFocus());
-            if (CompositorService.isNiri && root.closeOnFocusLost) {
+            if (root.closeOnFocusLost) {
                 clickOutsideBackdrop.visible = true;
             }
         }

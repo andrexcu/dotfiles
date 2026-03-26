@@ -27,6 +27,7 @@ ColumnLayout {
     property int titleWeight: Font.Medium
     property bool cleanTitle: true
     property bool animateTitle: true
+    property  bool animateArtist: true
     
     spacing: 0
     
@@ -40,6 +41,7 @@ ColumnLayout {
         elide: Text.ElideRight
         animateChange: root.animateTitle
         animationDistanceX: 6
+        animationDistanceY: 0
     }
     
     // Artist
@@ -50,5 +52,8 @@ ColumnLayout {
         color: root.artistColor
         elide: Text.ElideRight
         visible: text !== ""
+        animateChange: root.animateArtist
+        animationDistanceX: 6
+        animationDistanceY: 0
     }
 }

@@ -1,7 +1,7 @@
 import qs
 import qs.modules.common
 import qs.modules.common.widgets
-import qs.modules.mediaControls
+import qs.modules.bar.islands
 import qs.services
 import qs.modules.common.functions
 import QtQuick
@@ -15,7 +15,7 @@ import Quickshell.Widgets
 import qs.modules.bar.components
 import QtQuick.Effects
 import qs.services
-
+import qs.modules.mediaControls
 
 
 Rectangle {
@@ -23,7 +23,7 @@ Rectangle {
     
     property real progressTop: 0
     property real progressBottom: 0
-    property real maxRadius: 10
+    property real maxRadius: 8
     readonly property real borderWidth: 2
     property var colorsPalette: Colors {}
     property bool animating: false
@@ -33,6 +33,7 @@ Rectangle {
     }
     // Top-left growing line
     Item {
+        visible: false
         id: borderLayer
         anchors.fill: parent
         z: -1 // explicitly behind
@@ -45,7 +46,7 @@ Rectangle {
             color: "transparent"
             border.width: borderWidth
             border.color: colorsPalette.primary
-            radius: 10
+            radius: 8
         }
 
         Rectangle {
@@ -56,7 +57,7 @@ Rectangle {
             color: "transparent"
             border.width: borderWidth
             border.color: colorsPalette.primary
-            radius: 10
+            radius: 8
         }
     }
 
@@ -92,7 +93,7 @@ Rectangle {
         repeat: true
         running: true
         onTriggered: {
-            const playing = mediaIsland.activePlayer?.isPlaying ?? false
+            const playing = Players.effectiveIsPlaying ?? false
 
             if (playing !== lastIsPlaying) {
                 if (playing) {
@@ -116,107 +117,13 @@ Rectangle {
     }
     property MprisPlayer safePlayer: null
     property string cleanedTitle: Translation.tr("No media playing")
-    // Timer {
-    //     id: updatedTimer
-    //     interval: 200
-    //     repeat: true
-    //     running: true
-    //     onTriggered: {
-    //         const playing = activePlayer?.playbackState === MprisPlaybackState.Playing
-    //         const currentTrack = titleText.buildText()  // fully qualified
-
-    //         // Update lastTrack before showing paused
-    //         titleText.lastTrack = currentTrack
-
-    //         // Show "Paused" only if user paused
-    //         if (!playing && titleText.lastIsPlaying && Players.lastUserPaused
-    //             && currentTrack !== Translation.tr("No media playing")) {
-                
-    //             if (!titleText.pauseShown) {
-    //                 titleText.pauseShown = true
-    //                 titleText.text = Translation.tr("Paused")
-    //                 pauseTimer.restart()  // restart in case another pause happens
-    //             }
-    //         }
-    //         else if (playing && !titleText.lastIsPlaying && Players.lastUserPlayed
-    //             && currentTrack !== Translation.tr("No media playing")) {
-                
-    //             if (!titleText.playShown) {
-    //                 titleText.playShown = true
-    //                 titleText.text = Translation.tr("Now Playing")
-    //                 playTimer.restart()  // restart in case another pause happens
-    //             }   
-    //         } 
-    //         // Update normally when playing or after pause
-    //         else if (!titleText.pauseShown && !titleText.playShown && titleText.text !== currentTrack) {
-    //             titleText.text = currentTrack
-    //         }
-
-    //         titleText.lastIsPlaying = playing
-    //     }
-    // }
     
-   
-    // Timer {
-    //     interval: 100
-    //     repeat: true
-    //     running: true
-    //     onTriggered: {
-    //         const active = Players.active
-
-    //         if (active && (active.trackTitle || active.metadata?.title)) {
-    //             // Only update if safePlayer changed
-    //             if (safePlayer !== active) {
-    //                 safePlayer = active
-    //                 cleanedTitle = StringUtils.cleanMusicTitle(safePlayer.trackTitle || safePlayer.metadata?.title)
-    //                                 || Translation.tr("No media playing")
-    //             }
-    //         } else if (!active) {
-    //             // No player at all → reset
-    //             safePlayer = null
-    //             cleanedTitle = Translation.tr("No media playing")
-    //         }
-    //         // else: active exists but metadata not ready → retain old safePlayer/title
-    //     }
-    // }
-
-    // Timer {
-    //     interval: 100
-    //     repeat: true
-    //     running: true
-    //     onTriggered: {
-    //         const active = Players.active
-
-    //         let title = ""
-    //         let artist = ""
-
-    //         if (active) {
-    //             title = active.trackTitle || active.metadata?.title || ""
-    //             artist = active.trackArtist || active.metadata?.artist || ""
-    //         }
-
-    //         let newText = Translation.tr("No media playing")
-
-    //         if (title !== "") {
-    //             newText = StringUtils.cleanMusicTitle(title)
-
-    //             if (artist !== "") {
-    //                 newText += " • " + artist
-    //             }
-    //         }
-
-    //         if (cleanedTitle !== newText) {
-    //             cleanedTitle = newText
-    //         }
-    //     }
-    // }
-
     
 
 
     // readonly property string cleanedTitle: StringUtils.cleanMusicTitle(activePlayer?.trackTitle) || Translation.tr("No media playing")
     // readonly property MprisPlayer activePlayer: MprisController.activePlayer
-    readonly property var activePlayer: Players.active
+    readonly property var activePlayer: Players.player
     // property string cleanedTitle: StringUtils.cleanMusicTitle(activePlayer?.trackTitle || activePlayer?.metadata?.title) 
     //                                     || Translation.tr("No media playing")
     readonly property string configPath: FileUtils.trimFileProtocol(Directories.cache) + "/cava_config.txt"
@@ -225,7 +132,7 @@ Rectangle {
     readonly property bool visualizerActive: true
     property var audioBars: [0,0,0,0,0,0,0,0,0,0,0,0,0,0]
     property var barHeight: 0
-    property var barWidth: clockTimeIsland.width + root.implicitWidth + clockDateIsland.width + 26
+    property var barWidth: clockTimeIsland.width + root.implicitWidth + clockDateIsland.width + 10
     // property var barWidth: clockTimeIsland.implicitWidth + root.implicitWidth + clockDateIsland.implicitWidth
 // Volume popup
     property bool volumePopupVisible: false
@@ -237,16 +144,20 @@ Rectangle {
         // readonly property MprisPlayer activePlayer: MprisController.activePlayer
         // readonly property string cleanedTitle: StringUtils.cleanMusicTitle(activePlayer?.trackTitle) || Translation.tr("No media playing")
         // readonly property string popupMode: "dock"
-    radius: 10
+    radius: 8
     // color: mediaIsland.animating ? colorsPalette.background : colorsPalette.backgroundt70
-    color: mediaIsland.activePlayer?.isPlaying || mediaIsland.animating ? colorsPalette.background: colorsPalette.backgroundt70
-    // color: "transparent"
+    // color: mediaIsland.activePlayer?.isPlaying || mediaIsland.animating ? colorsPalette.background: colorsPalette.backgroundt70
+    
+    color: colorsPalette.background
+    // color: "red"
     Behavior on color {
         ColorAnimation {
             duration: 300      // adjust as needed
             easing.type: Easing.OutCubic
         }
     }
+    
+    // border.width: mediaIsland.activePlayer?.isPlaying && mediaIsland.animating ? 1 : 0
     border.width: 1
     border.color: "#4DFFFFFF"
 
@@ -279,9 +190,13 @@ Rectangle {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
-        anchors.margins: 2  
+        anchors.leftMargin: 2  
+        anchors.rightMargin: 2
+        anchors.bottomMargin: 2
+        // z: 1
+        clip: true  
         height: barHeight  // for example 35
-        live: mediaIsland.activePlayer?.isPlaying ?? false
+        live: Players.effectiveIsPlaying ?? false
         points: mediaIsland.visualizerPoints
         maxVisualizerValue: 1000
         smoothing: 2
@@ -290,13 +205,14 @@ Rectangle {
         //     0.6
         // )
         color: Appearance.colors.colPrimary
-        z: 10 // Make sure it's behind other content
+        z: 10 
     }
 
+    
     RowLayout {
 
-        spacing: 8
-        z: 1
+        spacing: 4
+        z: 2
         anchors.centerIn: parent
         property real targetWidth: Math.min(rowLayout.implicitWidth + rowLayout.spacing * 2, maxMediaWidth)
         property real animWidth: targetWidth  // This is what we animate
@@ -308,20 +224,23 @@ Rectangle {
         Behavior on animWidth {
             NumberAnimation { duration: 400; easing.type: Easing.OutCubic }
         }
+    
         Rectangle {
             id: clockTimeIsland
             radius: 8
             // visible: false
-            color: colorsPalette.backgroundt70
+            color: "transparent"
             // color: colorsPalette.surfaceContainer
-            border.width: 1
+            border.width: 0
             border.color: "#4DFFFFFF"
             property int padding: 10
          
-            Layout.preferredHeight: barHeight - 8
+            Layout.preferredHeight: barHeight
             Layout.preferredWidth: clockTime.implicitWidth + padding * 2
             // Layout.leftMargin: 12
             layer.enabled: true
+            // Layout.topMargin: 1
+            // Layout.bottomMargin: 1
             layer.effect: MultiEffect {
                 shadowEnabled: true
                 blurMax: 1
@@ -332,17 +251,17 @@ Rectangle {
                 id: clockTime
                 anchors.centerIn: parent
             }
-            
         }
         Rectangle {
             id: root
             // color: "transparent"
-            Layout.fillHeight: false
+            Layout.fillHeight: true
             Layout.fillWidth: false
             Layout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
             color: "#000000"
-            Layout.bottomMargin: 4
-            radius: 10
+            Layout.topMargin: 1
+            Layout.bottomMargin: 2
+            radius: 8
             property real targetWidth: Math.min(rowLayout.implicitWidth + rowLayout.spacing * 2, maxMediaWidth)
             Layout.preferredWidth: targetWidth
             Behavior on Layout.preferredWidth {
@@ -511,46 +430,46 @@ Rectangle {
                     onTriggered: barMediaPopupLoader._barMediaClosing = false
                 }
 
-                sourceComponent: PopupWindow {
-                    id: barMediaPopup
-                    visible: true
-                    color: "transparent"
-                    anchor {
-                        window: QsWindow.window
-                        item: root
-                        edges: Config.options.bar.bottom ? Edges.Top : Edges.Bottom
-                        gravity: Config.options.bar.bottom ? Edges.Top : Edges.Bottom
-                    }
-                    implicitWidth: mediaPopupContent.width + Appearance.sizes.elevationMargin * 2
-                    implicitHeight: mediaPopupContent.height + Appearance.sizes.elevationMargin * 2
+                // sourceComponent: PopupWindow {
+                //     id: barMediaPopup
+                //     visible: true
+                //     color: "transparent"
+                //     anchor {
+                //         window: QsWindow.window
+                //         item: root
+                //         edges: Config.options.bar.bottom ? Edges.Top : Edges.Bottom
+                //         gravity: Config.options.bar.bottom ? Edges.Top : Edges.Bottom
+                //     }
+                //     implicitWidth: mediaPopupContent.width + Appearance.sizes.elevationMargin * 2
+                //     implicitHeight: mediaPopupContent.height + Appearance.sizes.elevationMargin * 2
 
-                    // Click outside to close
-                    MouseArea {
-                        anchors.fill: parent
-                        onClicked: barMediaPopupVisible = false
-                        z: -1
-                    }
+                //     // Click outside to close
+                //     MouseArea {
+                //         anchors.fill: parent
+                //         onClicked: barMediaPopupVisible = false
+                //         z: -1
+                //     }
 
-                    BarMediaPopup {
-                        id: mediaPopupContent
-                        anchors.centerIn: parent
-                        onCloseRequested: barMediaPopupVisible = false
+                //     BarMediaPopup {
+                //         id: mediaPopupContent
+                //         anchors.centerIn: parent
+                //         onCloseRequested: barMediaPopupVisible = false
                         
-                        // Entry/exit animation
-                        opacity: barMediaPopupVisible ? 1 : 0
-                        scale: barMediaPopupVisible ? 1 : 0.9
-                        transformOrigin: Config.options.bar.bottom ? Item.Bottom : Item.Top
+                //         // Entry/exit animation
+                //         opacity: barMediaPopupVisible ? 1 : 0
+                //         scale: barMediaPopupVisible ? 1 : 0.9
+                //         transformOrigin: Config.options.bar.bottom ? Item.Bottom : Item.Top
 
-                        Behavior on opacity {
-                            enabled: Appearance.animationsEnabled
-                            NumberAnimation { duration: 180; easing.type: Easing.OutCubic }
-                        }
-                        Behavior on scale {
-                            enabled: Appearance.animationsEnabled
-                            NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
-                        }
-                    }
-                }
+                //         Behavior on opacity {
+                //             enabled: Appearance.animationsEnabled
+                //             NumberAnimation { duration: 180; easing.type: Easing.OutCubic }
+                //         }
+                //         Behavior on scale {
+                //             enabled: Appearance.animationsEnabled
+                //             NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
+                //         }
+                //     }
+                // }
             }
 
             MouseArea {
@@ -608,7 +527,7 @@ Rectangle {
                         MaterialSymbol {
                             anchors.centerIn: parent
                             fill: 1
-                            text: activePlayer?.isPlaying ? "pause" : "music_note"
+                            text: Players.effectiveIsPlaying ? "pause" : "music_note"
                             iconSize: Appearance.font.pixelSize.normal
                             color: Appearance.inirEverywhere ? Appearance.inir.colOnPrimary
                                 : Appearance.auroraEverywhere ? Appearance.colors.colOnLayer0
@@ -881,20 +800,20 @@ Rectangle {
                 }
                 
                 }
-            
 
         }
+        
         Rectangle {
             id: clockDateIsland
             radius: 8
             // visible: false
-            color: colorsPalette.backgroundt70
+            color: "transparent"
             // color: colorsPalette.surfaceContainer
-            border.width: 1
+            border.width: 0
             border.color: "#4DFFFFFF"
             property int padding: 10
 
-            Layout.preferredHeight: barHeight - 8
+            Layout.preferredHeight: barHeight
             Layout.preferredWidth: clockDate.implicitWidth + padding * 2
             // Layout.leftMargin: 12
             layer.enabled: true

@@ -1,0 +1,7 @@
+module qs.modules.mediaControls
+
+BarMediaPopup 1.0 BarMediaPopup.qml
+BarMediaPlayerItem 1.0 BarMediaPlayerItem.qml
+MediaControls 1.0 MediaControls.qml
+PlayerControl 1.0 PlayerControl.qml
+PlayerControlBackup 1.0 PlayerControlBackup.qml

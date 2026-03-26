@@ -1,725 +1,663 @@
 pragma ComponentBehavior: Bound
-import QtQuick
-import QtQuick.Layouts
-import QtQuick.Effects
-import Qt5Compat.GraphicalEffects as GE
-import Quickshell
-import Quickshell.Io
-import Quickshell.Services.Mpris
+// CompactMediaPlayer.qml
+// Enhanced media player widget for the compact sidebar Controls section
+// Shows current track with album art, playback controls, and progress
+// Supports native players, YtMusic, and browser media (via MPRIS/plasma-browser-integration)
+import qs
+import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
 import qs.modules.common.functions
 import qs.modules.common.models
-import qs.services
-import QtQuick.Controls
-import qs.colors
 
-import "root:"
+import qs.modules.mediaControls.components
+import Quickshell.Services.Mpris
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
+import QtQuick.Effects
+import Qt5Compat.GraphicalEffects as GE
+import qs.colors
+import Quickshell.Io
+import Quickshell
 
 Item {
     id: root
-    implicitHeight: hasPlayer ? card.implicitHeight + playerSelector.height + Appearance.sizes.elevationMargin : 0
-    visible: hasPlayer
-
-    property MprisPlayer player: Players.active
-    readonly property bool isYtMusicPlayer: MprisController.isYtMusicActive
-    readonly property bool hasPlayer: (player && player.trackTitle) || (isYtMusicPlayer && YtMusic.currentVideoId)
     
+
+    implicitHeight: Players.player !== null ? playerCard.implicitHeight + 20 : 0
+    // property MprisPlayer player: Players.readyActive
+    property MprisPlayer selectedPlayer: Players.player
+    visible: Players.player !== null
     property var colorsPalette: Colors{}
-    readonly property string effectiveTitle: isYtMusicPlayer ? YtMusic.currentTitle : (player?.trackTitle ?? "")
-    readonly property string effectiveArtist: isYtMusicPlayer ? YtMusic.currentArtist : (player?.trackArtist ?? "")
-    readonly property string effectiveArtUrl: isYtMusicPlayer ? YtMusic.currentThumbnail : (player?.trackArtUrl ?? "")
-    readonly property real effectivePosition: isYtMusicPlayer ? YtMusic.currentPosition : (player?.position ?? 0)
-    readonly property real effectiveLength: isYtMusicPlayer ? YtMusic.currentDuration : (player?.length ?? 0)
-    readonly property bool effectiveIsPlaying: isYtMusicPlayer ? YtMusic.isPlaying : (player?.isPlaying ?? false)
-    readonly property bool effectiveCanSeek: isYtMusicPlayer ? YtMusic.canSeek : (player?.canSeek ?? false)
+      // used by Image
     
-    property string artDownloadLocation: Directories.coverArt
-    property string artFileName: effectiveArtUrl ? Qt.md5(effectiveArtUrl) : ""
-    property string artFilePath: artFileName ? `${artDownloadLocation}/${artFileName}` : ""
-    property bool downloaded: false
-    property string displayedArtFilePath: downloaded ? Qt.resolvedUrl(artFilePath) : ""
-    property int _downloadRetryCount: 0
-    readonly property int _maxRetries: 3
-
-        // property var safePlayer: player
-    property MprisPlayer safePlayer: Players.active
-
-     // Update metadata & art helper
-    function updateArtAndInfo() {
-        if (!safePlayer) return
-
-        const newTitle = safePlayer.metadata?.title ?? ""
-        const newArtist = safePlayer.metadata?.artist ?? ""
-        const newArt = safePlayer.metadata?.artFilePath ?? ""
-
-        if (newTitle || newArtist) {
-            cachedTitle = newTitle || cachedTitle
-            cachedArtist = newArtist || cachedArtist
-        }
-
-        if (newArt) {
-            displayedArtFilePath = Qt.resolvedUrl(newArt)
-        }
-    }
-
-    // React when the active player changes
-    onSafePlayerChanged: updateArtAndInfo()
-
-    Connections {
-        target: safePlayer
-        ignoreUnknownSignals: true
-
-        function onMetadataChanged() { updateArtAndInfo() }
-        function onTrackArtUrlChanged() { 
-            _downloadRetryCount = 0
-            checkAndDownloadArt()
-        }
-    }
-    // Cava visualizer - using shared CavaProcess component
-    CavaProcess {
-        id: cavaProcess
-        active: root.visible && root.hasPlayer && GlobalStates.sidebarLeftOpen && Appearance.effectsEnabled
-    }
-
-    property list<real> visualizerPoints: cavaProcess.points
-
-    function checkAndDownloadArt() {
-        if (!root.effectiveArtUrl) {
-            downloaded = false
-            _downloadRetryCount = 0
-            return
-        }
-        artExistsChecker.running = true
-    }
-
-    function retryDownload() {
-        if (_downloadRetryCount < _maxRetries && root.effectiveArtUrl) {
-            _downloadRetryCount++
-            retryTimer.start()
-        }
-    }
-
-    Timer {
-        id: retryTimer
-        interval: 1000 * root._downloadRetryCount
-        repeat: false
-        onTriggered: {
-            if (root.effectiveArtUrl && !root.downloaded) {
-                coverArtDownloader.targetFile = root.effectiveArtUrl
-                coverArtDownloader.artFilePath = root.artFilePath
-                coverArtDownloader.running = true
-            }
-        }
-    }
-
-    onArtFilePathChanged: {
-        _downloadRetryCount = 0
-        checkAndDownloadArt()
-    }
-    
-    onEffectiveArtUrlChanged: {
-        _downloadRetryCount = 0
-        checkAndDownloadArt()
-    }
-    
-    // Re-check cover art when becoming visible
-    onVisibleChanged: {
-        if (visible && hasPlayer && artFilePath) {
-            checkAndDownloadArt()
-        }
-    }
-
-    Process {
-        id: artExistsChecker
-        command: ["/usr/bin/test", "-f", root.artFilePath]
-        onExited: (exitCode, exitStatus) => {
-            if (exitCode === 0) {
-                root.downloaded = true
-                root._downloadRetryCount = 0
-            } else {
-                root.downloaded = false
-                coverArtDownloader.targetFile = root.effectiveArtUrl ?? ""
-                coverArtDownloader.artFilePath = root.artFilePath
-                coverArtDownloader.running = true
-            }
-        }
-    }
-
-    Process {
-        id: coverArtDownloader
-        property string targetFile
-        property string artFilePath
-        command: ["/usr/bin/bash", "-c", `
-            if [ -f '${artFilePath}' ]; then exit 0; fi
-            mkdir -p '${root.artDownloadLocation}'
-            tmp='${artFilePath}.tmp'
-            /usr/bin/curl -sSL --connect-timeout 10 --max-time 30 '${targetFile}' -o "$tmp" && \
-            [ -s "$tmp" ] && /usr/bin/mv -f "$tmp" '${artFilePath}' || { rm -f "$tmp"; exit 1; }
-        `]
-        onExited: (exitCode) => {
-            if (exitCode === 0) {
-                root.downloaded = true
-                root._downloadRetryCount = 0
-            } else {
-                root.downloaded = false
-                root.retryDownload()
-            }
-        }
-    }
-
     ColorQuantizer {
         id: colorQuantizer
-        source: root.displayedArtFilePath
+        source: Players.displayedArtFilePath
         depth: 0
         rescaleSize: 1
     }
-
     property color artDominantColor: ColorUtils.mix(
         colorQuantizer?.colors[0] ?? Appearance.colors.colPrimary,
         Appearance.colors.colPrimaryContainer, 0.7
     )
 
+    
+    // Blended colors from dominant album art color
     property QtObject blendedColors: AdaptedMaterialScheme { color: root.artDominantColor }
     
-    // Inir uses fixed colors instead of adaptive
-    readonly property color jiraColText: Appearance.inir.colText
-    readonly property color jiraColTextSecondary: Appearance.inir.colTextSecondary
-    readonly property color jiraColPrimary: Appearance.inir.colPrimary
-    readonly property color jiraColLayer1: Appearance.inir.colLayer1
-    readonly property color jiraColLayer2: Appearance.inir.colLayer2
+    readonly property color colText: Appearance.colors.colOnLayer1
+    readonly property color colTextSecondary: Appearance.colors.colSubtext
+    readonly property color colCard: Appearance.colors.colLayer1 
+    readonly property color colBorder: Appearance.colors.colLayer0Border
+    readonly property int borderWidth: 1
+    readonly property real radius: Appearance.rounding.normal
+    readonly property color colPrimary: Appearance.colors.colPrimary
+    readonly property color colAuxButtonHover: ColorUtils.transparentize(root.colText, 0.82)
+    readonly property color colAuxButtonActive: ColorUtils.transparentize(root.colText, 0.72)
+    // Dynamic accent from album art
+    readonly property color accentColor: blendedColors?.colPrimary ?? colPrimary
 
-   
-    
-   // Full-window click-catcher outside the ColumnLayout
-    MouseArea {
-        anchors.fill: parent
-        visible: playerSelector.menuOpen
-        z: 999
-        onClicked: playerSelector.menuOpen = false
+
+    CavaProcess {
+        id: cavaProcess
+        active: root.visible && Players.hasPlayer && GlobalStates.sidebarLeftOpen && Appearance.effectsEnabled
     }
-    ColumnLayout {
-    id: playerColumnLayout
-    anchors.fill: parent
-    spacing: 8
-         Item {
-            id: playerSelector
-            Layout.alignment: Qt.AlignHCenter
-            property bool menuOpen: false
-            visible: Players.active
-            Timer {
-                id: autoCloseTimer
-                interval: 3000   // 3 seconds
-                repeat: false
-                onTriggered: playerSelector.menuOpen = false
-            } 
-            // Watch for menuOpen changes
-            onMenuOpenChanged: {
-                if (menuOpen) {
-                    autoCloseTimer.restart()  // start countdown when menu opens
-                } else {
-                    autoCloseTimer.stop()     // stop timer if menu closed manually
+
+    property list<real> visualizerPoints: cavaProcess.points
+
+    StyledRectangularShadow { visible: false; target: playerCard }
+
+    Rectangle {
+        id: playerCard
+        anchors.fill: parent
+        implicitHeight: contentColumn.implicitHeight + 16
+        radius: root.radius
+        color: "transparent"
+        border.width: 0
+        border.color: "transparent"
+        clip: true
+
+        layer.enabled: true
+        layer.effect: GE.OpacityMask {
+            maskSource: Rectangle { width: playerCard.width; height: playerCard.height; radius: playerCard.radius }
+        }
+
+        // Blurred album art background
+        Item {
+            id: bgArtContainer
+            anchors.fill: parent
+        
+        
+            property alias blurTimerRef: imgBlurInTimer
+            
+            Image {
+                id: bgArtCurrent
+                anchors.fill: parent
+                fillMode: Image.PreserveAspectCrop
+                asynchronous: true
+                source: Players.displayedArtFilePath
+                opacity: 0.5
+                layer.enabled: Appearance.effectsEnabled
+                layer.effect: MultiEffect {
+                    blurEnabled: true
+                    blur: bgArtContainer.transitioning ? 1 : 0
+                    blurMax: 32
+                    Behavior on blur {
+                        enabled: Appearance.animationsEnabled
+                        NumberAnimation { duration: 150; easing.type: Easing.InOutQuad }
+                    }
                 }
             }
-            // Filtered list: only players with media
-            readonly property var mediaPlayers: Players.list.filter(p =>
-                p.trackTitle || p.trackArtist || p.metadata?.title || p.metadata?.artist || p.metadata?.artUrl
-            )
 
-            // Base button
-            Rectangle {
-                id: button
-                radius: 8
-                color: colorsPalette.surfaceContainer
-                implicitWidth: 180      // button width
-                implicitHeight: 32      // button height
+            property string pendingSource: ""
+            property bool transitioning: false
+            Timer {
+                id: imgBlurInTimer
+                interval: 150
+                repeat: false
+                onTriggered: {
+                        bgArtCurrent.source = bgArtContainer.pendingSource
+                    
+                    imgBlurOutTimer.start()
+                }
+            }
+
+            Timer {
+                id: imgBlurOutTimer
+                interval: 50
+                repeat: false
+                onTriggered: bgArtContainer.transitioning = false
+            
+            }
+            Connections {
+                target: Players
+                function onDisplayedArtFilePathChanged() {
+                    if (!Players.displayedArtFilePath) return
+                    bgArtContainer.pendingSource = Players.displayedArtFilePath
+                    bgArtContainer.transitioning = true
+                    imgBlurInTimer.start()
+                }
+            }
+
+        }
+      
+        // Gradient overlay for depth and text readability
+         // Dark overlay for controls visibility - only for Material
+        Rectangle {
+            anchors.fill: parent
+            visible: !Appearance.inirEverywhere && !Appearance.auroraEverywhere
+            gradient: Gradient {
+                orientation: Gradient.Horizontal
+                GradientStop { position: 0.0; color: "transparent" }
+                GradientStop { position: 0.35; color: ColorUtils.transparentize(blendedColors?.colLayer0 ?? Appearance.colors.colLayer0, 0.3) }
+                GradientStop { position: 1.0; color: ColorUtils.transparentize(blendedColors?.colLayer0 ?? Appearance.colors.colLayer0, 0.15) }
+            }
+        }
+        WaveVisualizer {
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            height: 30
+            live: Players.effectiveIsPlaying
+            points: root.visualizerPoints
+            maxVisualizerValue: 1000
+            smoothing: 2
+            color: ColorUtils.transparentize(
+                Appearance.angelEverywhere ? Appearance.angel.colPrimary
+                : Appearance.inirEverywhere ? root.jiraColPrimary : (blendedColors?.colPrimary ?? Appearance.colors.colPrimary), 
+                0.6
+            )
+        }
+        ColumnLayout {
+            id: contentColumn
+            anchors {
+                fill: parent
+                margins: 10
+            }
+            spacing: 6
+
+            // Player switcher header (when multiple players)
+            RowLayout {
+                Layout.fillWidth: true
+                visible: false
+                // visible: (MprisController.displayPlayers?.length ?? 0) > 1
+                spacing: 6
+
+                // MaterialSymbol {
+                //     text: _playerIcon()
+                //     iconSize: 14
+                //     color: root.colTextSecondary
+                // }
 
                 StyledText {
-                    anchors.centerIn: parent
-                    text: Players.active ? Players.getIdentity(Players.active) : "No players"
+                    Layout.fillWidth: true
+                    text: Players.player?.identity ?? ""
+                    font.pixelSize: Appearance.font.pixelSize.smallest
+                    // color: root.colTextSecondary
+                    color: blendedColors?.colSubtext ?? Appearance.colors.colSubtext
                     elide: Text.ElideRight
                 }
 
-                MouseArea {
-                    anchors.fill: parent
-                    onClicked: playerSelector.menuOpen = !playerSelector.menuOpen
+                RippleButton {
+                    implicitWidth: 20
+                    implicitHeight: 20
+                    buttonRadius: 10
+                    colBackground: "transparent"
+                    colBackgroundHover: root.angelStyle ? Appearance.angel.colGlassCardHover
+                        : root.inirStyle ? Appearance.inir.colLayer2Hover
+                        : Appearance.colors.colLayer1Hover
+                    onClicked: {
+                        playerSwitcherMenu.anchorItem = this
+                        playerSwitcherMenu.active = true
+                    }
+
+                    contentItem: MaterialSymbol {
+                        anchors.centerIn: parent
+                        text: "swap_horiz"
+                        iconSize: 14
+                        color: root.colTextSecondary
+                    }
+
+                    StyledToolTip {
+                        text: Translation.tr("Switch player")
+                    }
                 }
             }
 
-            // Make parent item size match the button
-            width: button.implicitWidth
-            height: button.implicitHeight
+            
+            // Main content: Album art + Track info + time
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 10
 
-            // Menu container with smooth animation
-            Rectangle {
-                id: menuContainer
-                width: button.width
-                color: "transparent"
-                radius: 6
-                anchors.horizontalCenter: button.horizontalCenter
-                anchors.bottom: button.top
-                clip: true
-
-                property real itemHeight: 30
-                property real targetHeight: playerSelector.mediaPlayers.length * (itemHeight + 4) // 4 = spacing
-                height: playerSelector.menuOpen ? targetHeight : 0
-                opacity: playerSelector.menuOpen ? 1 : 0
-
-                Behavior on height { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
-                Behavior on opacity { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
-
-                Column {
-                    id: menu
-                    spacing: 4
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-
-                    Repeater {
-                        model: playerSelector.mediaPlayers
-
-                        delegate: Rectangle {
-                            required property var modelData
-                            width: parent.width
-                            height: menuContainer.itemHeight
-                            radius: 6
-                            color: modelData === Players.active ? colorsPalette.primary : colorsPalette.backgroundt70
-
-                            StyledText {
-                                anchors.centerIn: parent
-                                text: Players.getIdentity(modelData)
-                                elide: Text.ElideRight
-                                color: modelData === Players.active ? colorsPalette.primaryText : colorsPalette.backgroundText
-                            }
-
-                            MouseArea {
-                                anchors.fill: parent
-                                onClicked: {
-                                    Players.manualActive = modelData
-                                    playerSelector.menuOpen = false
-                                }
+                // Album art with hover play/pause overlay
+                Rectangle {
+                        id: coverArtContainer
+                        property string currentSource: ""
+                        property string nextSource: ""
+                        property bool transitioning: false
+                        Component.onCompleted: {
+                            if (Players.displayedArtFilePath) {
+                                coverArtContainer.currentSource = Players.displayedArtFilePath
                             }
                         }
-                    }
-                }
-            }
-        }   
-    
-        Item {
-            Layout.fillWidth: true
-            implicitHeight: card.implicitHeight
-            StyledRectangularShadow {
-                target: card
-            }
-            Rectangle {
-                id: card
-                Layout.alignment: Qt.AlignVCenter 
-                width: parent.width - Appearance.sizes.elevationMargin
-                implicitHeight: 130
-                radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
-                    : Appearance.inirEverywhere ? Appearance.inir.roundingNormal
-                    : Appearance.rounding.normal
-                color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-                    : Appearance.inirEverywhere ? Appearance.inir.colLayer1 
-                    : Appearance.auroraEverywhere ? ColorUtils.transparentize(blendedColors?.colLayer0 ?? Appearance.colors.colLayer0, 0.7)
-                    : (blendedColors?.colLayer0 ?? Appearance.colors.colLayer0)
-                border.width: Appearance.angelEverywhere ? 0 : (Appearance.inirEverywhere ? 1 : 0)
-                border.color: Appearance.angelEverywhere ? "transparent"
-                    : Appearance.inirEverywhere ? Appearance.inir.colBorder : "transparent"
-                clip: true
-
-                AngelPartialBorder { targetRadius: card.radius; coverage: 0.5 }
-
-                layer.enabled: true
-                layer.effect: GE.OpacityMask {
-                    maskSource: Rectangle { width: card.width; height: card.height; radius: card.radius }
-                }
-
-                // Cover art background - subtle for inir, more transparent for aurora
-                Image {
-                    id: bgArt
-                    anchors.fill: parent
-                    source: root.displayedArtFilePath
-                    fillMode: Image.PreserveAspectCrop
-                    asynchronous: true
-                    opacity: 0.5
-                    // opacity: Appearance.angelEverywhere ? 0.2 : (Appearance.inirEverywhere ? 0.15 : (Appearance.auroraEverywhere ? 0.25 : 0.5))
-                    visible: root.displayedArtFilePath !== ""
-
-                    layer.enabled: Appearance.effectsEnabled
-                    layer.effect: MultiEffect {
-                        blurEnabled: true
-                        blur: Appearance.inirEverywhere ? 0.3 : 0.15
-                        blurMax: 16
-                        saturation: Appearance.inirEverywhere ? 0.1 : 0.3
-                    }
-                }
-
-                // Dark overlay for controls visibility - only for Material
-                Rectangle {
-                    anchors.fill: parent
-                    visible: !Appearance.inirEverywhere && !Appearance.auroraEverywhere
-                    gradient: Gradient {
-                        orientation: Gradient.Horizontal
-                        GradientStop { position: 0.0; color: "transparent" }
-                        GradientStop { position: 0.35; color: ColorUtils.transparentize(blendedColors?.colLayer0 ?? Appearance.colors.colLayer0, 0.3) }
-                        GradientStop { position: 1.0; color: ColorUtils.transparentize(blendedColors?.colLayer0 ?? Appearance.colors.colLayer0, 0.15) }
-                    }
-                }
-
-                // Visualizer at bottom
-                WaveVisualizer {
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    anchors.bottom: parent.bottom
-                    height: 30
-                    live: root.effectiveIsPlaying
-                    points: root.visualizerPoints
-                    maxVisualizerValue: 1000
-                    smoothing: 2
-                    color: ColorUtils.transparentize(
-                        Appearance.angelEverywhere ? Appearance.angel.colPrimary
-                        : Appearance.inirEverywhere ? root.jiraColPrimary : (blendedColors?.colPrimary ?? Appearance.colors.colPrimary), 
-                        0.6
-                    )
-                }
-
-                RowLayout {
-                    anchors.fill: parent
-                    anchors.margins: 10
-                    spacing: 10
-
-                    // Cover art thumbnail
-                    Rectangle {
-                        id: coverArtContainer
-                        Layout.preferredWidth: 110
-                        Layout.preferredHeight: 110
-                        radius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
-                            : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.small
+                        Layout.preferredWidth: 56
+                        Layout.preferredHeight: 56
+                        radius: Appearance.rounding.small
                         color: "transparent"
                         clip: true
-
                         layer.enabled: true
                         layer.effect: GE.OpacityMask {
-                            maskSource: Rectangle { 
-                                width: 110
-                                height: 110
-                                radius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
-                                    : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.small 
-                            }
+                            maskSource: Rectangle { width: playerCard.width; height: playerCard.height; radius: playerCard.radius }
                         }
 
-                        // Cover art with blur transition
+                        // CURRENT IMAGE
                         Image {
-                            id: coverArt
+                            id: currentImage
                             anchors.fill: parent
                             fillMode: Image.PreserveAspectCrop
                             asynchronous: true
-                            
+                            source: coverArtContainer.currentSource
+                            opacity: 1
+
+                            property real blurLevel: 0
                             layer.enabled: Appearance.effectsEnabled
                             layer.effect: MultiEffect {
                                 blurEnabled: true
-                                blur: coverArtContainer.transitioning ? 1 : 0
+                                blur: currentImage.blurLevel
                                 blurMax: 32
-                                Behavior on blur {
-                                    enabled: Appearance.animationsEnabled
-                                    NumberAnimation { duration: 150; easing.type: Easing.InOutQuad }
-                                }
+                                Behavior on blur { NumberAnimation { duration: 150; easing.type: Easing.InOutQuad } }
                             }
                         }
 
-                        property bool transitioning: false
-                        property string pendingSource: ""
-                        
+                        // NEXT IMAGE
+                        Image {
+                            id: nextImage
+                            anchors.fill: parent
+                            fillMode: Image.PreserveAspectCrop
+                            asynchronous: true
+                            source: coverArtContainer.nextSource
+                            opacity: 0
+                            layer.enabled: Appearance.effectsEnabled
+                            layer.effect: MultiEffect {
+                                blurEnabled: true
+                                blur: 0.15
+                                blurMax: 16
+                                saturation: 0.3
+                            }
+                            Behavior on opacity { NumberAnimation { duration: 200; easing.type: Easing.InOutQuad } }
+                        }
+
+                        // TIMER TO CONTROL BLUR + FADE
                         Timer {
-                            id: blurInTimer
+                            id: swapTimer
                             interval: 150
+                            repeat: false
                             onTriggered: {
-                                coverArt.source = coverArtContainer.pendingSource
-                                blurOutTimer.start()
+                                // fade in nextImage
+                                nextImage.opacity = 1
+                                currentImage.opacity = 0
+
+                                // swap sources after fade
+                                Qt.callLater(() => {
+                                    coverArtContainer.currentSource = coverArtContainer.nextSource
+                                    coverArtContainer.nextSource = ""
+                                    currentImage.blurLevel = 0
+                                    nextImage.opacity = 0
+                                    currentImage.opacity = 1
+                                })
                             }
                         }
-                        
-                        Timer {
-                            id: blurOutTimer
-                            interval: 50
-                            onTriggered: coverArtContainer.transitioning = false
-                        }
-                        
+
                         Connections {
-                            target: root
+                            target: Players
                             function onDisplayedArtFilePathChanged() {
-                                if (!root.displayedArtFilePath) return
-                                if (!coverArt.source.toString()) {
-                                    coverArt.source = root.displayedArtFilePath
+                                if (!Players.displayedArtFilePath) return
+
+                                if (!coverArtContainer.currentSource) {
+                                    coverArtContainer.currentSource = Players.displayedArtFilePath
                                     return
                                 }
-                                coverArtContainer.pendingSource = root.displayedArtFilePath
-                                coverArtContainer.transitioning = true
-                                blurInTimer.start()
-                            }
-                        }
 
-                        Rectangle {
-                            anchors.fill: parent
-                            color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-                                : Appearance.inirEverywhere ? root.jiraColLayer2 : (blendedColors?.colLayer1 ?? Appearance.colors.colLayer1)
-                            visible: !root.downloaded
-                            
-                            MaterialSymbol {
-                                anchors.centerIn: parent
-                                text: "music_note"
-                                iconSize: 32
-                                color: Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
-                                    : Appearance.inirEverywhere ? root.jiraColTextSecondary : (blendedColors?.colSubtext ?? Appearance.colors.colSubtext)
+                                if (Players.displayedArtFilePath === coverArtContainer.currentSource) return
+
+                                coverArtContainer.nextSource = Players.displayedArtFilePath
+                                currentImage.blurLevel = 1  // start blur animation
+                                swapTimer.start()            // delay swap so blur animates
                             }
                         }
                     }
 
-                    // Info & controls column
-                    ColumnLayout {
+                // Track info
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 2
+
+                    PlayerInfo {
                         Layout.fillWidth: true
-                        Layout.fillHeight: true
-                        spacing: 2
+                        title: Players.currentVisibleTitle
+                        artist: Players.currentVisibleArtist
+                        titleSize: Appearance.font.pixelSize.normal
+                        artistSize: Appearance.font.pixelSize.smaller
+                        titleColor: blendedColors?.colOnLayer0 ?? Appearance.colors.colOnLayer0
+                        artistColor: blendedColors?.colSubtext ?? Appearance.colors.colSubtext
+                        animateTitle: true
+                        animateArtist: true
+                    }
 
-                        // Title
+                    // Time display
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 4
+                        visible: Players.effectiveLength > 0
+
                         StyledText {
-                            Layout.fillWidth: true
-                            text: StringUtils.cleanMusicTitle(root.effectiveTitle) || "—"
-                            font.pixelSize: Appearance.font.pixelSize.normal
+                            text: formatTime(root.selectedPlayer?.position ?? 0)
+                            font.pixelSize: Appearance.font.pixelSize.smallest
+                            font.family: Appearance.font.family.numbers
+                            color: root.accentColor
                             font.weight: Font.Medium
-                            color: Appearance.angelEverywhere ? Appearance.angel.colText
-                                : Appearance.inirEverywhere ? root.jiraColText : (blendedColors?.colOnLayer0 ?? Appearance.colors.colOnLayer0)
-                            elide: Text.ElideRight
-                            animateChange: true
-                            animationDistanceX: 6
                         }
 
-                        // Artist
                         StyledText {
-                            Layout.fillWidth: true
-                            text: root.effectiveArtist || ""
-                            font.pixelSize: Appearance.font.pixelSize.smaller
-                            color: Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
-                                : Appearance.inirEverywhere ? root.jiraColTextSecondary : (blendedColors?.colSubtext ?? Appearance.colors.colSubtext)
-                            elide: Text.ElideRight
-                            visible: text !== ""
+                            text: "/"
+                            font.pixelSize: Appearance.font.pixelSize.smallest
+                            color: root.colTextSecondary
+                            opacity: 0.5
                         }
 
-                        Item { Layout.fillHeight: true }
-
-                        // Progress bar
-                        Item {
-                            Layout.fillWidth: true
-                            implicitHeight: 16
-
-                            Loader {
-                                anchors.fill: parent
-                                active: root.effectiveCanSeek
-                                sourceComponent: StyledSlider {
-                                    configuration: StyledSlider.Configuration.Wavy
-                                    wavy: root.effectiveIsPlaying
-                                    animateWave: root.effectiveIsPlaying
-                                    highlightColor: Appearance.angelEverywhere ? Appearance.angel.colPrimary
-                                        : Appearance.inirEverywhere ? root.jiraColPrimary : (blendedColors?.colPrimary ?? Appearance.colors.colPrimary)
-                                    trackColor: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-                                        : Appearance.inirEverywhere ? Appearance.inir.colLayer2 : (blendedColors?.colSecondaryContainer ?? Appearance.colors.colSecondaryContainer)
-                                    handleColor: Appearance.angelEverywhere ? Appearance.angel.colPrimary
-                                        : Appearance.inirEverywhere ? root.jiraColPrimary : (blendedColors?.colPrimary ?? Appearance.colors.colPrimary)
-                                    value: root.effectiveLength > 0 ? root.effectivePosition / root.effectiveLength : 0
-                                    onMoved: {
-                                        if (root.isYtMusicPlayer) {
-                                            YtMusic.seek(value * root.effectiveLength)
-                                        } else if (root.player) {
-                                            root.player.position = value * root.player.length
-                                        }
-                                    }
-                                    scrollable: true
-                                }
-                            }
-
-                            Loader {
-                                anchors.fill: parent
-                                active: !root.effectiveCanSeek
-                                sourceComponent: StyledProgressBar {
-                                    wavy: root.effectiveIsPlaying
-                                    animateWave: root.effectiveIsPlaying
-                                    highlightColor: Appearance.angelEverywhere ? Appearance.angel.colPrimary
-                                        : Appearance.inirEverywhere ? root.jiraColPrimary : (blendedColors?.colPrimary ?? Appearance.colors.colPrimary)
-                                    trackColor: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-                                        : Appearance.inirEverywhere ? Appearance.inir.colLayer2 : (blendedColors?.colSecondaryContainer ?? Appearance.colors.colSecondaryContainer)
-                                    value: root.effectiveLength > 0 ? root.effectivePosition / root.effectiveLength : 0
-                                }
-                            }
+                        StyledText {
+                            text: formatTime(root.selectedPlayer?.length ?? 0)
+                            font.pixelSize: Appearance.font.pixelSize.smallest
+                            font.family: Appearance.font.family.numbers
+                            color: root.colTextSecondary
                         }
-                    
-                        // Time + controls row
-                        RowLayout {
-                            Layout.fillWidth: true
-                            spacing: 4
 
-                            StyledText {
-                                text: StringUtils.friendlyTimeForSeconds(root.effectivePosition)
-                                font.pixelSize: Appearance.font.pixelSize.smallest
-                                font.family: Appearance.font.family.numbers
-                                color: Appearance.angelEverywhere ? Appearance.angel.colText
-                                    : Appearance.inirEverywhere ? root.jiraColText : (blendedColors?.colOnLayer0 ?? Appearance.colors.colOnLayer0)
+                        Item { Layout.fillWidth: true }
+
+                        // Open full player button
+                        RippleButton {
+                            implicitWidth: 22
+                            implicitHeight: 22
+                            buttonRadius: 11
+                            colBackground: "transparent"
+                            colBackgroundHover: root.angelStyle ? Appearance.angel.colGlassCardHover
+                                : root.inirStyle ? Appearance.inir.colLayer2Hover
+                                : Appearance.colors.colLayer1Hover
+                            onClicked: GlobalStates.mediaControlsOpen = true
+
+                            contentItem: MaterialSymbol {
+                                anchors.centerIn: parent
+                                text: "open_in_full"
+                                iconSize: 14
+                                color: root.colTextSecondary
                             }
 
-                            Item { Layout.fillWidth: true }
-
-                            // Controls
-                            RippleButton {
-                                implicitWidth: 32
-                                implicitHeight: 32
-                                buttonRadius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
-                                    : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.full
-                                colBackground: "transparent"
-                                colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
-                                    : Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover : ColorUtils.transparentize(blendedColors?.colLayer1 ?? Appearance.colors.colLayer1, 0.5)
-                                colRipple: Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
-                                    : Appearance.inirEverywhere ? Appearance.inir.colLayer2Active : (blendedColors?.colLayer1Active ?? Appearance.colors.colLayer1Active)
-                                onClicked: player?.previous()
-
-                                contentItem: Item {
-                                    MaterialSymbol {
-                                        anchors.centerIn: parent
-                                        text: "skip_previous"
-                                        iconSize: 22
-                                        fill: 1
-                                        color: Appearance.angelEverywhere ? Appearance.angel.colText
-                                            : Appearance.inirEverywhere ? root.jiraColText : (blendedColors?.colOnLayer0 ?? Appearance.colors.colOnLayer0)
-                                    }
-                                }
-
-                                StyledToolTip { text: qsTr("Previous")}
-                  
-                            }
-
-                            RippleButton {
-                                id: playPauseButton
-                                implicitWidth: 40
-                                implicitHeight: 40
-                                buttonRadius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
-                                    : Appearance.inirEverywhere 
-                                    ? Appearance.inir.roundingSmall 
-                                    : (root.effectiveIsPlaying ? Appearance.rounding.normal : Appearance.rounding.full)
-                                colBackground: Appearance.angelEverywhere
-                                    ? "transparent"
-                                    : Appearance.inirEverywhere
-                                    ? "transparent"
-                                    : Appearance.auroraEverywhere
-                                        ? "transparent"
-                                        : (root.effectiveIsPlaying 
-                                            ? (blendedColors?.colPrimary ?? Appearance.colors.colPrimary)
-                                            : (blendedColors?.colSecondaryContainer ?? Appearance.colors.colSecondaryContainer))
-                                colBackgroundHover: Appearance.angelEverywhere
-                                    ? Appearance.angel.colGlassCardHover
-                                    : Appearance.inirEverywhere
-                                    ? Appearance.inir.colLayer2Hover
-                                    : Appearance.auroraEverywhere
-                                        ? ColorUtils.transparentize(blendedColors?.colLayer1 ?? Appearance.colors.colLayer1, 0.5)
-                                        : (root.effectiveIsPlaying 
-                                            ? (blendedColors?.colPrimaryHover ?? Appearance.colors.colPrimaryHover)
-                                            : (blendedColors?.colSecondaryContainerHover ?? Appearance.colors.colSecondaryContainerHover))
-                                colRipple: Appearance.angelEverywhere
-                                    ? Appearance.angel.colGlassCardActive
-                                    : Appearance.inirEverywhere
-                                    ? Appearance.inir.colLayer2Active
-                                    : Appearance.auroraEverywhere
-                                        ? (blendedColors?.colLayer1Active ?? Appearance.colors.colLayer1Active)
-                                        : (root.effectiveIsPlaying 
-                                            ? (blendedColors?.colPrimaryActive ?? Appearance.colors.colPrimaryActive)
-                                            : (blendedColors?.colSecondaryContainerActive ?? Appearance.colors.colSecondaryContainerActive))
-                                onClicked: player?.togglePlaying()
-
-                                Behavior on buttonRadius {
-                                    enabled: Appearance.animationsEnabled && !Appearance.inirEverywhere
-                                    NumberAnimation { duration: Appearance.animation.elementMoveFast.duration }
-                                }
-
-                                contentItem: Item {
-                                    MaterialSymbol {
-                                        anchors.centerIn: parent
-                                        text: root.effectiveIsPlaying ? "pause" : "play_arrow"
-                                        iconSize: 24
-                                        fill: 1
-                                        color: Appearance.angelEverywhere
-                                            ? Appearance.angel.colPrimary
-                                            : Appearance.inirEverywhere
-                                            ? root.jiraColPrimary
-                                            : Appearance.auroraEverywhere
-                                                ? (blendedColors?.colOnLayer0 ?? Appearance.colors.colOnLayer0)
-                                                : (root.effectiveIsPlaying 
-                                                    ? (blendedColors?.colOnPrimary ?? Appearance.colors.colOnPrimary)
-                                                    : (blendedColors?.colOnSecondaryContainer ?? Appearance.colors.colOnSecondaryContainer))
-
-                                        Behavior on color {
-                                            enabled: Appearance.animationsEnabled
-                                            animation: Appearance.animation.elementMoveFast.colorAnimation.createObject(this)
-                                        }
-                                    }
-                                }
-
-                                StyledToolTip { text: root.effectiveIsPlaying ? Translation.tr("Pause") : Translation.tr("Play") }
-                                // ToolTip.timeout: 3000
-                                // ToolTip.delay: 300
-                                // ToolTip.visible: hovered
-                                // ToolTip.text: root.effectiveIsPlaying ? qsTr("Pause") : qsTr("Play")
-                            }
-
-                            RippleButton {
-                                implicitWidth: 32
-                                implicitHeight: 32
-                                buttonRadius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
-                                    : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.full
-                                colBackground: "transparent"
-                                colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
-                                    : Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover : ColorUtils.transparentize(blendedColors?.colLayer1 ?? Appearance.colors.colLayer1, 0.5)
-                                colRipple: Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
-                                    : Appearance.inirEverywhere ? Appearance.inir.colLayer2Active : (blendedColors?.colLayer1Active ?? Appearance.colors.colLayer1Active)
-                                // onClicked: MprisController.next()
-                                onClicked: player?.next()
-
-                                contentItem: Item {
-                                    MaterialSymbol {
-                                        anchors.centerIn: parent
-                                        text: "skip_next"
-                                        iconSize: 22
-                                        fill: 1
-                                        color: Appearance.angelEverywhere ? Appearance.angel.colText
-                                            : Appearance.inirEverywhere ? root.jiraColText : (blendedColors?.colOnLayer0 ?? Appearance.colors.colOnLayer0)
-                                    }
-                                }
-
-                                StyledToolTip { text: Translation.tr("Next") }
-                                // ToolTip.timeout: 3000
-                                // ToolTip.delay: 300
-                                // ToolTip.visible: hovered
-                                // ToolTip.text: qsTr("Next")
-                            }
-
-                            Item { Layout.fillWidth: true }
-
-                            StyledText {
-                                text: StringUtils.friendlyTimeForSeconds(root.effectiveLength)
-                                font.pixelSize: Appearance.font.pixelSize.smallest
-                                font.family: Appearance.font.family.numbers
-                                color: Appearance.angelEverywhere ? Appearance.angel.colText
-                                    : Appearance.inirEverywhere ? root.jiraColText : (blendedColors?.colOnLayer0 ?? Appearance.colors.colOnLayer0)
+                            StyledToolTip {
+                                text: Translation.tr("Open full player")
                             }
                         }
                     }
                 }
             }
+
+            // Progress bar with dynamic accent color
+            Item {
+                Layout.fillWidth: true
+                implicitHeight: 16
+                Loader {
+                    anchors.fill: parent
+                    active: Players.effectiveCanSeek
+                    sourceComponent: StyledSlider {
+                        configuration: StyledSlider.Configuration.Wavy
+                        wavy: Players.effectiveIsPlaying
+                        animateWave: Players.effectiveIsPlaying
+                        highlightColor: blendedColors?.colPrimary ?? Appearance.colors.colPrimary
+                        trackColor: blendedColors?.colSecondaryContainer ?? Appearance.colors.colSecondaryContainer
+                        handleColor: blendedColors?.colPrimary ?? Appearance.colors.colPrimary
+                        value: Players.effectiveLength > 0 ? Players.effectivePosition / Players.effectiveLength : 0
+                        onMoved: {
+                            if (Players.isYtMusicPlayer) {
+                                YtMusic.seek(value * Players.effectiveLength)
+                            } else if (root.selectedPlayer) {
+                                root.selectedPlayer.position = value * root.selectedPlayer.length
+                            }
+                        }
+                        scrollable: true
+                    }
+                }
+            }
+            // Transport controls row — clean, no wrapper surface
+            RowLayout {
+                Layout.fillWidth: true
+                Layout.topMargin: 2
+                spacing: 2
+
+                // Shuffle button (left auxiliary)
+                MediaControlBtn {
+                    // visible: MprisController.shuffleSupported
+                    visible: false
+                    icon: "shuffle"
+                    toggled: MprisController.hasShuffle
+                    onClicked: MprisController.setShuffle(!MprisController.hasShuffle)
+                    tooltipText: Translation.tr("Shuffle")
+                    small: true
+                }
+
+                Item { Layout.fillWidth: true }
+
+                // Previous
+                MediaControlBtn {
+                    icon: "skip_previous"
+                    visible: Players.effectiveCanSeek
+                    iconFill: true
+                    onClicked: selectedPlayer.previous()
+                    tooltipText: Translation.tr("Previous")
+                }
+
+                // Play/Pause — prominent center button
+                RippleButton {
+                        id: playPauseButton
+                        visible: Players?.effectiveCanSeek ?? false
+                        
+                        // anchors.right: parent.right
+                        // anchors.bottom: sliderRow.top
+                        anchors.bottomMargin: 5
+                        property real size: 44
+                        implicitWidth: size
+                        implicitHeight: size
+                        downAction: () => selectedPlayer.togglePlaying();
+
+                        buttonRadius: Players.effectiveIsPlaying ? Appearance?.rounding.normal : size / 2
+                        colBackground: Players.effectiveIsPlaying ? blendedColors.colPrimary : blendedColors.colSecondaryContainer
+                        colBackgroundHover: Players.effectiveIsPlaying ? blendedColors.colPrimaryHover : blendedColors.colSecondaryContainerHover
+                        colRipple: Players.effectiveIsPlaying ? blendedColors.colPrimaryActive : blendedColors.colSecondaryContainerActive
+
+                        contentItem: MaterialSymbol {
+                            iconSize: Appearance.font.pixelSize.huge
+                            fill: 1
+                            horizontalAlignment: Text.AlignHCenter
+                            color: Players.effectiveIsPlaying ? blendedColors.colOnPrimary : blendedColors.colOnSecondaryContainer
+                            text: Players.effectiveIsPlaying ? "pause" : "play_arrow"
+
+                            Behavior on color {
+                                animation: Appearance.animation.elementMoveFast.colorAnimation.createObject(this)
+                            }
+                        }
+                    }
+
+                // Next
+                MediaControlBtn {
+                    icon: "skip_next"
+                    visible: Players.effectiveCanSeek
+                    iconFill: true
+                    onClicked: selectedPlayer.next()
+                    tooltipText: Translation.tr("Next")
+                }
+
+                Item { Layout.fillWidth: true }
+
+                // Loop button (right auxiliary)
+               Item {
+                width: 32
+                height: 32
+                visible: Players.effectiveCanSeek
+                // Rounded background
+                Rectangle {
+                    anchors.fill: parent
+                    radius: width / 2
+                    color: MprisController.loopState !== 0
+                        ? blendedColors.colPrimary
+                        : "transparent"
+                    opacity: 0.1
+                    z: 0
+                }
+
+                MediaControlBtn {
+                    anchors.fill: parent
+                    z: 1  // Ensure button is on top
+                    icon: MprisController.loopState === 2 ? "repeat_one" : "repeat"
+                    toggled: MprisController.loopState !== 0
+                    onClicked: {
+                        const next = (MprisController.loopState + 1) % 3
+                        MprisController.setLoopState(next)
+                    }
+                    tooltipText: Translation.tr("Loop")
+                    small: true
+                }
+            }
+            }
+        }
+
+        // Angel partial border
+        AngelPartialBorder {
+            targetRadius: playerCard.radius
+            visible: true
         }
     }
-    Timer {
-        running: root.effectiveIsPlaying && GlobalStates.sidebarLeftOpen
-        interval: 1000
-        repeat: true
-        onTriggered: {
-            if (!root.isYtMusicPlayer && root.player) {
-                root.player.positionChanged()
+    
+    // Player switcher context menu (styled)
+    // property var mediaPlayers: Players.list.filter(p => p && p.trackTitle) // loose filter for menu
+    ContextMenu {
+        id: playerSwitcherMenu
+        property var mediaPlayers: Players.list.filter(p => Players.hasMedia(p))
+
+        model: mediaPlayers.map(player => ({
+            type: "item",
+            text: player.identity ?? "",
+            checkable: true,
+            checked: Players.manualActive === player,
+            action: () => { 
+                Players.manualActive = player 
+            }
+        }))
+    }
+
+    // Resolve a Material Symbol icon name for the active player identity
+    // function _playerIcon(): string {
+    //     const player = MprisController.activePlayer
+    //     if (!player) return "music_note"
+    //     const name = (player.dbusName ?? "").toLowerCase()
+    //     const identity = (player.identity ?? "").toLowerCase()
+    //     if (name.includes("firefox") || identity.includes("firefox")) return "open_in_browser"
+    //     if (name.includes("chrome") || identity.includes("chrom")) return "open_in_browser"
+    //     if (name.includes("brave") || identity.includes("brave")) return "open_in_browser"
+    //     if (name.includes("vivaldi") || identity.includes("vivaldi")) return "open_in_browser"
+    //     if (name.includes("opera") || identity.includes("opera")) return "open_in_browser"
+    //     if (name.includes("plasma-browser") || identity.includes("plasma-browser")) return "open_in_browser"
+    //     if (name.includes("spotify") || identity.includes("spotify")) return "library_music"
+    //     if (name.includes("mpv") || identity.includes("mpv")) return "smart_display"
+    //     if (name.includes("vlc") || identity.includes("vlc")) return "smart_display"
+    //     return "music_note"
+    // }
+
+    function formatTime(seconds) {
+        if (!seconds || seconds <= 0) return "0:00"
+        const mins = Math.floor(seconds / 60)
+        const secs = Math.floor(seconds % 60)
+        return mins + ":" + (secs < 10 ? "0" : "") + secs
+    }
+
+    // Media control button component — simplified, no wrapper surface
+    component MediaControlBtn: Item {
+        id: mcBtn
+        required property string icon
+        property string tooltipText: ""
+        property bool highlighted: false
+        property bool toggled: false
+        property bool small: false
+        property bool iconFill: false
+        
+        signal clicked()
+        
+        implicitWidth: small ? 30 : 34
+        implicitHeight: small ? 30 : 34
+        
+        Rectangle {
+            anchors.fill: parent
+            radius: root.angelStyle ? Appearance.angel.roundingSmall
+                : root.inirStyle ? Appearance.inir.roundingSmall : Appearance.rounding.full
+            border.width: 0
+            border.color: "transparent"
+            
+            color: {
+                if (mcBtnMA.containsPress)
+                    return root.colAuxButtonActive
+                if (mcBtnMA.containsMouse)
+                    return root.colAuxButtonHover
+                if (mcBtn.toggled)
+                    return root.angelStyle ? ColorUtils.transparentize(root.accentColor, 0.64)
+                        : root.inirStyle ? Appearance.inir.colSecondaryContainer
+                        : ColorUtils.transparentize(root.accentColor, 0.78)
+                return "transparent"
+            }
+            
+            Behavior on color { 
+                ColorAnimation { 
+                    duration: Appearance.animation.elementMoveFast.duration 
+                } 
+            }
+            
+            MaterialSymbol {
+                anchors.centerIn: parent
+                text: mcBtn.icon
+                iconSize: mcBtn.small ? 18 : 22
+                fill: mcBtn.iconFill || mcBtn.highlighted || mcBtn.toggled ? 1 : 0
+                color: mcBtn.highlighted
+                    ? "white"
+                    : mcBtn.toggled
+                    ? (root.inirStyle ? Appearance.inir.colOnSecondaryContainer : root.accentColor)
+                    : root.colText
+                
+                Behavior on color {
+                    ColorAnimation { 
+                        duration: Appearance.animation.elementMoveFast.duration 
+                    }
+                }
+            }
+            
+            scale: mcBtnMA.containsPress ? 0.88 : 1.0
+            
+            Behavior on scale {
+                NumberAnimation { 
+                    duration: 150
+                    easing.type: Easing.OutCubic 
+                }
+            }
+            
+            MouseArea {
+                id: mcBtnMA
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: mcBtn.clicked()
+            }
+            
+            StyledToolTip {
+                visible: mcBtnMA.containsMouse && mcBtn.tooltipText !== ""
+                text: mcBtn.tooltipText
             }
         }
     }
