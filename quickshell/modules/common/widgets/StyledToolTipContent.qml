@@ -41,9 +41,14 @@ Item {
         implicitHeight: shown ? (tooltipTextObject.implicitHeight + 2 * root.verticalPadding) : 0
         clip: true
 
+          Behavior on implicitWidth {
+            animation: Appearance?.animation.elementMoveFast.numberAnimation.createObject(this)
+        }
+        Behavior on implicitHeight {
+            animation: Appearance?.animation.elementMoveFast.numberAnimation.createObject(this)
+        }
         Behavior on opacity {
-            enabled: Appearance.animationsEnabled
-            NumberAnimation { duration: 150; easing.type: Easing.OutCubic }
+            animation: Appearance?.animation.elementMoveFast.numberAnimation.createObject(this)
         }
         Behavior on scale {
             enabled: Appearance.animationsEnabled

@@ -6,7 +6,6 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Services.Mpris
 import QtQml
-import Caelestia
 import qs
 import qs.modules.config
 import qs.config
@@ -31,86 +30,90 @@ Singleton {
     
     property alias manualActive: props.manualActive
 
-  
+    
 
     property MprisPlayer readyActive: _readyActiveBacking
-    // property MprisPlayer _readyActiveBacking: null
-    property MprisPlayer _readyActiveBacking: active.trackTitle || active.metadata?.title ? active : null
-   
-    function hasMedia(mplayer: MprisPlayer): bool {
-        if (!mplayer) return false
-
-        const title = mplayer.trackTitle
-        const artist = mplayer.trackArtist 
-        const art = mplayer.trackArtUrl 
-
-        return title && title.length > 0 && artist && artist.length > 0 && art && art.length > 0
-    }
-
+    
+    property MprisPlayer _readyActiveBacking: (active && (active.trackTitle || active.metadata?.title)) ? active : null
+    
     Timer {
-        interval: 150
+        interval: 300
         repeat: true
         running: true
         onTriggered: {
             const candidate = list.find(p => hasMedia(p))
 
             if (!candidate) return
-
-            // Only switch if:
-            // - nothing is shown yet
-            // - OR current readyActive lost media
-            if (!_readyActiveBacking || !hasMedia(_readyActiveBacking)) {
+            
+            if (!isPlayerAlive(_readyActiveBacking)) {
+            // _readyActiveBacking = candidate
+             _readyActiveBacking = candidate ?? null
+            } else if (!hasMedia(_readyActiveBacking) && hasMedia(candidate)) {
+                // Only replace if a BETTER player exists
                 _readyActiveBacking = candidate
+            
+      
             }
         }
     }
- 
     // property MprisPlayer player: active
     property MprisPlayer player: readyActive
-      // Optional: reactive update when the player list changes
     Connections {
         target: MprisController
         function onDisplayPlayersChanged() {
-            // Force evaluation of `active` so `lastKnownActive` can update
-            const _ = root.active
+           if (playerConnections.target && !isPlayerAlive(playerConnections.target)) {
+                playerConnections.target = null
+            }
         }
     }
 
-    property real _positionCache: player?.position ?? 0
+    property real _positionCache: 0
     readonly property bool isYtMusicPlayer: MprisController.isYtMusicActive
-    readonly property string effectiveArtUrl: 
-        isYtMusicPlayer 
-            ? YtMusic.currentThumbnail 
-            : (player?.trackArtUrl ?? "")
+    readonly property string effectiveTitle: isYtMusicPlayer ? YtMusic.currentTitle : (player?.trackTitle ?? "")
+    readonly property string effectiveArtist: isYtMusicPlayer ? YtMusic.currentArtist : (player?.trackArtist ?? "")
+    readonly property string effectiveArtUrl: isYtMusicPlayer ? YtMusic.currentThumbnail : (player?.trackArtUrl ?? "")
     // readonly property real effectivePosition: isYtMusicPlayer ? YtMusic.currentPosition : (player?.position ?? 0)
+    
+    function hasMedia(mplayer: MprisPlayer): bool {
+        if (!mplayer) return false
+
+        const title = mplayer.trackTitle ?? ""
+        // const artist = mplayer.trackArtist ?? ""
+        const art = mplayer.trackArtUrl ?? ""
+
+        return title.length > 0 && (art.length > 0 || mplayer.isPlaying)
+    }
+    
+    Connections {
+        target: YtMusic
+        function onCurrentThumbnailChanged() {
+            if (isYtMusicPlayer) {
+                updateArtAndInfo()
+            }
+        }
+    }
     readonly property real effectivePosition:
     isYtMusicPlayer
         ? YtMusic.currentPosition
         : _positionCache
 
-
+    
     Timer {
         interval: 1000
         repeat: true
         running: effectiveIsPlaying
 
         onTriggered: {
+            if (!isPlayerAlive(player)) return
             if (isYtMusicPlayer) return
-
             if (player) {
                 _positionCache += 1
             }
         }
     }
 
-    Connections {
-        target: player
-        ignoreUnknownSignals: true
 
-        function onPositionChanged() {
-            _positionCache = player.position
-        }
-    }
+
 
     readonly property real effectiveLength: isYtMusicPlayer ? YtMusic.currentDuration : (player?.length ?? 0)
     readonly property bool effectiveIsPlaying: isYtMusicPlayer ? YtMusic.isPlaying : (player?.isPlaying ?? false)
@@ -130,82 +133,122 @@ Singleton {
     property string currentVisibleTitle: ""
     property string currentVisibleArtist: ""
     property string pendingArtUrl: ""
-    
-
+   
     Timer {
-        interval: 100
-        repeat: true
-        running: true
-        onTriggered: {
-            const current = player // or Players.readyActive (recommended)
-            if (!current) return
-
-            const newTitle = current.trackTitle
-            const newArtist = current.trackArtist
-
-            if (newTitle && newTitle.length > 0) {
-                root.currentVisibleTitle = StringUtils.cleanMusicTitle(newTitle)
-            }
-
-            if (newArtist && newArtist.length > 0) {
-                root.currentVisibleArtist = newArtist
-            }
-
-            if (current.trackArtUrl) {
-                updateArtAndInfo()
-            }
-        }
+    id: artUpdateTimer
+    interval: 50
+    repeat: false
+    onTriggered: updateArtAndInfoImmediate()
     }
-
 
     function updateArtAndInfo() {
-        const current = player
-        if (!current) return;
-
-        const newArtUrl = isYtMusicPlayer
-            ? YtMusic.currentThumbnail
-            : current.trackArtUrl;
-
-        if (!newArtUrl) return;
-
-        // If the same URL is already displayed and downloaded, do nothing
-        if (pendingArtUrl === newArtUrl && downloaded && displayedArtFilePath) return;
-
-        pendingArtUrl = newArtUrl;
-
-        const fileName = Qt.md5(newArtUrl);
-        const coverFilePath = `${artDownloadLocation}/${fileName}`;
-
-        artFileName = fileName;
-        artFilePath = coverFilePath;
-
-        if (!coverArtDownloader.running) {
-            coverArtDownloader.targetFile = pendingArtUrl
-            coverArtDownloader.artFilePath = coverFilePath
-            coverArtDownloader.running = true
-        }
+        artUpdateTimer.restart()
     }
 
+    function updateArtAndInfoImmediate() {
+        Qt.callLater(() => {   // <-- delays execution to avoid racing with MPRIS
+            const current = player
+            if (!current) return
+
+            const newArtUrl = current.trackArtUrl
+            if (!newArtUrl) return
+
+            if (newArtUrl === pendingArtUrl && downloaded) return
+            pendingArtUrl = newArtUrl
+
+            const fileName = Qt.md5(newArtUrl)
+            const coverFilePath = `${artDownloadLocation}/${fileName}`
+
+            artFileName = fileName
+            artFilePath = coverFilePath
+
+            if (coverArtDownloader.running && targetFile === newArtUrl) return
+
+            coverArtDownloader.targetFile = newArtUrl
+            coverArtDownloader.artFilePath = coverFilePath
+            coverArtDownloader.running = true
+        })
+    }
+    // function updateArtAndInfo() {
+    //     const current = player
+    //     if (!current) return;
+
+    //     const newArtUrl = isYtMusicPlayer
+    //         ? YtMusic.currentThumbnail
+    //         : current.trackArtUrl
+
+    //     if (!newArtUrl)
+    //         return
+
+    //     if (newArtUrl === pendingArtUrl && downloaded)
+    //         return
+    //     pendingArtUrl = newArtUrl
+
+    //     const fileName = Qt.md5(newArtUrl)
+    //     const coverFilePath = `${artDownloadLocation}/${fileName}`
+
+    //     artFileName = fileName
+    //     artFilePath = coverFilePath
+
+    //     if (coverArtDownloader.running && targetFile === newArtUrl) return
+
+    //     coverArtDownloader.targetFile = newArtUrl
+    //     coverArtDownloader.artFilePath = coverFilePath
+    //     coverArtDownloader.running = true
+    // }
 
     function isPlayerReady(player) {
         return player && player.trackTitle && player.trackTitle.length > 0
     }
 
 
-    onPlayerChanged: {
-        updateArtAndInfo()
-        if (player) _positionCache = player.position ?? 0
-        else _positionCache = 0
-    }
-
     Connections {
-        target: player
+        id: playerConnections
+        target: null
         ignoreUnknownSignals: true
 
-        function onMetadataChanged() { updateArtAndInfo() }
-        function onTrackArtUrlChanged() { 
-            _downloadRetryCount = 0
-            checkAndDownloadArt()
+      function safeUpdate(callback) {
+            if (!isPlayerAlive(player)) return
+            try { callback() } 
+            catch(e) { console.warn("Skipped update due to dead MPRIS service:", e) }
+        }
+
+        function onPositionChanged() {
+        Qt.callLater(() => {
+            if (!isPlayerAlive(player)) {
+                playerConnections.target = null
+                return
+            }
+
+            // ⚠️ safest possible guarded access
+            let pos
+            try {
+                pos = player.position
+            } catch (e) {
+                playerConnections.target = null
+                return
+            }
+
+            if (pos !== undefined && pos !== null) {
+                _positionCache = pos
+            }
+        })
+        }
+
+
+        function onMetadataChanged() {
+            safeUpdate(() => {
+                currentVisibleTitle = StringUtils.cleanMusicTitle(player.trackTitle)
+                currentVisibleArtist = player.trackArtist
+                updateArtAndInfo()
+            })
+        }
+
+        function onTrackArtUrlChanged() {
+            safeUpdate(() => {
+                _downloadRetryCount = 0
+                updateArtAndInfo()
+            })
         }
     }
 
@@ -259,78 +302,132 @@ Singleton {
         ]
         onExited: (exitCode) => {
             if (exitCode === 0) {
+
+                // ❗ Ignore outdated downloads
+                if (targetFile !== pendingArtUrl) {
+                    // A newer request exists → skip applying this result
+                    if (pendingArtUrl) {
+                        targetFile = pendingArtUrl
+                        artFilePath = `${artDownloadLocation}/${Qt.md5(pendingArtUrl)}`
+                        running = true
+                    }
+                    return
+                }
+
+                // ✅ Only apply if it's still the latest
                 downloaded = true
-                // Update displayedArtFilePath immediately for the just-finished download
                 displayedArtFilePath = Qt.resolvedUrl(artFilePath)
                 _downloadRetryCount = 0
 
-                // If there’s a newer pendingArtUrl, download it next
+                // ✅ If another new one came during this exact moment
                 if (pendingArtUrl && pendingArtUrl !== targetFile) {
                     targetFile = pendingArtUrl
                     artFilePath = `${artDownloadLocation}/${Qt.md5(pendingArtUrl)}`
                     running = true
                 }
+
             } else {
                 downloaded = false
-                retryDownload()
+
+                // ❗ Avoid retrying outdated URL
+                if (targetFile === pendingArtUrl) {
+                    retryDownload()
+                }
             }
         }
-        // onExited: (exitCode) => {
-        //     if (exitCode === 0) {
-        //         downloaded = true
-        //         // Only update displayedArtFilePath now
-        //         displayedArtFilePath = Qt.resolvedUrl(artFilePath)
-        //         _downloadRetryCount = 0
-
-        //         // If a new pending URL appeared while downloading, start it
-        //         if (pendingArtUrl !== targetFile) {
-        //             targetFile = pendingArtUrl
-        //             artFilePath = `${artDownloadLocation}/${Qt.md5(pendingArtUrl)}`
-        //             running = true
-        //         }
-        //     } else {
-        //         downloaded = false
-        //         retryDownload()
-        //     }
-        // }
     }
+       
+    
+
+    // visibility
+
+    property MprisPlayer stablePlayer: null
+
+    function updateStable() {
+        const activeStable = root.active
+
+        if (activeStable) {
+            stablePlayer = activeStable
+            return
+        }
+        if (list.length > 0) {
+            stablePlayer = list[0]
+            return
+        }
+
+        stablePlayer = null
+    }
+
+    Connections {
+        target: root
+
+        function onPlayerChanged() {
+            updateStable()
+            playerConnections.target = player
+             _positionCache = 0
+            // Show whatever is currently available immediately
+            currentVisibleTitle = player?.trackTitle
+                ? StringUtils.cleanMusicTitle(player.trackTitle)
+                : currentVisibleTitle   // 👈 KEEP OLD if empty
+
+            currentVisibleArtist = player?.trackArtist
+                ? player.trackArtist
+                : currentVisibleArtist  // 👈 KEEP OLD if empty
+
+            pendingArtUrl = ""
+            _downloadRetryCount = 0
+            updateArtAndInfo()
+        }
+    }
+
+
+    Component.onCompleted: {
+        updateStable()
+        updateArtAndInfo()
+    }
+     
+    property int currentLoopState: 0  // 0 = no loop, 1 = looping
+        
+
+    function toggleLoopState() {
+
+        
+        if (isYtMusicPlayer) { 
+            YtMusic.cycleRepeatMode()
+        } else {
+            // const next = currentLoopState === 0 ? 1 : 0
+            const next = (MprisController.loopState + 1) % 3
+            MprisController.setLoopState(next)
+        }
+
+        
+        
+    }
+
+    Connections {
+        target: MprisController
+        function onLoopStateChanged() {
+            if(!isYtMusicPlayer) {
+                currentLoopState = MprisController.loopState
+                console.log("MPRIS loop state changed, now:", currentLoopState)
+            }  
+        }
+    }
+
+    Connections {
+        target: YtMusic
+        function onRepeatModeChanged() {
+            currentLoopState = YtMusic.repeatMode
+            console.log("ytmusic repeat mode changed, now:", currentLoopState)
+        }
+    }
+
+    function isPlayerAlive(player) {
+        return player && root.list.includes(player)
+    }        
 
     PersistentProperties { id: props; property MprisPlayer manualActive; reloadableId: "players" }
-    
-    // Media shortcuts
-    CustomShortcut { name: "mediaToggle"; description: "Toggle media playback"
-        onPressed: { active?.canTogglePlaying && active.togglePlaying() }
-    }
-
-    CustomShortcut { name: "mediaPrev"; description: "Previous track"
-        onPressed: { active?.canGoPrevious && active.previous() }
-    }
-
-    CustomShortcut { name: "mediaNext"; description: "Next track"
-        onPressed: { active?.canGoNext && active.next() }
-    }
-
-    CustomShortcut { name: "mediaStop"; description: "Stop media playback"
-        onPressed: active?.stop()
-    }
-
-    // IPC interface for external scripts
-    IpcHandler {
-        target: "mpris"
-
-        function getActive(prop: string): string {
-            return active ? active[prop] ?? "Invalid property" : "No active player";
-        }
-
-        function list(): string {
-            return root.list.map(p => root.getIdentity(p)).join("\n");
-        }
-
-        function play(): void { if (active?.canPlay) active.play() }
-        function pause(): void { if (active?.canPause) active.pause() }
-        function togglePlaying(): void { if (active?.canTogglePlaying) active.togglePlaying() }
-        function previous(): void { if (active?.canGoPrevious) active.previous() }
-        function next(): void { if (active?.canGoNext) active.next() }
-        function stop(): void { active?.stop() }
-    }
+      
 }
+
+

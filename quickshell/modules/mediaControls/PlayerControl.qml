@@ -302,7 +302,7 @@ Item { // Player instance
                         font.pixelSize: Appearance.font.pixelSize.small
                         color: blendedColors.colSubtext
                         elide: Text.ElideRight
-                        text: `${StringUtils.friendlyTimeForSeconds(root.selectedPlayer?.position)} / ${StringUtils.friendlyTimeForSeconds(root.selectedPlayer?.length)}`
+                        text: `${StringUtils.friendlyTimeForSeconds(Players.effectivePosition)} / ${StringUtils.friendlyTimeForSeconds(Players.effectiveLength)}`
                     }
                     RowLayout {
                         id: sliderRow
@@ -331,11 +331,11 @@ Item { // Player instance
                         Item {
                             Layout.fillWidth: true
                             implicitHeight: 16
-                            
                             Loader {
                                 anchors.fill: parent
                                 active: Players.effectiveCanSeek ?? false
-                                sourceComponent: StyledSlider {
+                            
+                            sourceComponent: StyledSlider {
                                     configuration: StyledSlider.Configuration.Wavy
                                     wavy: Players.effectiveIsPlaying ?? false
                                     animateWave: Players.effectiveIsPlaying ?? false
@@ -347,8 +347,6 @@ Item { // Player instance
                                     scrollable: true
                                 }
                             }
-
-
                         }
                         TrackChangeButton {
                             iconName: "skip_next"

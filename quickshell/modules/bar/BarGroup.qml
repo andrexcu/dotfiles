@@ -2,26 +2,30 @@ import qs.modules.common
 import QtQuick
 import QtQuick.Layouts
 import qs.colors
-
 Item {
     id: root
     property bool vertical: false
     property real padding: 5
+    property var colorsPalette: Colors{}
+    property var radius: Appearance.rounding.full
     implicitWidth: vertical ? Appearance.sizes.baseVerticalBarWidth : (gridLayout.implicitWidth + padding * 2)
     implicitHeight: vertical ? (gridLayout.implicitHeight + padding * 2) : Appearance.sizes.baseBarHeight
     default property alias items: gridLayout.children
-    property var colorsPalette: Colors {}
+
+
     Rectangle {
         id: background
         anchors {
             fill: parent
-            topMargin: root.vertical ? 0 : 5
-            bottomMargin: root.vertical ? 0 : 5
-            leftMargin: root.vertical ? 5 : 0
-            rightMargin: root.vertical ? 5 : 0
+            topMargin: root.vertical ? 0 : 4
+            bottomMargin: root.vertical ? 0 : 4
+            leftMargin: root.vertical ? 4 : 0
+            rightMargin: root.vertical ? 4 : 0
         }
-        color: Appearance.m3colors.m3surfaceContainerLow
-        radius: Appearance.rounding.small
+        // color: Config.options?.bar.borderless ? "transparent" : colorsPalette.backgroundt70
+        color: Appearance.colors.colLayer1
+        // color: "red"
+        radius: root.radius
     }
 
     GridLayout {

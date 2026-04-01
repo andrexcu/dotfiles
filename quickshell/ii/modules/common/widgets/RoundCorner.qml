@@ -1,6 +1,5 @@
 import QtQuick
 import QtQuick.Shapes
-import qs.colors
 
 Item {
     id: root
@@ -11,7 +10,6 @@ Item {
     property alias topVisualMargin: shape.anchors.topMargin
     property alias rightVisualMargin: shape.anchors.rightMargin
     property alias bottomVisualMargin: shape.anchors.bottomMargin
-    property var colorsPalette: Colors {}
 
     property int implicitSize: 25
     property color color: "#000000"
@@ -43,8 +41,7 @@ Item {
         ShapePath {
             id: shapePath
             strokeWidth: 0
-            strokeColor: "red"
-            fillColor: colorsPalette.backgroundt70
+            fillColor: root.color
             pathHints: ShapePath.PathSolid & ShapePath.PathNonIntersecting
 
             startX: switch (root.corner) {

@@ -21,9 +21,8 @@ Singleton {
     property var activeWorkspace: null
     property var monitors: []
     property var layers: ({})
-
-    // Convenient stuff
-
+    
+   
     function toplevelsForWorkspace(workspace) {
         return ToplevelManager.toplevels.values.filter(toplevel => {
             const address = `0x${toplevel.HyprlandToplevel?.address}`;
@@ -95,16 +94,34 @@ Singleton {
     Component.onCompleted: {
         updateAll();
     }
-
+    readonly property HyprlandToplevel activeToplevel: Hyprland.activeToplevel?.wayland?.activated ? Hyprland.activeToplevel : null
     Connections {
         target: Hyprland
 
         function onRawEvent(event) {
-            // console.log("Hyprland raw event:", event.name);
-            if (["openlayer", "closelayer", "screencast"].includes(event.name)) return;
-            updateAll()
+            const n = event.name;
+            if (n.endsWith("v2")) return;
+
+            if (["openwindow", "closewindow", "movewindow"].includes(n)) {
+                Hyprland.refreshToplevels();   // updates activeToplevel
+            }
+            // optional: refresh workspaces or monitors if needed
+            if (["workspace", "moveworkspace"].includes(n)) {
+                Hyprland.refreshWorkspaces();
+                Hyprland.refreshMonitors();
+            }
+            updateAll();
         }
     }
+    // Connections {
+    //     target: Hyprland
+
+    //     function onRawEvent(event) {
+    //         // console.log("Hyprland raw event:", event.name);
+    //         if (["openlayer", "closelayer", "screencast"].includes(event.name)) return;
+    //         updateAll()
+    //     }
+    // }
 
     Process {
         id: getClients

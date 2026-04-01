@@ -25,10 +25,11 @@ Item {
     id: root
     
 
-    implicitHeight: Players.player !== null ? playerCard.implicitHeight : 0
+    implicitHeight: Players.stablePlayer !== null ? playerCard.implicitHeight : 0
     // property MprisPlayer player: Players.readyActive
-    property MprisPlayer selectedPlayer: Players.player
-    visible: Players.player !== null
+    readonly property MprisPlayer selectedPlayer: Players.player
+    // property MprisPlayer selectedPlayer: Players.player
+    visible:  Players.stablePlayer !== null
     property var colorsPalette: Colors{}
       // used by Image
     
@@ -91,7 +92,7 @@ Item {
         
         
             property alias blurTimerRef: imgBlurInTimer
-            
+         
             Image {
                 id: bgArtCurrent
                 anchors.fill: parent
@@ -113,17 +114,17 @@ Item {
 
             property string pendingSource: ""
             property bool transitioning: false
+   
             Timer {
                 id: imgBlurInTimer
                 interval: 150
                 repeat: false
                 onTriggered: {
-                        bgArtCurrent.source = bgArtContainer.pendingSource
-                    
-                    imgBlurOutTimer.start()
+                    if (!bgArtContainer.pendingSource) return
+                    bgArtCurrent.source = bgArtContainer.pendingSource
+                    imgBlurOutTimer.restart()
                 }
             }
-
             Timer {
                 id: imgBlurOutTimer
                 interval: 50
@@ -134,10 +135,10 @@ Item {
             Connections {
                 target: Players
                 function onDisplayedArtFilePathChanged() {
-                    if (!Players.displayedArtFilePath) return
                     bgArtContainer.pendingSource = Players.displayedArtFilePath
+                    if (!bgArtContainer.pendingSource) return  // skip if no art yet
                     bgArtContainer.transitioning = true
-                    imgBlurInTimer.start()
+                    imgBlurInTimer.restart()
                 }
             }
 
@@ -177,52 +178,6 @@ Item {
                 margins: 10
             }
             spacing: 6
-
-            // // Player switcher header (when multiple players)
-            // RowLayout {
-            //     Layout.fillWidth: true
-            //     visible: true
-            //     // visible: (MprisController.displayPlayers?.length ?? 0) > 1
-            //     spacing: 6
-
-            //     MaterialSymbol {
-            //         text: _playerIcon()
-            //         iconSize: 14
-            //         color: root.colTextSecondary
-            //     }
-
-            //     StyledText {
-            //         Layout.fillWidth: true
-            //         text: Players.player?.identity ?? ""
-            //         font.pixelSize: Appearance.font.pixelSize.smallest
-            //         // color: root.colTextSecondary
-            //         color: blendedColors?.colSubtext ?? Appearance.colors.colSubtext
-            //         elide: Text.ElideRight
-            //     }
-
-            //     RippleButton {
-            //         implicitWidth: 20
-            //         implicitHeight: 20
-            //         buttonRadius: 10
-            //         colBackground: "transparent"
-            //         colBackgroundHover: Appearance.colors.colLayer1Hover
-            //         onClicked: {
-            //             playerSwitcherMenu.anchorItem = this
-            //             playerSwitcherMenu.active = true
-            //         }
-
-            //         contentItem: MaterialSymbol {
-            //             anchors.centerIn: parent
-            //             text: "swap_horiz"
-            //             iconSize: 14
-            //             color: root.colTextSecondary
-            //         }
-
-            //         StyledToolTip {
-            //             text: Translation.tr("Switch player")
-            //         }
-            //     }
-            // }
 
             
             // Main content: Album art + Track info + time
@@ -402,10 +357,10 @@ Item {
                     RowLayout {
                         Layout.fillWidth: true
                         spacing: 4
-                        visible: Players.effectiveLength > 0
+                        visible: Players.stablePlayer !== null > 0
 
                         StyledText {
-                            text: formatTime(root.selectedPlayer?.position ?? 0)
+                            text: formatTime(Players.effectivePosition ?? 0)
                             font.pixelSize: Appearance.font.pixelSize.smallest
                             font.family: Appearance.font.family.numbers
                             color: root.accentColor
@@ -420,7 +375,7 @@ Item {
                         }
 
                         StyledText {
-                            text: formatTime(root.selectedPlayer?.length ?? 0)
+                            text: formatTime(Players.effectiveLength ?? 0)
                             font.pixelSize: Appearance.font.pixelSize.smallest
                             font.family: Appearance.font.family.numbers
                             color: root.colTextSecondary
@@ -462,22 +417,17 @@ Item {
                 implicitHeight: 16
                 Loader {
                     anchors.fill: parent
-                    active: Players.effectiveCanSeek
-                    sourceComponent: StyledSlider {
+                    active: Players.effectiveCanSeek ?? false
+                   
+                   sourceComponent: StyledSlider {
                         configuration: StyledSlider.Configuration.Wavy
-                        wavy: Players.effectiveIsPlaying
-                        animateWave: Players.effectiveIsPlaying
+                        wavy: Players.effectiveIsPlaying ?? false
+                        animateWave: Players.effectiveIsPlaying ?? false
                         highlightColor: blendedColors?.colPrimary ?? Appearance.colors.colPrimary
                         trackColor: blendedColors?.colSecondaryContainer ?? Appearance.colors.colSecondaryContainer
                         handleColor: blendedColors?.colPrimary ?? Appearance.colors.colPrimary
-                        value: Players.effectiveLength > 0 ? Players.effectivePosition / Players.effectiveLength : 0
-                        onMoved: {
-                            if (Players.isYtMusicPlayer) {
-                                YtMusic.seek(value * Players.effectiveLength)
-                            } else if (root.selectedPlayer) {
-                                root.selectedPlayer.position = value * root.selectedPlayer.length
-                            }
-                        }
+                        value: root.selectedPlayer?.length > 0 ? root.selectedPlayer.position / root.selectedPlayer.length : 0
+                        onMoved: root.selectedPlayer.position = value * root.selectedPlayer.length
                         scrollable: true
                     }
                 }
@@ -506,13 +456,13 @@ Item {
                     }
 
                     Connections {
-                        target: MprisController
-                        onHasShuffleChanged: {
-                            // forces QML to update the rectangle color and toggled state
-                            // sometimes just referencing it is enough
-                            _dummy = MprisController.hasShuffle
+                            target: MprisController
+                            function onHasShuffleChanged() {
+                                // forces QML to update the rectangle color and toggled state
+                                // sometimes just referencing it is enough
+                                _dummy = MprisController.hasShuffle
+                            }
                         }
-                    }
                     property bool _dummy
                 }
 
@@ -522,15 +472,97 @@ Item {
                 MediaControlBtn {
                     icon: "skip_previous"
                     visible: Players.effectiveCanSeek
+                    // visible: true
                     iconFill: true
-                    onClicked: selectedPlayer.previous()
+                    onClicked: {
+                        selectedPlayer.previous()
+                        loadingDots.dotCount = 1
+
+                        // Restart all dot animations so opacity starts from the beginning
+                        for (let i = 0; i < loadingDots.children.length; i++) {
+                            let child = loadingDots.children[i]
+                            if (child.dotAnim) {
+                                child.dotAnim.restart()
+                            }
+                        }
+                    }
                     tooltipText: Translation.tr("Previous")
                 }
+                 RippleButton {
+                        id: placeholder
+                        visible: !Players?.effectiveCanSeek
+                        // visible: true
+                        
+                        // anchors.right: parent.right
+                        // anchors.bottom: sliderRow.top
+                        anchors.bottomMargin: 5
+                        property real size: 44
+                        implicitWidth: size
+                        implicitHeight: size
+                 }
 
+
+
+
+
+                Item {
+                id: loadingDots
+                visible: !Players.effectiveCanSeek
+                Layout.fillWidth: true
+                
+                implicitHeight: 16
+
+             
+                Layout.alignment: Qt.AlignHCenter | Qt.AlignBottom
+               
+    
+
+                property int dotCount: 1
+
+                    // Timer to grow dots from 4 → 7 and reset to 4
+                    Timer {
+                        interval: 600
+                        repeat: true
+                        running: !Players.effectiveCanSeek
+                        onTriggered: {
+                            if (loadingDots.dotCount < 4) {
+                                loadingDots.dotCount++
+                            } else {
+                                loadingDots.dotCount = 1
+                            }
+                        }
+                    }
+
+                    Row {
+                        anchors.centerIn: parent
+                        spacing: 4
+
+                        Repeater {
+                            model: loadingDots.dotCount
+
+                            Rectangle {
+                                width: 6
+                                height: 6
+                                radius: 3
+                                color: blendedColors?.colPrimary ?? Appearance.colors.colPrimary
+                                opacity: 0.3
+
+                                SequentialAnimation on opacity {
+                                    id: dotAnim
+                                    loops: Animation.Infinite
+                                    // PauseAnimation { duration: index * 400 } // stagger start
+                                    NumberAnimation { to: 1; duration: 400; easing.type: Easing.InOutQuad }
+                                    NumberAnimation { to: 0.3; duration: 400; easing.type: Easing.InOutQuad }
+                                }
+                            }
+                        }
+                    }
+                }
                 // Play/Pause — prominent center button
                 RippleButton {
                         id: playPauseButton
                         visible: Players?.effectiveCanSeek ?? false
+                        // visible: true
                         
                         // anchors.right: parent.right
                         // anchors.bottom: sliderRow.top
@@ -547,6 +579,7 @@ Item {
 
                         contentItem: MaterialSymbol {
                             iconSize: Appearance.font.pixelSize.huge
+                            // visible: Players?.effectiveCanSeek ?? false
                             fill: 1
                             horizontalAlignment: Text.AlignHCenter
                             color: Players.effectiveIsPlaying ? blendedColors.colOnPrimary : blendedColors.colOnSecondaryContainer
@@ -563,7 +596,18 @@ Item {
                     icon: "skip_next"
                     visible: Players.effectiveCanSeek
                     iconFill: true
-                    onClicked: selectedPlayer.next()
+                    onClicked: {
+                        selectedPlayer.next()
+                        loadingDots.dotCount = 1
+
+                        // Restart all dot animations so opacity starts from the beginning
+                        for (let i = 0; i < loadingDots.children.length; i++) {
+                            let child = loadingDots.children[i]
+                            if (child.dotAnim) {
+                                child.dotAnim.restart()
+                            }
+                        }
+                    }
                     tooltipText: Translation.tr("Next")
                 }
 
@@ -573,30 +617,64 @@ Item {
             Item {
                 width: 32
                 height: 32
-                visible: Players.effectiveCanSeek
-                // Rounded background
                 Rectangle {
                     anchors.fill: parent
+                    visible: Players.effectiveCanSeek
                     radius: width / 2
-                    color: MprisController.loopState !== 0
-                        ? blendedColors.colPrimary
-                        : "transparent"
+                    color: Players.currentLoopState !== 0 ? blendedColors.colPrimary : "transparent"
                     opacity: 0.1
                     z: 0
                 }
 
                 MediaControlBtn {
                     anchors.fill: parent
-                    z: 1  // Ensure button is on top
+                    visible: Players.effectiveCanSeek
+                    z: 1
+                    // icon: "repeat"
                     icon: MprisController.loopState === 2 ? "repeat_one" : "repeat"
-                    toggled: MprisController.loopState !== 0
+                    toggled: Players.currentLoopState !== 0
                     onClicked: {
-                        const next = (MprisController.loopState + 1) % 3
-                        MprisController.setLoopState(next)
+                        Players.toggleLoopState()
+                        // const next = Players.currentLoopState === 0 ? 1 : 0
+                        // MprisController.setLoopState(next)
                     }
                     tooltipText: Translation.tr("Loop")
                     small: true
                 }
+
+            // Connections {
+            //     target: MprisController
+            //     function onLoopStateChanged() {
+            //         console.log("MPRIS loop state changed, now:", MprisController.loopState)
+            //         // If you want a local property, you can sync here:
+            //         // Players.loopState = MprisController.loopState
+            //     }
+            // }
+                // Rounded background
+                // Rectangle {
+                //     anchors.fill: parent
+                //     visible: Players.effectiveCanSeek
+                //     radius: width / 2
+                //     color: MprisController.loopState !== 0
+                //         ? blendedColors.colPrimary
+                //         : "transparent"
+                //     opacity: 0.1
+                //     z: 0
+                // }
+
+                // MediaControlBtn {
+                //     anchors.fill: parent
+                //     visible: Players.effectiveCanSeek
+                //     z: 1  // Ensure button is on top
+                    // icon: MprisController.loopState === 2 ? "repeat_one" : "repeat"
+                //     toggled: MprisController.loopState !== 0
+                //     onClicked: {
+                //         const next = (MprisController.loopState + 1) % 3
+                //         MprisController.setLoopState(next)
+                //     }
+                //     tooltipText: Translation.tr("Loop")
+                //     small: true
+                // }
             }
             }
         }

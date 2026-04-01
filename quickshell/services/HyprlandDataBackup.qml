@@ -21,9 +21,8 @@ Singleton {
     property var activeWorkspace: null
     property var monitors: []
     property var layers: ({})
-
-    // Convenient stuff
-
+    
+   
     function toplevelsForWorkspace(workspace) {
         return ToplevelManager.toplevels.values.filter(toplevel => {
             const address = `0x${toplevel.HyprlandToplevel?.address}`;
@@ -79,19 +78,49 @@ Singleton {
         }, null);
     }
 
+    function secondBiggestWindowForWorkspace(workspaceId) {
+        const windows = HyprlandData.windowList
+            .filter(w => w.workspace.id == workspaceId)
+            .sort((a, b) => {
+                const aArea = (a?.size?.[0] ?? 0) * (a?.size?.[1] ?? 0);
+                const bArea = (b?.size?.[0] ?? 0) * (b?.size?.[1] ?? 0);
+                return bArea - aArea;
+            });
+
+        return windows.length > 1 ? windows[1] : null;
+    }
+
+
     Component.onCompleted: {
         updateAll();
     }
-
+    readonly property HyprlandToplevel activeToplevel: Hyprland.activeToplevel?.wayland?.activated ? Hyprland.activeToplevel : null
     Connections {
         target: Hyprland
 
         function onRawEvent(event) {
-            // console.log("Hyprland raw event:", event.name);
-            if (["openlayer", "closelayer", "screencast"].includes(event.name)) return;
-            updateAll()
+            const n = event.name;
+            if (n.endsWith("v2")) return;
+
+            if (["openwindow", "closewindow", "movewindow"].includes(n)) {
+                Hyprland.refreshToplevels();   // updates activeToplevel
+            }
+            // optional: refresh workspaces or monitors if needed
+            if (["workspace", "moveworkspace"].includes(n)) {
+                Hyprland.refreshWorkspaces();
+                Hyprland.refreshMonitors();
+            }
         }
     }
+    // Connections {
+    //     target: Hyprland
+
+    //     function onRawEvent(event) {
+    //         // console.log("Hyprland raw event:", event.name);
+    //         if (["openlayer", "closelayer", "screencast"].includes(event.name)) return;
+    //         updateAll()
+    //     }
+    // }
 
     Process {
         id: getClients

@@ -1079,7 +1079,7 @@ Singleton {
                     property bool media: true
                     property bool week: true
                     property bool context: true
-                    property bool note: false
+                    property bool note: true
                     property bool launch: false
                     property bool controls: true
                     property bool status: true

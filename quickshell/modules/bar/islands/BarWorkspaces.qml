@@ -22,7 +22,7 @@ Item {
     readonly property Toplevel activeWindow: ToplevelManager.activeToplevel
     readonly property var wsConfig: Config.options?.bar?.workspaces ?? {}
     // readonly property int workspacesShown: Config.options.bar.workspaces.shown
-    readonly property int workspacesShown: 10
+    readonly property int workspacesShown: 5
     readonly property int workspaceGroup: Math.floor((monitor?.activeWorkspace?.id - 1) / root.workspacesShown)
     property list<bool> workspaceOccupied: []
     property int widgetPadding: 4
@@ -34,25 +34,29 @@ Item {
     property real workspaceIconOpacityShrinked: 1
     property real workspaceIconMarginShrinked: -4
     property int workspaceIndexInGroup: (monitor?.activeWorkspace?.id - 1) % root.workspacesShown
-    property real parentBarHeight: 0
+   
     property var colorsPalette: Colors{}
     property bool showNumbers: false
     
-   property real dynamicWidth: {
-    let total = 0;
-    const start = root.workspaceGroup * root.workspacesShown; // e.g., group 1: 0*5=0, group2: 1*5=5
-    const end = start + root.workspacesShown;
+    property real dynamicWidth: {
+        let total = 0;
+        const start = root.workspaceGroup * root.workspacesShown; // e.g., group 1: 0*5=0, group2: 1*5=5
+        const end = start + root.workspacesShown;
 
-    for (let i = start; i < end; i++) {
-        const biggest = HyprlandData.biggestWindowForWorkspace(i + 1);
-        const second = HyprlandData.secondBiggestWindowForWorkspace(i + 1);
-        const btnWidth = second ? root.workspaceButtonWidth : root.smallButtonWidth;
-        total += btnWidth;
+        for (let i = start; i < end; i++) {
+            const biggest = HyprlandData.biggestWindowForWorkspace(i + 1);
+            const second = HyprlandData.secondBiggestWindowForWorkspace(i + 1);
+            const btnWidth = second ? root.workspaceButtonWidth : root.smallButtonWidth;
+            total += btnWidth;
+        }
+        return total;
     }
-    return total;
-}
+
+    Behavior on implicitWidth{
+        NumberAnimation { duration: 400; easing.type: Easing.OutCubic }
+    }
     implicitWidth: root.dynamicWidth
-    implicitHeight: parentBarHeight
+    implicitHeight: root.vertical ? (root.workspaceButtonWidth * root.workspacesShown) : Appearance.sizes.barHeight
     // Connections {
     // target: HyprlandData
     // onWindowListChanged: root.dynamicWidth = root.dynamicWidth // triggers recalculation
@@ -89,7 +93,10 @@ Item {
     }
 
     // Occupied workspace updates
-    Component.onCompleted: updateWorkspaceOccupied()
+    Component.onCompleted: {
+        updateWorkspaceOccupied()
+      
+    }
     Connections {
         target: Hyprland.workspaces
         function onValuesChanged() {
@@ -109,18 +116,10 @@ Item {
   
 
     // implicitWidth: root.vertical ? Appearance.sizes.verticalBarWidth : (root.workspaceButtonWidth * root.workspacesShown)
-    // implicitHeight: root.vertical ? (root.workspaceButtonWidth * root.workspacesShown) : Appearance.sizes.barHeight
+    
 
     // Scroll to switch workspaces
-    // WheelHandler {
-    //     onWheel: (event) => {
-    //         if (event.angleDelta.y < 0)
-    //             Hyprland.dispatch(`workspace r+1`);
-    //         else if (event.angleDelta.y > 0)
-    //             Hyprland.dispatch(`workspace r-1`);
-    //     }
-    //     acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
-    // }
+   
     WheelHandler {
         acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
 
@@ -173,13 +172,26 @@ Item {
                 implicitWidth: second ? root.workspaceButtonWidth : root.smallButtonWidth
                 implicitHeight: 26
 
-                property bool isActiveWorkspace: monitor?.activeWorkspace?.id === workspaceValue
+                // property bool isActiveWorkspace: monitor?.activeWorkspace?.id === workspaceValue
                 // Occupancy & corner logic
                 // property bool currentOccupied: Boolean(workspaceOccupied[index]) && !(Boolean(activeWindow?.activated) === false && monitor?.activeWorkspace?.id === workspaceValue)
-                property bool previousOccupied: Boolean(workspaceOccupied[index-1]) && !(Boolean(activeWindow?.activated) === false && monitor?.activeWorkspace?.id === workspaceValue-1)
-                property bool nextOccupied: Boolean(workspaceOccupied[index+1]) && !(Boolean(activeWindow?.activated) === false && monitor?.activeWorkspace?.id === workspaceValue+1)
-                property real leftRadius: previousOccupied ? 0 : 14
-                property real rightRadius: nextOccupied ? 0 : 14
+                // property bool previousOccupied: Boolean(workspaceOccupied[index-1]) && !(Boolean(activeWindow?.activated) === false && monitor?.activeWorkspace?.id === workspaceValue-1)
+                // property bool nextOccupied: Boolean(workspaceOccupied[index+1]) && !(Boolean(activeWindow?.activated) === false && monitor?.activeWorkspace?.id === workspaceValue+1)
+                
+                
+                // property bool currentOccupied:  ( monitor?.activeWorkspace?.windows?.length ?? 0) > 0
+
+                property bool previousOccupied:
+                    Boolean(workspaceOccupied[index - 1] ?? false) &&
+                    (Boolean(activeWindow?.activated) || monitor?.activeWorkspace?.id !== workspaceValue - 1)
+
+                property bool nextOccupied:
+                    Boolean(workspaceOccupied[index + 1] ?? false) &&
+                    (Boolean(activeWindow?.activated) || monitor?.activeWorkspace?.id !== workspaceValue + 1)
+            
+                
+                property real leftRadius: previousOccupied ? 0 : Appearance.rounding.full
+                property real rightRadius: nextOccupied ? 0 : Appearance.rounding.full
 
                 topLeftRadius: root.vertical ? leftRadius : leftRadius
                 bottomLeftRadius: root.vertical ? leftRadius : leftRadius
@@ -187,8 +199,11 @@ Item {
                 bottomRightRadius: root.vertical ? rightRadius : rightRadius
 
                 // color: ColorUtils.transparentize(colorsPalette.secondaryContainer, 0.4)
-                color: ColorUtils.transparentize(Appearance.m3colors.m3secondaryContainer, 0.4)
-                opacity: (workspaceOccupied[index] && !(!activeWindow?.activated && monitor?.activeWorkspace?.id === workspaceValue)) ? 1 : 0
+                // color: ColorUtils.transparentize(Appearance.m3colors.m3secondaryContainer, 0.4)
+                color: (workspaceOccupied[index] && !(!activeWindow?.activated && monitor?.activeWorkspace?.id === workspaceValue)) 
+                ? ColorUtils.transparentize(Appearance.m3colors.m3secondaryContainer, 0.4) 
+                : "transparent"
+                // opacity: (workspaceOccupied[index] && !(!activeWindow?.activated && monitor?.activeWorkspace?.id === workspaceValue)) ? 1 : 0
                 // color: "#4D000000"
                 enabled: false
 
@@ -202,90 +217,25 @@ Item {
     }
 
 
-// Rectangle {
-//     id: activeIndicatorSettled
-//     z: 2
-//     opacity: moving ? 0 : 1
-//     color: colorsPalette.primary
-//     anchors.verticalCenter: parent.verticalCenter
-
-//     property real dotSize: 8
-//     property bool moving: false
-
-//     // Workspace width and position
-//     property real indicatorWidth: {
-//         const ws = monitor?.activeWorkspace?.id
-//         const second = HyprlandData.secondBiggestWindowForWorkspace(ws)
-//         return second ? root.workspaceButtonWidth : root.smallButtonWidth
-//     }
-
-//     property real indicatorX: {
-//         let pos = 0
-//         const startWorkspace = root.workspaceGroup * root.workspacesShown
-//         for (let i = startWorkspace; i < startWorkspace + root.workspaceIndexInGroup; i++) {
-//             const second = HyprlandData.secondBiggestWindowForWorkspace(i + 1)
-//             pos += second ? root.workspaceButtonWidth : root.smallButtonWidth
-//         }
-//         return pos
-//     }
-
-//     property real fullHeight: 26 - root.activeWorkspaceMargin * 2
-
-//     // --- SIZE ---
-//     width: moving ? dotSize : indicatorWidth
-//     height: moving ? dotSize : fullHeight
-//     radius: moving ? dotSize/2 : 6
-
-//     // --- X POSITION ---
-//     // Always keep centered on workspace; no animation while expanding
-//     x: indicatorX + (indicatorWidth - width)/2
-
-//     // --- ANIMATIONS ---
-//     Behavior on width { NumberAnimation { duration: activeIndicatorSettled.moving ? 120 : 180; easing.type: Easing.OutCubic } }
-//     Behavior on height { NumberAnimation { duration: activeIndicatorSettled.moving ? 120 : 180; easing.type: Easing.OutCubic } }
-//     Behavior on radius { NumberAnimation { duration: activeIndicatorSettled.moving ? 120 : 180; easing.type: Easing.OutCubic } }
-
-//     // --- MOVEMENT FLAG ---
-//     function startMoving() {
-//         moving = true
-//         settleTimer.restart()
-//     }
-
-//     // Call this whenever workspace changes
-//     onIndicatorXChanged: activeIndicatorSettled.startMoving()
-
-//     Timer {
-//         id: settleTimer
-//         interval: 600
-//         repeat: false
-//         onTriggered: activeIndicatorSettled.moving = false
-//     }
-// }
-
 
 
 // Rectangle {
 //     id: activeIndicator
-//     z: moving ? 4: 2
-//     opacity: moving ? 1 : 0
+//     z: 2
+//     radius: 8
 //     color: colorsPalette.primary
 
 //     anchors.verticalCenter: parent.verticalCenter
+//     // if vertical bar, use horizontalCenter: parent.horizontalCenter
 
-//     // --- CONFIG ---
-//     property real dotSize: 8
-//     property bool moving: false
-
-//     // --- WIDTH ---
 //     property real indicatorWidth: {
 //         const ws = monitor?.activeWorkspace?.id
 //         const second = HyprlandData.secondBiggestWindowForWorkspace(ws)
 //         return second ? root.workspaceButtonWidth : root.smallButtonWidth
 //     }
 
-//     // --- POSITION ---
 //     property real indicatorX: {
-//         let pos = 0
+//         let pos = 0  // start at 0, parent anchors will handle vertical centering
 //         const startWorkspace = root.workspaceGroup * root.workspacesShown
 //         for (let i = startWorkspace; i < startWorkspace + root.workspaceIndexInGroup; i++) {
 //             const second = HyprlandData.secondBiggestWindowForWorkspace(i + 1)
@@ -294,62 +244,23 @@ Item {
 //         return pos
 //     }
 
-//     property real fullHeight: 26 - root.activeWorkspaceMargin * 2
+//     Behavior on indicatorX { NumberAnimation { duration: 320; easing.type: Easing.InOutQuad } }
+//     Behavior on indicatorWidth { NumberAnimation { duration: 320; easing.type: Easing.InOutQuad } }
 
-//     // --- SIZE ---
-//     width: moving ? dotSize : indicatorWidth
-//     height: moving ? dotSize : fullHeight
-//     radius: moving ? dotSize/2 : 6
-
-//     // --- POSITION FIX ---
-//     x: moving
-//         ? indicatorX + (indicatorWidth - dotSize) / 2   // center dot
-//         : indicatorX                                   // original correct position
-
-//     // --- ANIMATION ---
-//     Behavior on x { NumberAnimation { duration: 220; easing.type: Easing.InOutQuad } }
-
-//     Behavior on width {
-//         NumberAnimation {
-//             duration: activeIndicator.moving ? 120 : 180   // fast shrink, slower expand
-//             easing.type: Easing.OutCubic
-//         }
-//     }
-
-//     Behavior on height {
-//         NumberAnimation {
-//             duration: activeIndicator.moving ? 120 : 180
-//             easing.type: Easing.OutCubic
-//         }
-//     }
-
-//     // --- FIX JUMP BUG ---
-//     onIndicatorXChanged: {
-//         activeIndicator.moving = true
-//         dotSettleTimer.restart()
-//     }
-
-//     Timer {
-//         id: dotSettleTimer
-//         interval: 600
-//         repeat: false
-//         onTriggered: activeIndicator.moving = false
-//     }
+//     x: indicatorX  // animate horizontally from left edge of the parent
+//     implicitWidth: indicatorWidth
+//     implicitHeight: 26 - root.activeWorkspaceMargin * 2
 // }
-
-
-
-
-
+// Active workspace indicator
 Rectangle {
     id: activeIndicator
     z: 2
-    radius: 14
+    radius: Appearance.rounding.full
     color: colorsPalette.primary
 
     anchors.verticalCenter: parent.verticalCenter
-    // if vertical bar, use horizontalCenter: parent.horizontalCenter
 
+    // --- Calculated properties ---
     property real indicatorWidth: {
         const ws = monitor?.activeWorkspace?.id
         const second = HyprlandData.secondBiggestWindowForWorkspace(ws)
@@ -357,7 +268,7 @@ Rectangle {
     }
 
     property real indicatorX: {
-        let pos = 0  // start at 0, parent anchors will handle vertical centering
+        let pos = 0
         const startWorkspace = root.workspaceGroup * root.workspacesShown
         for (let i = startWorkspace; i < startWorkspace + root.workspaceIndexInGroup; i++) {
             const second = HyprlandData.secondBiggestWindowForWorkspace(i + 1)
@@ -366,62 +277,110 @@ Rectangle {
         return pos
     }
 
-    Behavior on indicatorX { NumberAnimation { duration: 320; easing.type: Easing.InOutQuad } }
-    Behavior on indicatorWidth { NumberAnimation { duration: 320; easing.type: Easing.InOutQuad } }
+    // --- Smooth animation like AnimatedTabIndexPair ---
+    Behavior on indicatorX { NumberAnimation { duration: 180; easing.type: Easing.InOutQuad } }
+    Behavior on indicatorWidth { NumberAnimation { duration: 180; easing.type: Easing.InOutQuad } }
 
-    x: indicatorX  // animate horizontally from left edge of the parent
+    x: indicatorX
     implicitWidth: indicatorWidth
     implicitHeight: 26 - root.activeWorkspaceMargin * 2
 }
 
+// Trail rectangle (visual effect)
+Rectangle {
+    id: trailIndicator
+    z: 1
+    radius: Appearance.rounding.full
+    color: colorsPalette.primary
+    anchors.verticalCenter: parent.verticalCenter
 
- 
+    // Keep trail's own edges and target
+    property real leftEdge: activeIndicator.x
+    property real rightEdge: activeIndicator.x + activeIndicator.implicitWidth
+    property real targetX: activeIndicator.x
+    property real targetWidth: activeIndicator.implicitWidth
+
+    x: leftEdge
+    implicitWidth: rightEdge - leftEdge
+    implicitHeight: 26 - root.activeWorkspaceMargin * 2
+
+    Timer {
+        interval: 16
+        running: true
+        repeat: true
+        onTriggered: {
+            // Always refer to trailIndicator explicitly
+            trailIndicator.targetX = activeIndicator.x
+            trailIndicator.targetWidth = activeIndicator.implicitWidth
+
+           if (trailIndicator.targetX > trailIndicator.leftEdge) {
+                // moving right → stretch left edge slowly
+                trailIndicator.leftEdge = Math.min(trailIndicator.targetX,
+                    trailIndicator.leftEdge + (trailIndicator.targetX - trailIndicator.leftEdge) * 0.2)
+                trailIndicator.rightEdge = trailIndicator.targetX + trailIndicator.targetWidth
+            } else if (trailIndicator.targetX < trailIndicator.leftEdge) {
+                // moving left → stretch right edge slowly
+                trailIndicator.rightEdge = Math.max(trailIndicator.targetX + trailIndicator.targetWidth,
+                    trailIndicator.rightEdge - (trailIndicator.rightEdge - (trailIndicator.targetX + trailIndicator.targetWidth)) * 0.2)
+                trailIndicator.leftEdge = trailIndicator.targetX
+            } else {
+                // exact position
+                trailIndicator.leftEdge = trailIndicator.targetX
+                trailIndicator.rightEdge = trailIndicator.targetX + trailIndicator.targetWidth
+            }
+        }
+    }
+}
 
     // Workspaces - numbers
     Grid {
         z: 3
-        anchors.centerIn: parent
+        // anchors.centerIn: parent
         columns: root.vertical ? 1 : root.workspacesShown
         rows: root.vertical ? root.workspacesShown : 1
         columnSpacing: 0
         rowSpacing: 0
         
-        // anchors.fill: parent
+        anchors.fill: parent
 
         Repeater {
             model: root.workspacesShown
-
+            
            Button {
             id: button
+            
             property int workspaceValue: workspaceGroup * root.workspacesShown + index + 1
             property bool isActiveWorkspace: monitor?.activeWorkspace?.id === workspaceValue
+            property bool currentOccupied:
+                    Boolean(workspaceOccupied[index]) &&
+                    (Boolean(activeWindow?.activated) || monitor?.activeWorkspace?.id !== workspaceValue)
             // Compute dynamic width
-            property var biggestWindow: HyprlandData.biggestWindowForWorkspace(workspaceValue)
-            property var secondWindow: HyprlandData.secondBiggestWindowForWorkspace(workspaceValue)
-            width: vertical 
-                ? undefined 
-                : (secondWindow ? root.workspaceButtonWidth : root.smallButtonWidth)
-
-            implicitHeight: vertical ? Appearance.sizes.verticalBarWidth : Appearance.sizes.barHeight
-
+            // property var biggestWindow: HyprlandData.biggestWindowForWorkspace(workspaceValue)
+            // property var secondBiggestWindow: HyprlandData.secondBiggestWindowForWorkspace(workspaceValue)
+            
+            width: workspaceButtonBackground.secondBiggestWindow ? root.workspaceButtonWidth : root.smallButtonWidth
+            
+            implicitHeight: Appearance.sizes.barHeight
+            implicitWidth: Appearance.sizes.verticalBarWidth
+            
             onPressed: {
                 if (monitor?.activeWorkspace?.id !== workspaceValue) {
                     Hyprland.dispatch(`workspace ${workspaceValue}`)
                 }
-            }
-                // width: vertical ? undefined : workspaceButtonWidth
-                // height: vertical ? workspaceButtonWidth : undefined
-            //    anchors.leftMargin: 20 // add space between buttons
-            //      anchors.rightMargin: 20
-                
+            }                
                 background: Item {
                     id: workspaceButtonBackground
+                    implicitWidth: workspaceButtonWidth
+                    implicitHeight: workspaceButtonWidth
+                    anchors.centerIn: parent
                     // implicitWidth: workspaceButtonWidth
-                    implicitHeight: 26
+                    // implicitHeight: 26
                     property var biggestWindow: HyprlandData.biggestWindowForWorkspace(button.workspaceValue)
                     property var secondBiggestWindow: HyprlandData.secondBiggestWindowForWorkspace(button.workspaceValue)
-                    property var mainAppIconSource: Quickshell.iconPath(AppSearch.guessIcon(biggestWindow?.class), "image-missing")
-                    // property var secondAppIconSource: Quickshell.iconPath(AppSearch.guessIcon(secondBiggestWindow?.class), "image-missing")
+                    property var mainAppIconSource: biggestWindow
+                    ? Quickshell.iconPath(AppSearch.guessIcon(biggestWindow?.class), "image-missing")
+                    : ""
+                   
                     property var secondAppIconSource: secondBiggestWindow
                     ? Quickshell.iconPath(AppSearch.guessIcon(secondBiggestWindow.class), "image-missing")
                     : ""   // empty string = no icon
@@ -430,7 +389,13 @@ Rectangle {
                         opacity: root.showNumbers
                             || ((Config.options?.bar.workspaces.alwaysShowNumbers && (!Config.options?.bar.workspaces.showAppIcons || !workspaceButtonBackground.biggestWindow || root.showNumbers))
                             || (root.showNumbers && !Config.options?.bar.workspaces.showAppIcons)
-                            )  ? 1 : 0
+                            )  || (button.isActiveWorkspace && !button.currentOccupied) ? 1 : 0
+                        //  opacity: (
+                        //         button.isActiveWorkspace &&
+                        //         !button.currentOccupied
+                        //     )
+                        //  ? 1 : 0
+                        
                         z: 3
                         property bool shouldBeVisible: !button.isActiveWorkspace && !activeIndicator.moving            
                         anchors.centerIn: parent
@@ -443,18 +408,18 @@ Rectangle {
                         property list<string> numberMap: ["一","二","三","四","五","六","七","八","九","十","十一","十二","十三","十四","十五","十六","十七","十八","十九","二十"]
                         text: Config.options?.bar.workspaces.numberMap[button.workspaceValue - 1] || button.workspaceValue
                         elide: Text.ElideRight
-                        color: (monitor?.activeWorkspace?.id == button.workspaceValue) ? 
-                            Appearance.m3colors.m3onPrimary : 
-                            (workspaceOccupied[index] ? Appearance.m3colors.m3onSecondaryContainer : 
-                                colorsPalette.inactiveText)
+                        // color: (monitor?.activeWorkspace?.id == button.workspaceValue) ? 
+                        //     Appearance.m3colors.m3onPrimary : 
+                        //     (workspaceOccupied[index] ? Appearance.m3colors.m3onSecondaryContainer : 
+                        //         colorsPalette.inactiveText)
                         // Appearance.colors.colOnLayer1Inactive
-
-                        Behavior on color {
-                            ColorAnimation {
-                                duration: 250        // animation duration in ms
-                                easing.type: Easing.InOutQuad  // smooth easing
-                            }
-                        }
+                        color: Appearance.m3colors.m3onPrimary
+                        // Behavior on color {
+                        //     ColorAnimation {
+                        //         duration: 250        // animation duration in ms
+                        //         easing.type: Easing.InOutQuad  // smooth easing
+                        //     }
+                        // }
 
                         Behavior on opacity {
                             animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
@@ -466,25 +431,28 @@ Rectangle {
                             || root.showNumbers
                             || (Config.options?.bar.workspaces.showAppIcons && workspaceButtonBackground.biggestWindow)
                             ) ? 0 : 1
-                        visible: opacity > 0
+                        visible: !button.isActiveWorkspace
                         anchors.centerIn: parent
                         width: workspaceButtonWidth * 0.18
                         height: width
                         radius: width / 2
-                        color: (monitor?.activeWorkspace?.id == button.workspaceValue) ? 
-                            Appearance.m3colors.m3onPrimary : 
-                            (workspaceOccupied[index] ? Appearance.m3colors.m3onSecondaryContainer : 
-                                Appearance.colors.colOnLayer1Inactive)
+                        color: Appearance.colors.colOnLayer1Inactive
+                        // color: (monitor?.activeWorkspace?.id == button.workspaceValue) ? 
+                        //     Appearance.m3colors.m3onPrimary : 
+                        //     (workspaceOccupied[index] ? Appearance.m3colors.m3onSecondaryContainer : 
+                        //         Appearance.colors.colOnLayer1Inactive)
 
-                        Behavior on opacity {
-                            animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
-                        }
+                        // Behavior on opacity {
+                        //     animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
+                        // }
                     }
 
                         Item { // Main app icon container
                         anchors.centerIn: parent
-                        implicitWidth: mainAppIcon.implicitWidth
-                        implicitHeight: mainAppIcon.implicitHeight
+                        width: workspaceButtonWidth
+                        height: workspaceButtonWidth
+                        // implicitWidth: mainAppIcon.implicitWidth
+                        
 
                         opacity: !Config.options?.bar.workspaces.showAppIcons ? 0 :
                             (workspaceButtonBackground.biggestWindow && !root.showNumbers) ? 
@@ -495,17 +463,19 @@ Rectangle {
                         Row {
                             anchors.centerIn: parent
                             spacing: 4
+                            
 
                             // --- Main icon ---
                             Item {
-                                width: workspaceIconSizeShrinked
-                                height: workspaceIconSizeShrinked
+                                width: workspaceIconSize
+                                height: workspaceIconSize
                                 visible: workspaceButtonBackground.mainAppIconSource !== ""
-
+                                // && !button.isActiveWorkspace
+                                
                                 IconImage {
                                     id: mainAppIcon
                                     anchors.fill: parent
-                                    
+                                    // anchors.centerIn: parent
                                     source: workspaceButtonBackground.mainAppIconSource
                                     smooth: true
                                     // opacity: activeIndicator.moving ?  0 : 1
@@ -548,9 +518,11 @@ Rectangle {
 
                             // --- Second icon ---
                             Item {
-                                width: workspaceIconSizeShrinked
-                                height: workspaceIconSizeShrinked
+                                width: workspaceIconSize
+                                height: workspaceIconSize
                                 visible: workspaceButtonBackground.secondAppIconSource !== ""
+                                
+                                // && !button.isActiveWorkspace
 
                                 IconImage {
                                     id: secondAppIcon
@@ -600,7 +572,7 @@ Rectangle {
                 
 
             }
-
+        
         }
 
     }

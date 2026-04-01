@@ -31,9 +31,10 @@ Item {
 
         StyledText {
             visible: root.showDate
-            font.pixelSize: Appearance.font.pixelSize.small
+            font.pixelSize: Appearance.font.pixelSize.normal
             color: Appearance.colors.colOnLayer1
             text: DateTime.date
+            font.family: "JetBrainsMono Nerd Font Mono"
         }
     }
 

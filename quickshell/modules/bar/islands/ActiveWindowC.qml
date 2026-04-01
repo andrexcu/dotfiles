@@ -7,9 +7,6 @@ import Quickshell
 import Quickshell.Wayland
 import Quickshell.Hyprland
 import qs.colors
-import qs.config
-import qs.components
-import qs.utils
 
 Item {
     id: root
@@ -19,89 +16,97 @@ Item {
     property string activeWindowAddress: `0x${activeWindow?.HyprlandToplevel?.address}`
     property bool focusingThisMonitor: HyprlandData.activeWorkspace?.monitor == monitor?.name
     property var biggestWindow: HyprlandData.biggestWindowForWorkspace(HyprlandData.monitors[root.monitor?.id]?.activeWorkspace.id)
-    property var colorsPalette: Colors {}
+    property var colorsPalette: Colors{}
     implicitWidth: colLayout.implicitWidth
 
+  
     ColumnLayout {
-        id: colLayout
-        anchors.verticalCenter: parent.verticalCenter
-        anchors.left: parent.left
-        anchors.right: parent.right
-        spacing: -4
+    id: colLayout
+    anchors.verticalCenter: parent.verticalCenter
+    anchors.left: parent.left
+    anchors.right: parent.right
+    spacing: -4
+    StyledText {
+        Layout.fillWidth: true
+        font.pixelSize: Appearance.font.pixelSize.smaller
+        // horizontalAlignment: Text.AlignHCenter
+        // verticalAlignment: Text.AlignVCenter
+        color: colorsPalette.backgroundText
+        elide: Text.ElideRight
+        text: (
+        root.focusingThisMonitor && root.activeWindow?.activated && root.biggestWindow
+            ? root.activeWindow?.appId
+            : (root.biggestWindow?.class ?? qsTr("Desktop"))
+        )
 
-            StyledText {
-            id: typingText
-            // font.pixelSize: Appearance.font.pixelSize.normal
-            color: colorsPalette.inactiveText
-            elide: Text.ElideRight
+    }
+    StyledText {
+        id: typingText
+        Layout.fillWidth: true
+        font.pixelSize: Appearance.font.pixelSize.small
+        // horizontalAlignment: Text.AlignHCenter
+        // verticalAlignment: Text.AlignVCenter
+        color: colorsPalette.backgroundText
+        elide: Text.ElideRight
 
-            property string fullText: ""
-            property real charIndex: 0
+        property string fullText: ""
+        property real charIndex: 0
 
-            text: "~: " + fullText.substring(0, Math.floor(charIndex))
+        text: fullText.substring(0, Math.floor(charIndex))
 
-            PropertyAnimation {
-                id: typingAnim
-                target: typingText
-                property: "charIndex"
-                duration: 180
-                easing.type: Easing.Linear
+        PropertyAnimation {
+            id: typingAnim
+            target: typingText
+            property: "charIndex"
+            duration: 180
+            easing.type: Easing.Linear
+        }
+
+        function startTyping() {
+            Qt.callLater(function() {
+
+                var workspaceId = monitor?.activeWorkspace?.id ?? 1
+
+                var newText = root.biggestWindow
+                    ? (root.activeWindow?.title ?? root.biggestWindow?.title)
+                    : `${qsTr("Workspace")} ${workspaceId}`
+
+                fullText = newText
+                charIndex = 0
+
+                typingAnim.from = 0
+                typingAnim.to = fullText.length
+                typingAnim.restart()
+            })
+        }
+
+        Component.onCompleted: startTyping()
+
+        Connections {
+            target: root
+
+            function onActiveWindowChanged(arg) {
+                typingText.startTyping()
             }
-            function startTyping() {
-                Qt.callLater(function() {
-                    var currentWorkspace = monitor?.activeWorkspace?.id ?? 1
-                    var activeWindow = root.activeWindow
+        }
 
-                    var newText = (activeWindow && activeWindow.activated)
-                                ? activeWindow.appId
-                                : `${qsTr("Workspace")} ${currentWorkspace}`
+        Connections {
+            target: monitor
 
-                    // Always update, even if fullText is same mid-animation
-                    fullText = newText
-                    charIndex = 0
-
-                    typingAnim.from = 0
-                    typingAnim.to = fullText.length
-                    typingAnim.restart()
-                })
+            // ✅ Modern, warning-free
+            function onActiveWorkspaceChanged(arg) {
+                typingText.startTyping()
             }
+        }
+        Connections {
+            target: root.activeWindow
+            ignoreUnknownSignals: true
 
-            Component.onCompleted: startTyping()
-
-            // Update whenever active window changes
-            Connections {
-                target: root
-                onActiveWindowChanged: typingText.startTyping()
-            }
-
-            // Update whenever workspace changes (for empty workspaces)
-            Connections {
-                target: monitor
-                onActiveWorkspaceChanged: typingText.startTyping()
+            function onTitleChanged(arg) {
+                typingText.startTyping()
             }
         }
     }
-    // ColumnLayout {
-    //     id: colLayout
-
-    //     anchors.verticalCenter: parent.verticalCenter
-    //     anchors.left: parent.left
-    //     anchors.right: parent.right
-    //     spacing: -4
-
-    //     StyledText {
-    //         Layout.fillWidth: true
-    //         font.pixelSize: Appearance.font.pixelSize.small
-
-    //         color: colorsPalette.inactiveText
-     
-    //         elide: Text.ElideRight
-    //         text: "~: " + (
-    //         root.focusingThisMonitor && root.activeWindow?.activated && root.biggestWindow
-    //             ? root.activeWindow?.appId
-    //             : (root.biggestWindow?.class ?? `${qsTr("Workspace")} ${monitor?.activeWorkspace?.id ?? 1}`)
-    //     )
-    //     }
-    // }
+}
 
 }

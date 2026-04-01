@@ -455,13 +455,27 @@ mkdir -p "$XDG_STATE_HOME/quickshell/user/generated"
 generate_pywalfox > "$XDG_STATE_HOME/quickshell/user/generated/pywalfox-colors.json"
 
 # Generate GTK3 CSS (legacy apps)
+# Generate GTK3 CSS (legacy apps)
+#!/usr/bin/env bash
+
 GTK3_CSS="$HOME/.config/gtk-3.0/gtk.css"
 mkdir -p "$(dirname "$GTK3_CSS")"
+
+# Helper: convert hex to rgba
+hex_to_rgba() {
+    local hex="${1#\#}"
+    local alpha="${2:-1}"
+    local r=$((0x${hex:0:2}))
+    local g=$((0x${hex:2:2}))
+    local b=$((0x${hex:4:2}))
+    echo "rgba($r,$g,$b,$alpha)"
+}
+
+# Hover background
+HOVER_BG=$(hex_to_rgba "$PRIMARY" 0.1)
+
 cat > "$GTK3_CSS" << EOF
-/*
- * GTK Colors - Generated with iNiR theming
- * This file is overwritten when you change wallpaper
- */
+/* GTK3 Colors — Dark theme, fixed transparency format */
 
 @define-color accent_color ${PRIMARY};
 @define-color accent_fg_color ${ON_PRIMARY};
@@ -503,7 +517,7 @@ placessidebar row {
 }
 
 placessidebar row:hover {
-    background-color: alpha(${PRIMARY}, 0.1) !important;
+    background-color: ${HOVER_BG} !important;
 }
 
 placessidebar row:selected,
@@ -532,6 +546,9 @@ placessidebar row:selected image {
 EOF
 
 # Generate GTK4/libadwaita CSS (Nautilus, GNOME apps)
+#!/usr/bin/env bash
+
+
 GTK4_CSS="$HOME/.config/gtk-4.0/gtk.css"
 mkdir -p "$(dirname "$GTK4_CSS")"
 cat > "$GTK4_CSS" << EOF
@@ -548,8 +565,8 @@ cat > "$GTK4_CSS" << EOF
 @define-color window_bg_color ${BG};
 @define-color window_fg_color ${FG};
 
-@define-color headerbar_bg_color ${SURFACE_DIM};
-@define-color headerbar_fg_color ${ON_SURFACE};
+@define-color headerbar_bg_color ${BG};
+@define-color headerbar_fg_color ${FG};
 
 @define-color popover_bg_color ${SURFACE_CONTAINER};
 @define-color popover_fg_color ${ON_SURFACE};
@@ -557,32 +574,42 @@ cat > "$GTK4_CSS" << EOF
 @define-color dialog_bg_color ${SURFACE_CONTAINER_HIGH};
 @define-color dialog_fg_color ${ON_SURFACE};
 
-@define-color view_bg_color ${SURFACE};
-@define-color view_fg_color ${ON_SURFACE};
+@define-color view_bg_color ${BG};
+@define-color view_fg_color ${FG};
 
 @define-color card_bg_color ${SURFACE_CONTAINER_LOW};
 @define-color card_fg_color ${ON_SURFACE};
 
-@define-color sidebar_bg_color ${SURFACE_CONTAINER_LOW};
-@define-color sidebar_fg_color ${ON_SURFACE};
-@define-color sidebar_border_color ${OUTLINE_VARIANT};
-@define-color sidebar_backdrop_color ${SURFACE_CONTAINER_LOW};
+@define-color sidebar_bg_color ${BG};
+@define-color sidebar_fg_color ${FG};
+@define-color sidebar_border_color ${BG};
+@define-color sidebar_backdrop_color ${BG};
 
 @define-color thumbnail_bg_color ${SURFACE_CONTAINER_HIGHEST};
 @define-color thumbnail_fg_color ${ON_SURFACE};
 
 @define-color card_shade_color alpha(black, 0.15);
-@define-color shade_color alpha(black, 0.36);
+@define-color shade_color alpha(black, 0.25);
 @define-color scrollbar_outline_color alpha(white, 0.1);
+
+headerbar {
+    background-color: ${BG} !important;
+    box-shadow: none !important;
+    border-bottom: none !important;
+}
+
+headerbar separator {
+    background-color: transparent !important;
+}
 
 .nautilus-window .sidebar,
 .nautilus-window sidebar,
-.nautilus-window placessidebar,
-.nautilus-window placessidebar list,
+navigation-view > navigation-sidebar,
 placessidebar,
 placessidebar list {
     background-color: ${BG} !important;
     color: ${FG} !important;
+    border-right: none !important;
 }
 
 placessidebar row {
@@ -591,31 +618,33 @@ placessidebar row {
 }
 
 placessidebar row:hover {
-    background-color: alpha(${PRIMARY}, 0.1) !important;
+    background-color: alpha(${PRIMARY}, 0.08) !important;
 }
 
 placessidebar row:selected,
 placessidebar row:selected:hover {
-    background-color: ${PRIMARY} !important;
-    color: ${ON_PRIMARY} !important;
-}
-
-.nautilus-window headerbar {
-    background-color: ${BG} !important;
-    color: ${FG} !important;
-}
-
-.nautilus-window .view {
-    background-color: ${BG} !important;
-    color: ${FG} !important;
+    background-color: alpha(${PRIMARY}, 0.15) !important;
+    color: ${PRIMARY} !important;
 }
 
 placessidebar image {
-    color: ${FG} !important;
+    color: inherit !important;
 }
 
-placessidebar row:selected image {
-    color: ${ON_PRIMARY} !important;
+.view,
+.nautilus-window .view {
+    background-color: ${BG} !important;
+}
+
+separator.sidebar,
+paned > separator {
+    background-color: transparent !important;
+    min-width: 0;
+}
+
+/* Remove navigation pane borders */
+.navigation-sidebar {
+    border-right: none !important;
 }
 EOF
 
@@ -635,5 +664,4 @@ icon_theme=${CURRENT_ICON_THEME}
 style=${CURRENT_QT_STYLE}
 EOF
 
-# Restart Nautilus so it picks up new GTK CSS
-nautilus -q 2>/dev/null &
+# pkill dolphin 2>/dev/null

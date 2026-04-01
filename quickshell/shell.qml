@@ -7,8 +7,8 @@ import qs.modules.sidebarLeft
 
 ShellRoot {
     id: root
-    Bar {}
-    MediaControls {}
+    // Bar {}
+    // MediaControls {}
     
 
     Component.onCompleted: {

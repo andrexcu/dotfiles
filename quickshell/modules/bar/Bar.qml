@@ -15,6 +15,8 @@ import qs.modules.bar.components
 import qs.modules.common.widgets
 import qs
 import qs.modules.sidebarLeft
+// import Quickshell.Services.UPower
+import qs.services
 
 // | Opacity % | Alpha Hex | Color Code  | Transparency %   |
 // | --------- | --------- | ----------- | ---------------- |
@@ -187,7 +189,8 @@ id: barScope
                                 }
 
                                 implicitSize: Appearance.rounding.screenRounding
-                                color: barRoot.colorsPalette.backgroundt70
+                                // color: barRoot.colorsPalette.backgroundt70
+                                color: "#4D000000"
 
                                 corner: RoundCorner.CornerEnum.TopLeft
                                 states: State {
@@ -206,8 +209,8 @@ id: barScope
                                     bottom: Config.options.bar.bottom ? parent.bottom : undefined
                                 }
                                 implicitSize: Appearance.rounding.screenRounding
-                                color: barRoot.colorsPalette.backgroundt70
-
+                                // color: barRoot.colorsPalette.backgroundt70
+                                color: "#4D000000"
                                 corner: RoundCorner.CornerEnum.TopRight
                                 states: State {
                                     name: "bottom"

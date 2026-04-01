@@ -42,8 +42,8 @@ Item {
             root.hovered = false
             root.trackingScroll = false
         }
-        onPressed: {
-            root.pressed(mouse)   // emit the pressed signal
+        onPressed: function(mouse) {  // explicitly declare the mouse parameter
+            root.pressed(mouse)
         }
         onWheel: event => {
             if (event.angleDelta.y < 0)

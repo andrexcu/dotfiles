@@ -218,7 +218,7 @@ reload_terminal_colors() {
 }
 
 apply_qt() {
-  sh "$CONFIG_DIR/scripts/kvantum/materialQT.sh"          # generate kvantum theme
+  # sh "$CONFIG_DIR/scripts/kvantum/materialQT.sh"          # generate kvantum theme
   python "$CONFIG_DIR/scripts/kvantum/changeAdwColors.py" # apply config colors
 }
 
@@ -305,6 +305,18 @@ apply_gtk_kde() {
   "$SCRIPT_DIR/apply-gtk-theme.sh"
 }
 
+# apply_kde_reload() {
+#     # Reapply color scheme (forces Breeze to update)
+#     lookandfeeltool -a org.kde.breezedark.desktop 2>/dev/null
+#     lookandfeeltool -a org.kde.breeze.desktop 2>/dev/null
+
+#     # Restart services
+#     kquitapp6 plasmashell 2>/dev/null
+#     kstart plasmashell 2>/dev/null &
+
+#     # Restart Dolphin (important)
+#     pkill dolphin
+# }
 # need to work: 
 # sudo mkdir -p /etc/opt/chrome/policies/managed
 # sudo chown $USER /etc/opt/chrome/policies/managed
@@ -328,7 +340,7 @@ else
   apply_terminal_configs &
 fi
 
-# apply_qt & # Qt theming is already handled by kde-material-colors
+ # Qt theming is already handled by kde-material-colors
 
 # Apply GTK/KDE theming if enabled
 if [ -f "$CONFIG_FILE" ]; then
@@ -355,3 +367,4 @@ else
   apply_chrome &
 fi
 
+# apply_qt

@@ -231,7 +231,7 @@ Singleton {
                 "wght": 450,
             })
             property var title: ({ // Slightly bold weight for title
-                "wght": 550, // Weight (Lowe5 to compensate for increased grade)
+                "wght": 550, // Weight (Lowered to compensate for increased grade)
             })
         }
         property QtObject pixelSize: QtObject {
@@ -371,7 +371,7 @@ Singleton {
     }
 
     sizes: QtObject {
-        property real baseBarHeight: 45
+        property real baseBarHeight: 40
         property real barHeight: Config.options.bar.cornerStyle === 1 ? 
             (baseBarHeight + root.sizes.hyprlandGapsOut * 2) : baseBarHeight
         property real barCenterSideModuleWidth: Config.options?.bar.verbose ? 360 : 140

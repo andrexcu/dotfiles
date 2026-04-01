@@ -7,98 +7,98 @@ import qs.modules.common.widgets
 ContentPage {
     forceWidth: true
 
-    // ContentSection {
-    //     icon: "keyboard"
-    //     title: Translation.tr("Cheat sheet")
+    ContentSection {
+        icon: "keyboard"
+        title: Translation.tr("Cheat sheet")
 
-    //     ContentSubsection {
-    //         title: Translation.tr("Super key symbol")
-    //         tooltip: Translation.tr("You can also manually edit cheatsheet.superKey")
-    //         ConfigSelectionArray {
-    //             currentValue: Config.options.cheatsheet.superKey
-    //             onSelected: newValue => {
-    //                 Config.options.cheatsheet.superKey = newValue;
-    //             }
-    //             // Use a nerdfont to see the icons
-    //             options: ([
-    //               "󰖳", "", "󰨡", "", "󰌽", "󰣇", "", "", "", 
-    //               "", "", "󱄛", "", "", "", "⌘", "󰀲", "󰟍", ""
-    //             ]).map(icon => { return {
-    //               displayName: icon,
-    //               value: icon
-    //               }
-    //             })
-    //         }
-    //     }
+        ContentSubsection {
+            title: Translation.tr("Super key symbol")
+            tooltip: Translation.tr("You can also manually edit cheatsheet.superKey")
+            ConfigSelectionArray {
+                currentValue: Config.options.cheatsheet.superKey
+                onSelected: newValue => {
+                    Config.options.cheatsheet.superKey = newValue;
+                }
+                // Use a nerdfont to see the icons
+                options: ([
+                  "󰖳", "", "󰨡", "", "󰌽", "󰣇", "", "", "", 
+                  "", "", "󱄛", "", "", "", "⌘", "󰀲", "󰟍", ""
+                ]).map(icon => { return {
+                  displayName: icon,
+                  value: icon
+                  }
+                })
+            }
+        }
 
-    //     ConfigSwitch {
-    //         buttonIcon: "󰘵"
-    //         text: Translation.tr("Use macOS-like symbols for mods keys")
-    //         checked: Config.options.cheatsheet.useMacSymbol
-    //         onCheckedChanged: {
-    //             Config.options.cheatsheet.useMacSymbol = checked;
-    //         }
-    //         StyledToolTip {
-    //             text: Translation.tr("e.g. 󰘴  for Ctrl, 󰘵  for Alt, 󰘶  for Shift, etc")
-    //         }
-    //     }
+        ConfigSwitch {
+            buttonIcon: "󰘵"
+            text: Translation.tr("Use macOS-like symbols for mods keys")
+            checked: Config.options.cheatsheet.useMacSymbol
+            onCheckedChanged: {
+                Config.options.cheatsheet.useMacSymbol = checked;
+            }
+            StyledToolTip {
+                text: Translation.tr("e.g. 󰘴  for Ctrl, 󰘵  for Alt, 󰘶  for Shift, etc")
+            }
+        }
 
-    //     ConfigSwitch {
-    //         buttonIcon: "󱊶"
-    //         text: Translation.tr("Use symbols for function keys")
-    //         checked: Config.options.cheatsheet.useFnSymbol
-    //         onCheckedChanged: {
-    //             Config.options.cheatsheet.useFnSymbol = checked;
-    //         }
-    //         StyledToolTip {
-    //           text: Translation.tr("e.g. 󱊫 for F1, 󱊶  for F12")
-    //         }
-    //     }
-    //     ConfigSwitch {
-    //         buttonIcon: "󰍽"
-    //         text: Translation.tr("Use symbols for mouse")
-    //         checked: Config.options.cheatsheet.useMouseSymbol
-    //         onCheckedChanged: {
-    //             Config.options.cheatsheet.useMouseSymbol = checked;
-    //         }
-    //         StyledToolTip {
-    //           text: Translation.tr("Replace 󱕐   for \"Scroll ↓\", 󱕑   \"Scroll ↑\", L󰍽   \"LMB\", R󰍽   \"RMB\", 󱕒   \"Scroll ↑/↓\" and ⇞/⇟ for \"Page_↑/↓\"")
-    //         }
-    //     }
-    //     ConfigSwitch {
-    //         buttonIcon: "highlight_keyboard_focus"
-    //         text: Translation.tr("Split buttons")
-    //         checked: Config.options.cheatsheet.splitButtons
-    //         onCheckedChanged: {
-    //             Config.options.cheatsheet.splitButtons = checked;
-    //         }
-    //         StyledToolTip {
-    //             text: Translation.tr("Display modifiers and keys in multiple keycap (e.g., \"Ctrl + A\" instead of \"Ctrl A\" or \"󰘴 + A\" instead of \"󰘴 A\")")
-    //         }
+        ConfigSwitch {
+            buttonIcon: "󱊶"
+            text: Translation.tr("Use symbols for function keys")
+            checked: Config.options.cheatsheet.useFnSymbol
+            onCheckedChanged: {
+                Config.options.cheatsheet.useFnSymbol = checked;
+            }
+            StyledToolTip {
+              text: Translation.tr("e.g. 󱊫 for F1, 󱊶  for F12")
+            }
+        }
+        ConfigSwitch {
+            buttonIcon: "󰍽"
+            text: Translation.tr("Use symbols for mouse")
+            checked: Config.options.cheatsheet.useMouseSymbol
+            onCheckedChanged: {
+                Config.options.cheatsheet.useMouseSymbol = checked;
+            }
+            StyledToolTip {
+              text: Translation.tr("Replace 󱕐   for \"Scroll ↓\", 󱕑   \"Scroll ↑\", L󰍽   \"LMB\", R󰍽   \"RMB\", 󱕒   \"Scroll ↑/↓\" and ⇞/⇟ for \"Page_↑/↓\"")
+            }
+        }
+        ConfigSwitch {
+            buttonIcon: "highlight_keyboard_focus"
+            text: Translation.tr("Split buttons")
+            checked: Config.options.cheatsheet.splitButtons
+            onCheckedChanged: {
+                Config.options.cheatsheet.splitButtons = checked;
+            }
+            StyledToolTip {
+                text: Translation.tr("Display modifiers and keys in multiple keycap (e.g., \"Ctrl + A\" instead of \"Ctrl A\" or \"󰘴 + A\" instead of \"󰘴 A\")")
+            }
 
-    //     }
+        }
 
-    //     ConfigSpinBox {
-    //         text: Translation.tr("Keybind font size")
-    //         value: Config.options.cheatsheet.fontSize.key
-    //         from: 8
-    //         to: 30
-    //         stepSize: 1
-    //         onValueChanged: {
-    //             Config.options.cheatsheet.fontSize.key = value;
-    //         }
-    //     }
-    //     ConfigSpinBox {
-    //         text: Translation.tr("Description font size")
-    //         value: Config.options.cheatsheet.fontSize.comment
-    //         from: 8
-    //         to: 30
-    //         stepSize: 1
-    //         onValueChanged: {
-    //             Config.options.cheatsheet.fontSize.comment = value;
-    //         }
-    //     }
-    // }
+        ConfigSpinBox {
+            text: Translation.tr("Keybind font size")
+            value: Config.options.cheatsheet.fontSize.key
+            from: 8
+            to: 30
+            stepSize: 1
+            onValueChanged: {
+                Config.options.cheatsheet.fontSize.key = value;
+            }
+        }
+        ConfigSpinBox {
+            text: Translation.tr("Description font size")
+            value: Config.options.cheatsheet.fontSize.comment
+            from: 8
+            to: 30
+            stepSize: 1
+            onValueChanged: {
+                Config.options.cheatsheet.fontSize.comment = value;
+            }
+        }
+    }
     ContentSection {
         icon: "call_to_action"
         title: Translation.tr("Dock")
@@ -157,14 +157,14 @@ ContentPage {
             }
         }
 
-        // ConfigSwitch {
-        //     buttonIcon: "account_circle"
-        //     text: Translation.tr('Launch on startup')
-        //     checked: Config.options.lock.launchOnStartup
-        //     onCheckedChanged: {
-        //         Config.options.lock.launchOnStartup = checked;
-        //     }
-        // }
+        ConfigSwitch {
+            buttonIcon: "account_circle"
+            text: Translation.tr('Launch on startup')
+            checked: Config.options.lock.launchOnStartup
+            onCheckedChanged: {
+                Config.options.lock.launchOnStartup = checked;
+            }
+        }
 
         ContentSubsection {
             title: Translation.tr("Security")
@@ -197,14 +197,14 @@ ContentPage {
         ContentSubsection {
             title: Translation.tr("Style: general")
 
-            // ConfigSwitch {
-            //     buttonIcon: "center_focus_weak"
-            //     text: Translation.tr('Center clock')
-            //     checked: Config.options.lock.centerClock
-            //     onCheckedChanged: {
-            //         Config.options.lock.centerClock = checked;
-            //     }
-            // }
+            ConfigSwitch {
+                buttonIcon: "center_focus_weak"
+                text: Translation.tr('Center clock')
+                checked: Config.options.lock.centerClock
+                onCheckedChanged: {
+                    Config.options.lock.centerClock = checked;
+                }
+            }
 
             ConfigSwitch {
                 buttonIcon: "info"
@@ -267,81 +267,81 @@ ContentPage {
         }
     }
 
-    // ContentSection {
-    //     icon: "select_window"
-    //     title: Translation.tr("Overlay: General")
+    ContentSection {
+        icon: "select_window"
+        title: Translation.tr("Overlay: General")
 
-    //     ConfigSwitch {
-    //         buttonIcon: "high_density"
-    //         text: Translation.tr("Enable opening zoom animation")
-    //         checked: Config.options.overlay.openingZoomAnimation
-    //         onCheckedChanged: {
-    //             Config.options.overlay.openingZoomAnimation = checked;
-    //         }
-    //     }
-    //     ConfigSwitch {
-    //         buttonIcon: "texture"
-    //         text: Translation.tr("Darken screen")
-    //         checked: Config.options.overlay.darkenScreen
-    //         onCheckedChanged: {
-    //             Config.options.overlay.darkenScreen = checked;
-    //         }
-    //     }
-    // }
+        ConfigSwitch {
+            buttonIcon: "high_density"
+            text: Translation.tr("Enable opening zoom animation")
+            checked: Config.options.overlay.openingZoomAnimation
+            onCheckedChanged: {
+                Config.options.overlay.openingZoomAnimation = checked;
+            }
+        }
+        ConfigSwitch {
+            buttonIcon: "texture"
+            text: Translation.tr("Darken screen")
+            checked: Config.options.overlay.darkenScreen
+            onCheckedChanged: {
+                Config.options.overlay.darkenScreen = checked;
+            }
+        }
+    }
 
-    // ContentSection {
-    //     icon: "point_scan"
-    //     title: Translation.tr("Overlay: Crosshair")
+    ContentSection {
+        icon: "point_scan"
+        title: Translation.tr("Overlay: Crosshair")
 
-    //     MaterialTextArea {
-    //         Layout.fillWidth: true
-    //         placeholderText: Translation.tr("Crosshair code (in Valorant's format)")
-    //         text: Config.options.crosshair.code
-    //         wrapMode: TextEdit.Wrap
-    //         onTextChanged: {
-    //             Config.options.crosshair.code = text;
-    //         }
-    //     }
+        MaterialTextArea {
+            Layout.fillWidth: true
+            placeholderText: Translation.tr("Crosshair code (in Valorant's format)")
+            text: Config.options.crosshair.code
+            wrapMode: TextEdit.Wrap
+            onTextChanged: {
+                Config.options.crosshair.code = text;
+            }
+        }
 
-    //     RowLayout {
-    //         StyledText {
-    //             Layout.leftMargin: 10
-    //             color: Appearance.colors.colSubtext
-    //             font.pixelSize: Appearance.font.pixelSize.smallie
-    //             text: Translation.tr("Press Super+G to open the overlay and pin the crosshair")
-    //         }
-    //         Item {
-    //             Layout.fillWidth: true
-    //         }
-    //         RippleButtonWithIcon {
-    //             id: editorButton
-    //             buttonRadius: Appearance.rounding.full
-    //             materialIcon: "open_in_new"
-    //             mainText: Translation.tr("Open editor")
-    //             onClicked: {
-    //                 Qt.openUrlExternally(`https://www.vcrdb.net/builder?c=${Config.options.crosshair.code}`);
-    //             }
-    //             StyledToolTip {
-    //                 text: "www.vcrdb.net"
-    //             }
-    //         }
-    //     }
-    // }
+        RowLayout {
+            StyledText {
+                Layout.leftMargin: 10
+                color: Appearance.colors.colSubtext
+                font.pixelSize: Appearance.font.pixelSize.smallie
+                text: Translation.tr("Press Super+G to open the overlay and pin the crosshair")
+            }
+            Item {
+                Layout.fillWidth: true
+            }
+            RippleButtonWithIcon {
+                id: editorButton
+                buttonRadius: Appearance.rounding.full
+                materialIcon: "open_in_new"
+                mainText: Translation.tr("Open editor")
+                onClicked: {
+                    Qt.openUrlExternally(`https://www.vcrdb.net/builder?c=${Config.options.crosshair.code}`);
+                }
+                StyledToolTip {
+                    text: "www.vcrdb.net"
+                }
+            }
+        }
+    }
 
-    // ContentSection {
-    //     icon: "point_scan"
-    //     title: Translation.tr("Overlay: Floating Image")
+    ContentSection {
+        icon: "point_scan"
+        title: Translation.tr("Overlay: Floating Image")
 
-    //     MaterialTextArea {
-    //         Layout.fillWidth: true
-    //         placeholderText: Translation.tr("Image source")
-    //         text: Config.options.overlay.floatingImage.imageSource
-    //         wrapMode: TextEdit.Wrap
-    //         onTextChanged: {
-    //             Config.options.overlay.floatingImage.imageSource = text;
-    //         }
-    //     }
-    // }
+        MaterialTextArea {
+            Layout.fillWidth: true
+            placeholderText: Translation.tr("Image source")
+            text: Config.options.overlay.floatingImage.imageSource
+            wrapMode: TextEdit.Wrap
+            onTextChanged: {
+                Config.options.overlay.floatingImage.imageSource = text;
+            }
+        }
+    }
 
     ContentSection {
         icon: "screenshot_frame_2"
@@ -542,128 +542,128 @@ ContentPage {
             }
         }
 
-        // ContentSubsection {
-        //     title: Translation.tr("Corner open")
-        //     tooltip: Translation.tr("Allows you to open sidebars by clicking or hovering screen corners regardless of bar position")
-        //     ConfigRow {
-        //         uniform: true
-        //         ConfigSwitch {
-        //             buttonIcon: "check"
-        //             text: Translation.tr("Enable")
-        //             checked: Config.options.sidebar.cornerOpen.enable
-        //             onCheckedChanged: {
-        //                 Config.options.sidebar.cornerOpen.enable = checked;
-        //             }
-        //         }
-        //     }
-        //     ConfigSwitch {
-        //         buttonIcon: "highlight_mouse_cursor"
-        //         text: Translation.tr("Hover to trigger")
-        //         checked: Config.options.sidebar.cornerOpen.clickless
-        //         onCheckedChanged: {
-        //             Config.options.sidebar.cornerOpen.clickless = checked;
-        //         }
+        ContentSubsection {
+            title: Translation.tr("Corner open")
+            tooltip: Translation.tr("Allows you to open sidebars by clicking or hovering screen corners regardless of bar position")
+            ConfigRow {
+                uniform: true
+                ConfigSwitch {
+                    buttonIcon: "check"
+                    text: Translation.tr("Enable")
+                    checked: Config.options.sidebar.cornerOpen.enable
+                    onCheckedChanged: {
+                        Config.options.sidebar.cornerOpen.enable = checked;
+                    }
+                }
+            }
+            ConfigSwitch {
+                buttonIcon: "highlight_mouse_cursor"
+                text: Translation.tr("Hover to trigger")
+                checked: Config.options.sidebar.cornerOpen.clickless
+                onCheckedChanged: {
+                    Config.options.sidebar.cornerOpen.clickless = checked;
+                }
 
-        //         StyledToolTip {
-        //             text: Translation.tr("When this is off you'll have to click")
-        //         }
-        //     }
-        //     Row {
-        //         ConfigSwitch {
-        //             enabled: !Config.options.sidebar.cornerOpen.clickless
-        //             text: Translation.tr("Force hover open at absolute corner")
-        //             checked: Config.options.sidebar.cornerOpen.clicklessCornerEnd
-        //             onCheckedChanged: {
-        //                 Config.options.sidebar.cornerOpen.clicklessCornerEnd = checked;
-        //             }
+                StyledToolTip {
+                    text: Translation.tr("When this is off you'll have to click")
+                }
+            }
+            Row {
+                ConfigSwitch {
+                    enabled: !Config.options.sidebar.cornerOpen.clickless
+                    text: Translation.tr("Force hover open at absolute corner")
+                    checked: Config.options.sidebar.cornerOpen.clicklessCornerEnd
+                    onCheckedChanged: {
+                        Config.options.sidebar.cornerOpen.clicklessCornerEnd = checked;
+                    }
 
-        //             StyledToolTip {
-        //                 text: Translation.tr("When the previous option is off and this is on,\nyou can still hover the corner's end to open sidebar,\nand the remaining area can be used for volume/brightness scroll")
-        //             }
-        //         }
-        //         ConfigSpinBox {
-        //             icon: "arrow_cool_down"
-        //             text: Translation.tr("with vertical offset")
-        //             value: Config.options.sidebar.cornerOpen.clicklessCornerVerticalOffset
-        //             from: 0
-        //             to: 20
-        //             stepSize: 1
-        //             onValueChanged: {
-        //                 Config.options.sidebar.cornerOpen.clicklessCornerVerticalOffset = value;
-        //             }
-        //             MouseArea {
-        //                 id: mouseArea
-        //                 anchors.fill: parent
-        //                 hoverEnabled: true
-        //                 acceptedButtons: Qt.NoButton
-        //                 StyledToolTip {
-        //                     extraVisibleCondition: mouseArea.containsMouse
-        //                     text: Translation.tr("Why this is cool:\nFor non-0 values, it won't trigger when you reach the\nscreen corner along the horizontal edge, but it will when\nyou do along the vertical edge")
-        //                 }
-        //             }
-        //         }
-        //     }
+                    StyledToolTip {
+                        text: Translation.tr("When the previous option is off and this is on,\nyou can still hover the corner's end to open sidebar,\nand the remaining area can be used for volume/brightness scroll")
+                    }
+                }
+                ConfigSpinBox {
+                    icon: "arrow_cool_down"
+                    text: Translation.tr("with vertical offset")
+                    value: Config.options.sidebar.cornerOpen.clicklessCornerVerticalOffset
+                    from: 0
+                    to: 20
+                    stepSize: 1
+                    onValueChanged: {
+                        Config.options.sidebar.cornerOpen.clicklessCornerVerticalOffset = value;
+                    }
+                    MouseArea {
+                        id: mouseArea
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        acceptedButtons: Qt.NoButton
+                        StyledToolTip {
+                            extraVisibleCondition: mouseArea.containsMouse
+                            text: Translation.tr("Why this is cool:\nFor non-0 values, it won't trigger when you reach the\nscreen corner along the horizontal edge, but it will when\nyou do along the vertical edge")
+                        }
+                    }
+                }
+            }
             
-        //     ConfigRow {
-        //         uniform: true
-        //         ConfigSwitch {
-        //             buttonIcon: "vertical_align_bottom"
-        //             text: Translation.tr("Place at bottom")
-        //             checked: Config.options.sidebar.cornerOpen.bottom
-        //             onCheckedChanged: {
-        //                 Config.options.sidebar.cornerOpen.bottom = checked;
-        //             }
+            ConfigRow {
+                uniform: true
+                ConfigSwitch {
+                    buttonIcon: "vertical_align_bottom"
+                    text: Translation.tr("Place at bottom")
+                    checked: Config.options.sidebar.cornerOpen.bottom
+                    onCheckedChanged: {
+                        Config.options.sidebar.cornerOpen.bottom = checked;
+                    }
 
-        //             StyledToolTip {
-        //                 text: Translation.tr("Place the corners to trigger at the bottom")
-        //             }
-        //         }
-        //         ConfigSwitch {
-        //             buttonIcon: "unfold_more_double"
-        //             text: Translation.tr("Value scroll")
-        //             checked: Config.options.sidebar.cornerOpen.valueScroll
-        //             onCheckedChanged: {
-        //                 Config.options.sidebar.cornerOpen.valueScroll = checked;
-        //             }
+                    StyledToolTip {
+                        text: Translation.tr("Place the corners to trigger at the bottom")
+                    }
+                }
+                ConfigSwitch {
+                    buttonIcon: "unfold_more_double"
+                    text: Translation.tr("Value scroll")
+                    checked: Config.options.sidebar.cornerOpen.valueScroll
+                    onCheckedChanged: {
+                        Config.options.sidebar.cornerOpen.valueScroll = checked;
+                    }
 
-        //             StyledToolTip {
-        //                 text: Translation.tr("Brightness and volume")
-        //             }
-        //         }
-        //     }
-        //     ConfigSwitch {
-        //         buttonIcon: "visibility"
-        //         text: Translation.tr("Visualize region")
-        //         checked: Config.options.sidebar.cornerOpen.visualize
-        //         onCheckedChanged: {
-        //             Config.options.sidebar.cornerOpen.visualize = checked;
-        //         }
-        //     }
-        //     ConfigRow {
-        //         ConfigSpinBox {
-        //             icon: "arrow_range"
-        //             text: Translation.tr("Region width")
-        //             value: Config.options.sidebar.cornerOpen.cornerRegionWidth
-        //             from: 1
-        //             to: 300
-        //             stepSize: 1
-        //             onValueChanged: {
-        //                 Config.options.sidebar.cornerOpen.cornerRegionWidth = value;
-        //             }
-        //         }
-        //         ConfigSpinBox {
-        //             icon: "height"
-        //             text: Translation.tr("Region height")
-        //             value: Config.options.sidebar.cornerOpen.cornerRegionHeight
-        //             from: 1
-        //             to: 300
-        //             stepSize: 1
-        //             onValueChanged: {
-        //                 Config.options.sidebar.cornerOpen.cornerRegionHeight = value;
-        //             }
-        //         }
-        //     }
-        // }
+                    StyledToolTip {
+                        text: Translation.tr("Brightness and volume")
+                    }
+                }
+            }
+            ConfigSwitch {
+                buttonIcon: "visibility"
+                text: Translation.tr("Visualize region")
+                checked: Config.options.sidebar.cornerOpen.visualize
+                onCheckedChanged: {
+                    Config.options.sidebar.cornerOpen.visualize = checked;
+                }
+            }
+            ConfigRow {
+                ConfigSpinBox {
+                    icon: "arrow_range"
+                    text: Translation.tr("Region width")
+                    value: Config.options.sidebar.cornerOpen.cornerRegionWidth
+                    from: 1
+                    to: 300
+                    stepSize: 1
+                    onValueChanged: {
+                        Config.options.sidebar.cornerOpen.cornerRegionWidth = value;
+                    }
+                }
+                ConfigSpinBox {
+                    icon: "height"
+                    text: Translation.tr("Region height")
+                    value: Config.options.sidebar.cornerOpen.cornerRegionHeight
+                    from: 1
+                    to: 300
+                    stepSize: 1
+                    onValueChanged: {
+                        Config.options.sidebar.cornerOpen.cornerRegionHeight = value;
+                    }
+                }
+            }
+        }
     }
 
     ContentSection {
@@ -739,21 +739,60 @@ ContentPage {
                 }
             }
         }
+        ConfigRow {
+            uniform: true
+            ConfigSelectionArray {
+                currentValue: Config.options.overview.orderRightLeft
+                onSelected: newValue => {
+                    Config.options.overview.orderRightLeft = newValue
+                }
+                options: [
+                    {
+                        displayName: Translation.tr("Left to right"),
+                        icon: "arrow_forward",
+                        value: 0
+                    },
+                    {
+                        displayName: Translation.tr("Right to left"),
+                        icon: "arrow_back",
+                        value: 1
+                    }
+                ]
+            }
+            ConfigSelectionArray {
+                currentValue: Config.options.overview.orderBottomUp
+                onSelected: newValue => {
+                    Config.options.overview.orderBottomUp = newValue
+                }
+                options: [
+                    {
+                        displayName: Translation.tr("Top-down"),
+                        icon: "arrow_downward",
+                        value: 0
+                    },
+                    {
+                        displayName: Translation.tr("Bottom-up"),
+                        icon: "arrow_upward",
+                        value: 1
+                    }
+                ]
+            }
+        }
     }
 
-    // ContentSection {
-    //     icon: "wallpaper_slideshow"
-    //     title: Translation.tr("Wallpaper selector")
+    ContentSection {
+        icon: "wallpaper_slideshow"
+        title: Translation.tr("Wallpaper selector")
 
-    //     ConfigSwitch {
-    //         buttonIcon: "ad"
-    //         text: Translation.tr('Use system file picker')
-    //         checked: Config.options.wallpaperSelector.useSystemFileDialog
-    //         onCheckedChanged: {
-    //             Config.options.wallpaperSelector.useSystemFileDialog = checked;
-    //         }
-    //     }
-    // }
+        ConfigSwitch {
+            buttonIcon: "ad"
+            text: Translation.tr('Use system file picker')
+            checked: Config.options.wallpaperSelector.useSystemFileDialog
+            onCheckedChanged: {
+                Config.options.wallpaperSelector.useSystemFileDialog = checked;
+            }
+        }
+    }
 
     ContentSection {
         icon: "text_format"
@@ -762,7 +801,6 @@ ContentPage {
         ContentSubsection {
             title: Translation.tr("Main font")
             tooltip: Translation.tr("Used for general UI text")
-            
 
             MaterialTextArea {
                 Layout.fillWidth: true

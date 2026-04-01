@@ -125,7 +125,7 @@ ContentPage {
                         text: Translation.tr("Pick wallpaper image on your system")
                     }
                     onClicked: {
-                        Quickshell.execDetached(["hyprctl", "dispatch", "global", "quickshell:wallpaperSelectorToggle"])
+                        Quickshell.execDetached(`${Directories.wallpaperSwitchScriptPath}`);
                     }
                     mainContentComponent: Component {
                         RowLayout {
@@ -141,7 +141,7 @@ ContentPage {
                                     key: "Ctrl"
                                 }
                                 KeyboardKey {
-                                    key: "󰖳"
+                                    key: Config.options.cheatsheet.superKey ?? "󰖳"
                                 }
                                 StyledText {
                                     Layout.alignment: Qt.AlignVCenter
@@ -154,21 +154,21 @@ ContentPage {
                         }
                     }
                 }
-                // RowLayout {
-                //     Layout.alignment: Qt.AlignHCenter
-                //     Layout.fillWidth: true
-                //     Layout.fillHeight: true
-                //     uniformCellSizes: true
+                RowLayout {
+                    Layout.alignment: Qt.AlignHCenter
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    uniformCellSizes: true
 
-                //     SmallLightDarkPreferenceButton {
-                //         Layout.fillHeight: true
-                //         dark: false
-                //     }
-                //     SmallLightDarkPreferenceButton {
-                //         Layout.fillHeight: true
-                //         dark: true
-                //     }
-                // }
+                    SmallLightDarkPreferenceButton {
+                        Layout.fillHeight: true
+                        dark: false
+                    }
+                    SmallLightDarkPreferenceButton {
+                        Layout.fillHeight: true
+                        dark: true
+                    }
+                }
             }
         }
 
@@ -218,17 +218,14 @@ ContentPage {
             ]
         }
 
-        // ConfigSwitch {
-        //     buttonIcon: "ev_shadow"
-        //     text: Translation.tr("Transparency")
-        //     checked: Config.options.appearance.transparency.enable
-        //     onCheckedChanged: {
-        //         Config.options.appearance.transparency.enable = checked;
-        //     }
-        //     StyledToolTip {
-        //         text: Translation.tr("Might look ass. Unsupported.")
-        //     }
-        // }
+        ConfigSwitch {
+            buttonIcon: "ev_shadow"
+            text: Translation.tr("Transparency")
+            checked: Config.options.appearance.transparency.enable
+            onCheckedChanged: {
+                Config.options.appearance.transparency.enable = checked;
+            }
+        }
     }
 
     ContentSection {
@@ -297,36 +294,36 @@ ContentPage {
             }
         }
 
-        // ConfigRow {
-        //     ContentSubsection {
-        //         title: Translation.tr("Screen round corner")
+        ConfigRow {
+            ContentSubsection {
+                title: Translation.tr("Screen round corner")
 
-        //         ConfigSelectionArray {
-        //             currentValue: Config.options.appearance.fakeScreenRounding
-        //             onSelected: newValue => {
-        //                 Config.options.appearance.fakeScreenRounding = newValue;
-        //             }
-        //             options: [
-        //                 {
-        //                     displayName: Translation.tr("No"),
-        //                     icon: "close",
-        //                     value: 0
-        //                 },
-        //                 {
-        //                     displayName: Translation.tr("Yes"),
-        //                     icon: "check",
-        //                     value: 1
-        //                 },
-        //                 {
-        //                     displayName: Translation.tr("When not fullscreen"),
-        //                     icon: "fullscreen_exit",
-        //                     value: 2
-        //                 }
-        //             ]
-        //         }
-        //     }
+                ConfigSelectionArray {
+                    currentValue: Config.options.appearance.fakeScreenRounding
+                    onSelected: newValue => {
+                        Config.options.appearance.fakeScreenRounding = newValue;
+                    }
+                    options: [
+                        {
+                            displayName: Translation.tr("No"),
+                            icon: "close",
+                            value: 0
+                        },
+                        {
+                            displayName: Translation.tr("Yes"),
+                            icon: "check",
+                            value: 1
+                        },
+                        {
+                            displayName: Translation.tr("When not fullscreen"),
+                            icon: "fullscreen_exit",
+                            value: 2
+                        }
+                    ]
+                }
+            }
             
-        // }
+        }
     }
 
     NoticeBox {

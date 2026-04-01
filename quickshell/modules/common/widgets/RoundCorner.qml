@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Shapes
-
+import QtQuick.Effects
+import qs.modules.common
 Item {
     id: root
 
@@ -35,6 +36,14 @@ Item {
             right: root.isRight ? parent.right : undefined
         }
         layer.enabled: true
+
+        layer.effect: MultiEffect {
+            shadowEnabled: true
+            shadowBlur: 0.3      // tune this (0–1 range)
+            shadowColor: Appearance.colors.colShadow
+            shadowVerticalOffset: 1
+            shadowHorizontalOffset: 0
+        }
         layer.smooth: true
         preferredRendererType: Shape.CurveRenderer
 

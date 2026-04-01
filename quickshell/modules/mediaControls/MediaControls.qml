@@ -30,25 +30,25 @@ Scope {
     property real popupRounding: Appearance.inirEverywhere ? Appearance.inir.roundingLarge : Appearance.rounding.large
     readonly property bool visualizerActive: true
  
-    property MprisPlayer safePlayer: null
+    // property MprisPlayer safePlayer: null
     
 
-    Timer {
-        interval: 100
-        repeat: true
-        running: true
-        onTriggered: {
-            const active = Players.active
-            if (active && (active.trackTitle || active.metadata?.title)) {
-                if (safePlayer !== active) {
-                    safePlayer = active
-                }
-            } else if (!active) {
-                safePlayer = null
-            }
-            // If active exists but metadata not ready → keep old safePlayer
-        }
-    }
+    // Timer {
+    //     interval: 100
+    //     repeat: true
+    //     running: true
+    //     onTriggered: {
+    //         const active = Players.active
+    //         if (active && (active.trackTitle || active.metadata?.title)) {
+    //             if (safePlayer !== active) {
+    //                 safePlayer = active
+    //             }
+    //         } else if (!active) {
+    //             safePlayer = null
+    //         }
+    //         // If active exists but metadata not ready → keep old safePlayer
+    //     }
+    // }
 
     CavaProcess {
         id: cavaProcess
@@ -131,54 +131,54 @@ Scope {
 
                 Item {
                 id: cardArea
-                width: root.widgetWidth
-                height: playerColumnLayout.implicitHeight
-                anchors.horizontalCenter: parent.horizontalCenter
-
-                // Use top anchor to position below your media island
-                // anchors.top: mediaIslandBar.bottom
-                anchors.topMargin: 50   // Adjust as needed
-
-                y: anchors.topMargin  // initial position for animation
-                opacity: 0
-                scale: 0.9
-                transformOrigin: Item.Top
-
-                states: State {
-                    name: "visible"
-                    when: GlobalStates.mediaControlsOpen
-                    PropertyChanges {
-                        target: cardArea
-                        y: anchors.topMargin   // animate relative to top
-                        opacity: 1
-                        scale: 1
-                    }
-                }
-
-           
                 // width: root.widgetWidth
                 // height: playerColumnLayout.implicitHeight
                 // anchors.horizontalCenter: parent.horizontalCenter
 
-                // // Use screen height for reliable off-screen position
-                // readonly property real screenH: mediaControlsRoot.screen?.height ?? 1080
-                // readonly property real targetY: screenH - height - root.dockHeight - root.dockMargin - 5
+                // // Use top anchor to position below your media island
+                // // anchors.top: mediaIslandBar.bottom
+                // anchors.topMargin: 50   // Adjust as needed
 
-                // y: screenH + 50
+                // y: anchors.topMargin  // initial position for animation
                 // opacity: 0
                 // scale: 0.9
-                // transformOrigin: Item.Bottom
+                // transformOrigin: Item.Top
 
                 // states: State {
                 //     name: "visible"
                 //     when: GlobalStates.mediaControlsOpen
                 //     PropertyChanges {
                 //         target: cardArea
-                //         y: cardArea.targetY
+                //         y: anchors.topMargin   // animate relative to top
                 //         opacity: 1
                 //         scale: 1
                 //     }
                 // }
+
+           
+                width: root.widgetWidth
+                height: playerColumnLayout.implicitHeight
+                anchors.horizontalCenter: parent.horizontalCenter
+
+                // Use screen height for reliable off-screen position
+                readonly property real screenH: mediaControlsRoot.screen?.height ?? 1080
+                readonly property real targetY: screenH - height - root.dockHeight - root.dockMargin - 5
+
+                y: screenH + 50
+                opacity: 0
+                scale: 0.9
+                transformOrigin: Item.Bottom
+
+                states: State {
+                    name: "visible"
+                    when: GlobalStates.mediaControlsOpen
+                    PropertyChanges {
+                        target: cardArea
+                        y: cardArea.targetY
+                        opacity: 1
+                        scale: 1
+                    }
+                }
 
                 transitions: [
                     Transition {
@@ -207,7 +207,7 @@ Scope {
         
                     PlayerControl {
                         id: playerDelegate
-                        visible: root.safePlayer !== null
+                        visible: Players.stablePlayer !== null
                         selectedPlayer: root.activePlayer
                         visualizerPoints: root.visualizerPoints
                         implicitWidth: root.widgetWidth
@@ -218,153 +218,12 @@ Scope {
                         // screenY: cardArea.y
                     }
 
-                //     Item {
-                //     id: playerSelector
-                //     Layout.alignment: Qt.AlignHCenter
-                //     Layout.topMargin: 10
-                //     property bool menuOpen: false
-                //     visible: root.safePlayer !== null
-                //     Timer {
-                //         id: autoCloseTimer
-                //         interval: 3000   // 3 seconds
-                //         repeat: false
-                //         onTriggered: playerSelector.menuOpen = false
-                //     } 
-                //     // Watch for menuOpen changes
-                //     onMenuOpenChanged: {
-                //         if (menuOpen) {
-                //             autoCloseTimer.restart()  // start countdown when menu opens
-                //         } else {
-                //             autoCloseTimer.stop()     // stop timer if menu closed manually
-                //         }
-                //     }
-                //     // Filtered list: only players with media
-                //     readonly property var mediaPlayers: Players.list.filter(p =>
-                //         Players.hasMedia(p)
-                //         // p.trackTitle || p.trackArtist || p.metadata?.title || p.metadata?.artist || p.metadata?.artUrl
-                //     )
-
-                //     // Base button
-                //         Rectangle {
-                //         id: button
-                //         radius: 8
-                //         color: colorsPalette.surfaceContainer
-                //         implicitWidth: 180
-                //         implicitHeight: 32
-
-                //         // Chevron V arrow
-                //         Item {
-                //             id: chevron
-                //             width: 12
-                //             height: 6
-                //             anchors.verticalCenter: parent.verticalCenter
-                //             anchors.right: parent.right
-                //             anchors.rightMargin: 8
-
-                //             transformOrigin: Item.Center
-                //             rotation: playerSelector.menuOpen ? 180 : 0   // rotate down when menu opens
-                //             Behavior on rotation { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
-
-                //             Canvas {
-                //                 anchors.fill: parent
-                //                 onPaint: {
-                //                     var ctx = getContext("2d");
-                //                     ctx.clearRect(0, 0, width, height);
-                //                     ctx.strokeStyle = colorsPalette.backgroundText;
-                //                     ctx.lineWidth = 2;
-                //                     ctx.lineCap = "round";
-
-                //                     // Draw chevron pointing UP by default
-                //                     ctx.beginPath();
-                //                     ctx.moveTo(0, height);      // bottom-left
-                //                     ctx.lineTo(width/2, 0);     // top-middle
-                //                     ctx.stroke();
-
-                //                     ctx.beginPath();
-                //                     ctx.moveTo(width, height);  // bottom-right
-                //                     ctx.lineTo(width/2, 0);     // top-middle
-                //                     ctx.stroke();
-                //                 }
-                //             }
-                //         }
-                //         StyledText {
-                //             anchors.verticalCenter: parent.verticalCenter
-                //             anchors.left: parent.left
-                //             anchors.right: chevron.left
-                //             anchors.leftMargin: 8
-                //             elide: Text.ElideRight
-                //             text: Players.active ? Players.getIdentity(Players.active) : "No players"
-                //         }
-
-                //         MouseArea {
-                //             anchors.fill: parent
-                //             onClicked: playerSelector.menuOpen = !playerSelector.menuOpen
-                //         }
-                //     }
-
-                //     // Make parent item size match the button
-                //     width: button.implicitWidth
-                //     height: button.implicitHeight
-
-                //     // Menu container with smooth animation
-                //     Rectangle {
-                //         id: menuContainer
-                //         width: button.width
-                //         color: "transparent"
-                //         radius: 6
-                //         anchors.horizontalCenter: button.horizontalCenter
-                //         anchors.top: button.bottom
-                //         clip: true
-
-                //         property real itemHeight: 30
-                //         property real targetHeight: playerSelector.mediaPlayers.length * (itemHeight + 4) // 4 = spacing
-                //         height: playerSelector.menuOpen ? targetHeight : 0
-                //         opacity: playerSelector.menuOpen ? 1 : 0
-
-                //         Behavior on height { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
-                //         Behavior on opacity { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
-
-                //         Column {
-                //             id: menu
-                //             spacing: 4
-                //             anchors.left: parent.left
-                //             anchors.right: parent.right
-
-                //             Repeater {
-                //                 model: playerSelector.mediaPlayers
-
-                //                 delegate: Rectangle {
-                //                     required property var modelData
-                //                     width: parent.width
-                //                     height: menuContainer.itemHeight
-                //                     radius: 6
-                //                     color: modelData === Players.active ? colorsPalette.primary : colorsPalette.background
-
-                //                     StyledText {
-                //                         anchors.centerIn: parent
-                //                         text: Players.getIdentity(modelData)
-                //                         elide: Text.ElideRight
-                //                         color: modelData === Players.active ? colorsPalette.primaryText : colorsPalette.backgroundText
-                //                     }
-
-                //                     MouseArea {
-                //                         anchors.fill: parent
-                //                         onClicked: {
-                //                             Players.manualActive = modelData
-                //                             playerSelector.menuOpen = false
-                //                         }
-                //                     }
-                //                 }
-                //             }
-                //         }
-                //     }
-                // }
-
                     Item { // No player placeholder
                         Layout.fillWidth: true
-                        visible: safePlayer === null
-                        // visible: (root.activePlayer?.length ?? 0) === 0
-                        // visible: root.activePlayer.length === 0
+                        visible: Players.stablePlayer === null
+                        focus: false
+                        enabled: false
+                        activeFocusOnTab: false
                         implicitWidth: placeholderBackground.implicitWidth + Appearance.sizes.elevationMargin
                         implicitHeight: placeholderBackground.implicitHeight + Appearance.sizes.elevationMargin
 

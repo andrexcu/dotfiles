@@ -2,7 +2,7 @@ import qs.modules.config
 import QtQuick
 
 NumberAnimation {
-    duration: Appearance.anim.durations.normal
+    duration: AppearanceHelper.anim.durations.normal
     easing.type: Easing.BezierSpline
-    easing.bezierCurve: Appearance.anim.curves.standard
+    easing.bezierCurve: AppearanceHelper.anim.curves.standard
 }

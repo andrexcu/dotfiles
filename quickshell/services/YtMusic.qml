@@ -379,6 +379,10 @@ Singleton {
         root.repeatMode = (root.repeatMode + 1) % 3
     }
 
+    function cycleRepeatModeInfinite(): void {
+        root.repeatMode = root.repeatMode === 0 ? 1 : 0
+    }
+
     function playNext(): void {
         root._log("[YtMusic] playNext called. activePlaylist.length=" + activePlaylist.length + " currentIndex=" + currentIndex + " source=" + activePlaylistSource)
         
