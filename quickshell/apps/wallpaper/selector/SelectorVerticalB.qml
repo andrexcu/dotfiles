@@ -52,7 +52,9 @@ Scope {
 		
 	}
 
-
+	Component.onCompleted: {
+		cardShowTimer.start()
+	}
 
 	// Color scheme
 	readonly property color colorBackground: "#151217"
@@ -90,9 +92,7 @@ Scope {
 	// Cache for base names to avoid repeated calculations
 	property var thumbnailPaths: ({})
 
-	Component.onCompleted: {
-		cardShowTimer.start()
-	}
+	// Persistent settings for custom directories
 
 	// Keep settings in sync
 	onWallpaperDirChanged: {
@@ -129,15 +129,6 @@ Scope {
 			wallpaperSelector.currentFullPath = wallpaperDir + "/" + wallpaperName
 
 			// Step 0: apply wallpaper immediately for preview
-			// let awwwArgs = [
-			// 	"img", `"${wallpaperSelector.currentFullPath}"`,
-			// 	"--transition-type", "wave",
-			// 	"--transition-fps", "60",
-			// 	"--transition-duration", "0.5",
-			// 	"--transition-wave", "25,15",
-			// 	"--transition-angle", "45",
-			// 	"--transition-bezier", ".4,0,.2,1"
-			// ]
 			let awwwArgs = [
 				"img", `"${wallpaperSelector.currentFullPath}"`,
 				"--transition-type", "wave",
@@ -147,7 +138,6 @@ Scope {
 				"--transition-angle", "45",
 				"--transition-bezier", ".4,0,.2,1"
 			]
-		
 			awwwProcess.exec(["sh", "-c", ["awww"].concat(awwwArgs).join(" ")])
 
 			// Step 1: kill previous matugen if running
@@ -170,15 +160,15 @@ Scope {
 		function randomWallpaper() {
 			if (filteredWallpapers.length === 0) return;
 
-			let newIndex = flick.currentIndex;
+			let newIndex = wallpaperScroll.currentIndex;
 
 			if (filteredWallpapers.length > 1) {
 				do {
 					newIndex = Math.floor(Math.random() * filteredWallpapers.length);
-				} while (newIndex === flick.currentIndex);
+				} while (newIndex === wallpaperScroll.currentIndex);
 			}
 
-			flick.currentIndex = newIndex;
+			wallpaperScroll.currentIndex = newIndex;
 
 			applyWallpaper(filteredWallpapers[newIndex]);
 		}
@@ -228,7 +218,23 @@ Scope {
 			}
 		}
 
+		// FolderListModel {
+		// 	id: folderModel
+		// 	folder: Quickshell.env("HOME") + "/.cache/wall-thumbs/"  // your thumbnail folder
+		// 	nameFilters: ["*.png"]
+		// 	showDirs: false    // <-- hides directories
+		// 	showHidden: false  // optional, ignore hidden files
 
+		// 	Component.onCompleted: logFiles()
+		// 	onCountChanged: logFiles()
+
+		// 	function logFiles() {
+		// 		console.log("FolderListModel count:", folderModel.count)
+		// 		for (var i = 0; i < folderModel.count; i++) {
+		// 			console.log("File found:", folderModel.get(i, "fileName"))
+		// 		}
+		// 	}
+		// }
 		QtObject {
 			id: thumbs
 			property var thumbData: {}
@@ -469,7 +475,6 @@ Scope {
 		}
 	}
 	
-	
 
     PanelWindow {
         id: selectorPanel
@@ -507,7 +512,6 @@ Scope {
 		}
 		DimOverlay {
 			active: wallpaperSelector.cardVisible
-			// active: false
 		}
 
 
@@ -525,17 +529,11 @@ Scope {
 	id: cardContainer
 
 	width: 1200
-	// height: 650
-	// anchors.centerIn: parent
-	anchors {
-		top: parent.top
-		bottom: parent.bottom
-		horizontalCenter: parent.horizontalCenter
-	}
+	height: 548
+	anchors.centerIn: parent
 	visible: wallpaperSelector.cardVisible
 	
  	opacity: 0
-	
     property bool animateIn: wallpaperSelector.cardVisible
 
     onAnimateInChanged: {
@@ -568,7 +566,7 @@ Scope {
         anchors.fill: parent
         focus: true
         Keys.enabled: true
-		
+	
 		Keys.onPressed: function(event) {
 			if (!filteredWallpapers || filteredWallpapers.length === 0) return;
 
@@ -594,21 +592,30 @@ Scope {
 
 			wallpaperScroll.currentIndex = nextIndex;
 			const item = wallpaperRepeater.itemAt(nextIndex);
+			// if (item) {
+			// 	const paddingTop = flick.height * 0.16;
+			// 	const paddingBottom = flick.height * 0.16;
+			// 	let targetY = flick.contentY;
+
+			// 	// Scroll up only if item is above the visible area
+			// 	if (item.y < flick.contentY + paddingTop) {
+			// 		targetY = item.y - paddingTop;   // scroll up
+			// 	}
+			// 	// Scroll down only if item is below the visible area
+			// 	else if (item.y + item.height > flick.contentY + flick.height - paddingBottom) {
+			// 		targetY = item.y + item.height - flick.height + paddingBottom; // scroll down
+			// 	}
+
+			// 	// Clamp
+			// 	targetY = Math.max(0, Math.min(targetY, flick.contentHeight - flick.height));
+
+			// 	flick.contentY = targetY;
+			// }
 			if (item) {
-				const strokeMargin = 4; // half of border stroke width, tweak if needed
-
-				const top = item.y - strokeMargin;
-				const bottom = item.y + item.height + strokeMargin;
-
-				if (top < flick.contentY) {
-					flick.contentY = top;
-				} else if (bottom > flick.contentY + flick.height) {
-					flick.contentY = bottom - flick.height;
-				}
-
-				// Move border exactly over item
-				selectedHexBorder.x = item.x;
-				selectedHexBorder.y = item.y;
+				if (item.y < flick.contentY)
+					flick.contentY = item.y;
+				else if (item.y + item.height > flick.contentY + flick.height)
+					flick.contentY = item.y + item.height - flick.height;
 			}
 
 			if (event.key === Qt.Key_Escape) {
@@ -755,103 +762,25 @@ Scope {
 			id: wallpaperScroll
 			Layout.fillWidth: true
 			Layout.fillHeight: true
-			
 			focus: true
 			clip: true
-			
+
 			ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
 
 			property int currentIndex: 0
-			 // --- Method to scale items according to viewport ---
-			// --- Method to scale items according to viewport ---
-			function updateScales() {
-				if (!wallpaperRepeater || wallpaperRepeater.count === 0) return
 
-				var viewportTop = flick.contentY
-				var viewportBottom = flick.contentY + cardContainer.height
-
-				for (var i = 0; i < wallpaperRepeater.count; i++) {
-					var item = wallpaperRepeater.itemAt(i)
-					if (!item) continue
-
-					var itemTop = item.y
-					var itemBottom = item.y + wallpaperContainer.cellHeight
-
-					// Top edge
-					if (itemTop < viewportTop) {
-						if (!item.touchedTop) {
-							item.touchedTop = true
-							item.scale = 0
-						}
-					} else if (item.touchedTop) {
-						item.touchedTop = false
-						item.scale = 1
-					}
-
-					// Bottom edge
-					if (itemBottom > viewportBottom) {
-						if (!item.touchedBottom) {
-							item.touchedBottom = true
-							item.scale = 0
-						}
-					} else if (item.touchedBottom) {
-						item.touchedBottom = false
-						item.scale = 1
-					}
-				}
-			}
-
-			Component.onCompleted: {
-				// Start a small timer to wait until everything is ready
-				initTimer.start()
-			}
-
-			Timer {
-				id: initTimer
-				interval: 50
-				repeat: true
-				running: false
-				onTriggered: {
-					// Ensure items exist and heights are valid
-					if (wallpaperRepeater.count > 0 && flick.height > 0 && cardContainer.height > 0) {
-						stop()           // stop the timer
-						flick.contentY = 0   // snap top row fully visible
-						wallpaperScroll.updateScales()  // update scale of items
-					}
-				}
-			}
-
-			Connections {
-				target: flick
-				function onContentYChanged() {
-					wallpaperScroll.updateScales()
-				}
-			}
 			Flickable {
 				id: flick
 				anchors.fill: parent
 				// property real scalePadding: wallpaperContainer.cellHeight * 0.35
 				contentWidth: wallpaperContainer.width
 				contentHeight: wallpaperContainer.height
-				
 				// contentHeight: wallpaperContainer.height + scalePadding * 2
 
 				interactive: true
 				
 				clip: true
-				Behavior on contentY {
-					NumberAnimation {
-						duration: 210
-						easing.type: Easing.InOutQuad
-					}
-				}
-                MouseArea {
-                        anchors.fill: parent
-                        onWheel: (wheel) => {
-                            flick.flick(0, wheel.angleDelta.y * 12)
-                            wheel.accepted = true
-                        }
-				}
+
 				Item {
 					id: wallpaperContainer
 					width: flick.width
@@ -868,78 +797,17 @@ Scope {
 						const rows = Math.ceil(count / columns);
 						return rows * (cellHeight + spacingY)
 					}
-				// Container outside the Flickable, so it’s not masked
-					Item {
-						id: highlightContainer
-						anchors.fill: parent
-						// property Item currentItem: wallpaperRepeater.itemAt(wallpaperScroll.currentIndex)
-						// visible: wallpaperSelector.cardVisible
-						// && wallpaperRepeater.count > 0
-						// && wallpaperRepeater.itemAt(wallpaperScroll.currentIndex).imageReady
-						// visible: wallpaperSelector.cardVisible
-						// && selectedHexBorder.currentItem.imageReady 
-						z: 9999
+			
 
-						layer.smooth: true
-						
-						Shape {
-							
-							id: selectedHexBorder
-							width: wallpaperContainer.cellWidth - 10
-							height: wallpaperContainer.cellHeight - 10
-							// visible: wallpaperSelector.cardVisible && wallpaperRepeater.count > 0
-							visible: wallpaperSelector.cardVisible
-													&& wallpaperRepeater.count > 0
-													&& wallpaperRepeater.itemAt(wallpaperScroll.currentIndex).imageReady
-							// property Item currentItem: wallpaperRepeater.itemAt(wallpaperScroll.currentIndex)
-							// visible:  wallpaperSelector.cardVisible && currentItem
-							
-
-							property Item currentItem: wallpaperRepeater.count > 0 ? wallpaperRepeater.itemAt(wallpaperScroll.currentIndex) : null
-
-							onCurrentItemChanged: {
-								if (currentItem && currentItem.imageReady) {
-									selectedHexBorder.visible = true
-								}
-							}
-							x: currentItem ? currentItem.x : 0
-							y: currentItem ? currentItem.y : 0
-							preferredRendererType: Shape.CurveRenderer
-							antialiasing: true
-							
-							ShapePath {
-								strokeWidth: 4
-								strokeColor: colorsPalette.primary
-								fillColor: "transparent"
-
-								PathMove { x: selectedHexBorder.width * 0.5; y: 0 }
-								PathLine { x: selectedHexBorder.width; y: selectedHexBorder.height * 0.25 }
-								PathLine { x: selectedHexBorder.width; y: selectedHexBorder.height * 0.75 }
-								PathLine { x: selectedHexBorder.width * 0.5; y: selectedHexBorder.height }
-								PathLine { x: 0; y: selectedHexBorder.height * 0.75 }
-								PathLine { x: 0; y: selectedHexBorder.height * 0.25 }
-								PathLine { x: selectedHexBorder.width * 0.5; y: 0 }
-								
-							}
-
-							Behavior on x { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-							Behavior on y { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-								
-						}
-						
-						
-					}
-					
 					Repeater {
 						id: wallpaperRepeater
 						model: filteredWallpapers
 
 						Item {
 							id: hexItem
-							width: wallpaperContainer.cellWidth - 10
-							height: wallpaperContainer.cellHeight - 10
-							property bool imageReady: thumbImage.status === Image.Ready && thumbImage.paintedWidth > 0
+							width: wallpaperContainer.cellWidth
 							
+							height: wallpaperContainer.cellHeight
 
 							property int row: Math.floor(index / wallpaperContainer.columns)
 							property int col: index % wallpaperContainer.columns
@@ -947,31 +815,34 @@ Scope {
 							x: col * (wallpaperContainer.cellWidth * 0.95 + wallpaperContainer.spacingX * 0.8)
 							+ (row % 2 === 1 ? (wallpaperContainer.cellWidth * 0.95 + wallpaperContainer.spacingX * 0.8)/2 : 0)
 
-							y: row * ((wallpaperContainer.cellHeight * 0.70) + wallpaperContainer.spacingY * 0.8) + 10
+							y: row * ((wallpaperContainer.cellHeight * 0.70) + wallpaperContainer.spacingY * 0.8)
 
+							// scale: wallpaperScroll.currentIndex === index ? 1.2 : 1.0
+							// transformOrigin: Item.Center
+							// z: wallpaperScroll.currentIndex === index ? 10 : 0
 
-							property bool touchedTop: false
-							property bool touchedBottom: false
-							property bool hiddenRow: false
-							Behavior on width { NumberAnimation { duration: 200; easing.type: Easing.InOutQuad } }
-							Behavior on height { NumberAnimation { duration: 200; easing.type: Easing.InOutQuad } }
-							Behavior on scale {
-								NumberAnimation { duration: 200; easing.type: Easing.InOutQuad }
-							}
-							// // update touchedTop whenever flick view changes
-							// onYChanged: {
-							// 	if (y <= flick.contentY) {
-							// 		touchedTop = true
-							// 		width = wallpaperContainer.cellWidth - wallpaperContainer.cellWidth // basically 0
-							// 		height = wallpaperContainer.cellHeight - wallpaperContainer.cellHeight
-							// 	} else if (touchedTop) {
-							// 		touchedTop = false
-							// 		width = wallpaperContainer.cellWidth - 10
-							// 		height = wallpaperContainer.cellHeight - 10
+							// // Fast sleek pop
+							// Behavior on scale {
+							// 	SpringAnimation {
+							// 		spring: 10     // stronger spring for quicker snap
+							// 		damping: 10   // faster settle
+							// 		velocity: 0.5
 							// 	}
 							// }
+
+							// Behavior on x {
+							// 	NumberAnimation { duration: 120; easing.type: Easing.OutCubic }
+							// }
+							// Behavior on y {
+							// 	NumberAnimation { duration: 120; easing.type: Easing.OutCubic }
+							// }
+							// Behavior on z {
+							// 	NumberAnimation { duration: 50; easing.type: Easing.Linear }
+							// }
+
+
+
 							Image {
-								id: thumbImage
 								fillMode: Image.PreserveAspectCrop
 								width: parent.width
 								height: parent.height
@@ -992,9 +863,6 @@ Scope {
 								anchors.fill: parent
 								color: "#000000"
 								opacity: wallpaperScroll.currentIndex === index ? 0.6 : 0
-								Behavior on opacity {
-									NumberAnimation { duration: 200; easing.type: Easing.InOutQuad }
-								}
 							}
 
 							layer.enabled: true
@@ -1002,14 +870,13 @@ Scope {
 							layer.effect: OpacityMask {
 								maskSource: Shape {
 									// anchors.fill: parent
-									width: hexItem.width
-									height: hexItem.height
+									width: hexItem.width * 1.05
+									height: hexItem.height * 1.05
 									anchors.centerIn: parent
 									preferredRendererType: Shape.CurveRenderer
 									antialiasing: true
 								
 									ShapePath {
-										          
 										fillColor: "white"
 										strokeColor: fillColor
 										strokeWidth: 0

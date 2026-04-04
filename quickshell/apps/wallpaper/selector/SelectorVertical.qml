@@ -525,13 +525,8 @@ Scope {
 	id: cardContainer
 
 	width: 1200
-	// height: 650
-	// anchors.centerIn: parent
-	anchors {
-		top: parent.top
-		bottom: parent.bottom
-		horizontalCenter: parent.horizontalCenter
-	}
+	height: 650
+	anchors.centerIn: parent
 	visible: wallpaperSelector.cardVisible
 	
  	opacity: 0
@@ -755,9 +750,8 @@ Scope {
 			id: wallpaperScroll
 			Layout.fillWidth: true
 			Layout.fillHeight: true
-			
 			focus: true
-			clip: true
+			clip: false
 			
 			ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
 
