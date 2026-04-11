@@ -1,0 +1,11 @@
+- even row, odd column <- re
+- odd row, odd column <- ee
+- odd row, even column <- 11
+- even row, even column <-- 33
+
+this improved but still not there
+last row behavior:
+- even row, odd column <- staggered correctlly
+- odd row, odd column <- still doesnt stagger
+- odd row, even column <- stagger correctly
+- even row, even column <-- still doesnt stagger

@@ -9,9 +9,10 @@ import Quickshell.Wayland
 
 ShellRoot {
     id: root  
-    Loader {
-        id: wallpaperSelectorLoader
-        active: true
-        source: "selector/Selector.qml"
-   }  
+    Selector {}
+//     Loader {
+//         id: wallpaperSelectorLoader
+//         active: true
+//         source: "selector/Selector.qml"
+//    }  
 }
