@@ -100,8 +100,11 @@ Scope {
 	property bool cardVisible: false
 	property bool _previousSelectedHex: false
 	property bool framePending: false
-	property bool isContentVisible: wallpaperController.cardVisible && wallpaperRepeater.count > 0
-	&& currentItem && currentItem.imageReady
+	property bool isContentVisible:
+    !!(wallpaperController.cardVisible &&
+       wallpaperRepeater.count > 0 &&
+       currentItem &&
+       currentItem.imageReady)
 	
 	// tracking items
 	property Item currentSelected: null
@@ -157,7 +160,6 @@ Scope {
 
 	Component.onCompleted: {  
 		cardShowTimer.start()
-		// scaleDelayTimer.start()
 		// selectedItem.visualWrapperRef.width = wallpaperContainer.cellWidth - 10
 		// selectedItem.visualWrapperRef.height = wallpaperContainer.cellHeight - 10
 		console.log("path: " + Config.options.wallpaperDir)
@@ -187,48 +189,73 @@ Scope {
 		interval: 400 
 		repeat: false
 		onTriggered: {
-			if (wallpaperController.currentSelected) {
-				wallpaperController.currentSelected.visualWrapperRef.visualScale = 1.15
-			} 
+			// if (wallpaperController.currentSelected) {
+			// 	wallpaperController.currentSelected.visualWrapperRef.visualScale = 1.15
+			// } 
 		}
 	}
 
-	function flipHex() {
-		var wSelected = wallpaperController.selectedItem
-		var wPrevious = wallpaperController.previousItem
+	// function flipHex() {
+	// 	var wSelected = wallpaperController.selectedItem
+	// 	var wPrevious = wallpaperController.previousItem
 
-		if (!wSelected) return
+	// 	if (!wSelected) return
+		
+	// 	// Compute movement direction
+	// 	var direction = 1
 
-		var direction = 1
-		if (wPrevious && wPrevious !== wSelected) {
-			direction = (wPrevious.x < wSelected.x) ? 1 : -1
-		}
+	// 	if (wPrevious && wPrevious !== wSelected) {
+	// 		direction = (wPrevious.x < wSelected.x) ? 1 : -1
+	// 	}
 
-		if (wPrevious && wPrevious !== wSelected) {
-			var vwPrev = wPrevious.visualWrapperRef
-			vwPrev.flipAnim.stop()
-			vwPrev.flipAnim.from = vwPrev.flipAngle
-			vwPrev.flipAnim.to = 0
-			vwPrev.flipAnim.start()
-		}
+	// 	// Animate previous item (EXIT)
+	// 	if (wPrevious && wPrevious !== wSelected) {
+	// 		var vwPrev = previousItem.visualWrapperRef
+	// 		vwPrev.flipAnim.stop()
 
-		var vw = wSelected.visualWrapperRef
-		vw.flipAnim.stop()
-		vw.flipAnim.from = 0
-		vw.flipAnim.to = 180 * direction
-		vw.flipAnim.start()
-	}
+	// 		// Normalize current state
+			
+	// 		vwPrev.visualScale = 1
+	// 		vwPrev.fadeOpacity = 1
+
+	// 		// Animate back to flat
+	// 		vwPrev.flipAnim.from = vwPrev.flipAngle
+	// 		vwPrev.flipAnim.to = 0
+	// 		vwPrev.flipAnim.start()
+	// 	}
+
+	// 	// Animate selected item (ENTER)
+	// 	var vw = selectedItem.visualWrapperRef
+	// 	vw.flipAnim.stop()
+
+	// 	// Prepare starting state
+	// 	vw.flipAngle = 0
+	// 	vw.visualScale = 0
+	// 	// vw.visualScale = 0.25
+	// 	vw.fadeOpacity = 0
+
+	// 	// Animate flip in correct direction
+	// 	vw.flipAnim.from = 0
+	// 	vw.flipAnim.to = 180 * direction
+	// 	vw.flipAnim.start()
+	// }
 
 	function updateVisual() {
-		// flick.applyVisual(selectedItem, 1, 1)
+		// flick.applyVisual(selectedItem, 1, 1, 0)
+		// for (var i = 0; i < wallpaperRepeater.count; i++) {
+		// 	var item = wallpaperRepeater.itemAt(i)
+		// 	// if (!item) continue
+		// 	flick.applyVisual(item, 1, 1, 0)
+		// }
+		// Update selected & previous index
 		wallpaperController.currentSelected = selectedItem
-	
 		wallpaperController.previousIndex = wallpaperController.currentIndex
-
 	}
 
 	function runFrame() {
+
 		wallpaperContainer.updateGridFocusOffset()
+		// flick.updateScales()
 	}
 	
 	function requestFrame() {
@@ -246,45 +273,30 @@ Scope {
 		if (sel && sel.updateShift)
 			sel.updateShift()
 	}
-			// var row = Math.floor(wallpaperController.currentIndex / flick.cols)
-
-			// if (row < flick.startRow || row >= flick.startRow + wallpaperContainer.visibleRows) {
-			// 	flick.contentY = row * flick.rowStep
-			// }
-	// NumberAnimation {
-	// 	id: scaleAnim
-	// 	target: visualWrapperRef
-	// 	property: "visualScale"
-	// 	duration: 180
-	// 	easing.type: Easing.OutQuad
-	// }
+	
 	// effects on change
 	Connections {
-    target: wallpaperController
+		target: wallpaperController
+		function onCurrentIndexChanged() {
+			// flip animation
+			// flipHex()
 
-    function onCurrentIndexChanged() {
+			runUpdateShift()
+			
+			// Apply scale + fade
+			updateVisual()
+			
+			// Scaling selected hex
+			scaleDelayTimer.start()
 
-        // var wPrev = wallpaperController.previousItem
-        // if (wPrev && wPrev !== wallpaperController.currentSelected) {
-        //     var vwPrev = wPrev.visualWrapperRef
-        //     vwPrev.scaleAnim.stop()
-        //     vwPrev.scaleAnim.from = vwPrev.visualScale
-        //     vwPrev.scaleAnim.to = 1
-        //     vwPrev.scaleAnim.start()
-        // }
-
-        // scaleDelayTimer.start()
-        flipHex()
-		updateVisual()
-        runUpdateShift()
-        wallpaperContainer.updateGridFocusOffset()
-
-        wallpaperController.blurTransition = true
-        imgBlurInTimer.restart()
-    }
-}
-
-
+			// Parallax effect
+			wallpaperContainer.updateGridFocusOffset()
+			
+			// Blur selected hex
+			wallpaperController.blurTransition = true
+			imgBlurInTimer.restart()
+		}
+	}
 
     PanelWindow {
         id: selectorPanel
@@ -366,7 +378,7 @@ Scope {
 	// 	bottom: parent.bottom
 	// 	horizontalCenter: parent.horizontalCenter
 	// }
-	visible: wallpaperController.isContentVisible
+	visible: true
 	// visible: wallpaperController.cardVisible
 	
  	opacity: 0
@@ -413,7 +425,7 @@ Scope {
         anchors.fill: parent
         focus: true
 		clip: false
-        Keys.enabled: isContentVisible
+        Keys.enabled:  true
 		function getRow(index) {
 		return Math.floor(index / wallpaperContainer.columns)
 		}
@@ -501,11 +513,10 @@ Scope {
 			property real maxItemScale: 1
 			property real itemOverflow: wallpaperContainer.cellHeight * (maxItemScale - 1)
 			property int extraPadding: 25
+			property real rowStep: wallpaperContainer.cellHeight * 0.75
 			property int topMargin: 40
 			property int bottomMargin: itemOverflow + extraPadding
 			
-			
-
 
 			// Rectangle {
 			// 	anchors.fill: parent
@@ -532,13 +543,6 @@ Scope {
 
 			property bool firstUpdateDone: false
 
-
-			// Component.onCompleted: {
-			// 	console.log("cols", wallpaperContainer.columns)
-			// console.log("rowStep", rowStep)
-			// console.log("startIndex", startIndex)
-			// console.log("endIndex", endIndex)
-			// }
 	
 			property bool selectedHexSettled: false
 
@@ -548,230 +552,49 @@ Scope {
 			property real viewportTop: contentY - (rowStep * topFactor)
 			property real viewportBottom: contentY + height - (rowStep * bottomFactor)
 			property bool layoutLock: false
+			property real _lastContentY: 0
+			property int _scrollDir: 1   // 1 down, -1 up
 
-			
-			function applyVisual(item, scale, opacity) {
-				item.visualWrapperRef.visualScale = scale
-				item.visualWrapperRef.fadeOpacity = opacity
+			function updateScrollDir() {
+				_scrollDir = (contentY > _lastContentY) ? 1 : -1
+				_lastContentY = contentY
 			}
-			property real rowStep: wallpaperContainer.cellHeight * 0.75
-			property int cols: wallpaperContainer.columns
+		function updateVisibility() {
+    var top = viewportTop
+    var bottom = viewportBottom
 
-			property int startRow:
-				Math.floor((contentY + rowStep * 0.5) / rowStep)
+    for (var i = 0; i < wallpaperRepeater.count; i++) {
+        var item = wallpaperRepeater.itemAt(i)
+        if (!item) continue
 
-			property int startIndex:
-				startRow * cols
+        var itemTop = item.y
+        var itemBottom = item.y + item.height
 
-			property int endIndex:
-				startIndex + wallpaperContainer.visibleRows * cols
+        var visible = itemBottom > top && itemTop < bottom
 
-			// property int startRow: Math.floor(viewportTop / rowStep) - 1
-			// property int endRow: Math.ceil(viewportBottom / rowStep) + 1
-			// property int startIndex: startRow * cols
-			// property int endIndex:
-			// Math.min(wallpaperRepeater.count, (endRow + 1) * cols)
+        if (!item._visibleState && visible) {
+            item._enterDir = _scrollDir
 
-				
+            // ALWAYS reset entry base
+            item._startY = _scrollDir > 0 ? 30 : -30
+            item._targetY = 0
+        }
 
-			// property bool inView: {
-			// 	if (index < flick.startIndex || index >= flick.endIndex)
-			// 		return false
+        if (item._visibleState === visible) continue
 
-			// 	var top = flick.contentY
-			// 	var bottom = flick.contentY + flick.height
+        item._visibleState = visible
+        item._colScale = visible ? 1 : 0
+    }
+}
 
-			// 	var cellH = wallpaperContainer.cellHeight * 0.75
-			// 	var yPos = y
-
-			// 	// overlap gate (NOT containment)
-			// 	return (yPos + cellH > top &&
-			// 			yPos < bottom)
-			// }
-			// O(k) only scan visible rows
-		
-			// property bool inView: {	
-			// 	var rep = wallpaperRepeater
-			// 	if (!rep || rep.count === 0) return
-
-			// 	var top = viewportTop
-			// 	var bottom = viewportBottom
-			// 	var cellH = wallpaperContainer.cellHeight * 0.6
-
-			// 	var cols = wallpaperContainer.columns
-			// 	var startRow = Math.floor(top / rowStep) - 1
-			// 	var endRow = Math.ceil(bottom / rowStep) + 1
-
-			// 	if (startRow < 0) startRow = 0
-
-			// 	var startIndex = startRow * cols
-			// 	var endIndex = Math.min(rep.count, (endRow + 1) * cols)
-
-			// 	var isVisible
-			// 	for (var i = startIndex; i < endIndex; i++) {
-			// 		var item = rep.itemAt(i)
-			// 		if (!item) continue
-
-			// 		var y = item.y
-
-			// 		isVisible = (y >= top && y + cellH <= bottom)
-	
-			// 	}
-			// 	return isVisible
-			// }
-
-			// function updateScales() {
-			// 	if (layoutLock) return
-
-			// 	var rep = wallpaperRepeater
-			// 	if (!rep || rep.count === 0) return
-
-				// var top = viewportTop
-				// var bottom = viewportBottom
-				// var cellH = wallpaperContainer.cellHeight * 0.6
-
-				// var cols = wallpaperContainer.columns
-				// var startRow = Math.floor(top / rowStep) - 1
-				// var endRow = Math.ceil(bottom / rowStep) + 1
-
-			// 	if (startRow < 0) startRow = 0
-
-				// var startIndex = startRow * cols
-				// var endIndex = Math.min(rep.count, (endRow + 1) * cols)
-
-			// 	for (var i = startIndex; i < endIndex; i++) {
-			// 		var item = rep.itemAt(i)
-			// 		if (!item) continue
-
-			// 		var v = item.visualWrapperRef
-			// 		var y = item.y
-
-			// 		var visible = (y >= top && y + cellH <= bottom)
-			// 		var isSelected = (i === wallpaperController.currentIndex)
-
-			// 		var s = 0
-
-			// 		if (!visible) {
-			// 			s = 0
-			// 		} else {
-			// 			s = 1
-			// 		}
-
-			// 		// HARD OVERRIDE (IMPORTANT)
-			// 		if (isSelected && visible) {
-			// 			s = 1.15
-			// 		}
-
-			// 		if (v.visualScale === s) continue
-
-			// 		v.visualScale = s
-			// 		v.fadeOpacity = s
-			// 	}
-
-			// 	firstUpdateDone = true
-			// }
-
-			// function updateScales() {
-			// 	if (layoutLock) return
-
-			// 	var rep = wallpaperRepeater
-			// 	if (!rep || rep.count === 0) return
-
-			// 	var top = viewportTop
-			// 	var bottom = viewportBottom
-			// 	var cellH = wallpaperContainer.cellHeight * 0.6
-
-			// 	var count = rep.count
-
-			// 	for (var i = 0; i < count; i++) {
-			// 		var item = rep.itemAt(i)
-			// 		if (!item) continue
-
-			// 		var v = item.visualWrapperRef
-
-			// 		var y = item.y
-			// 		var itemTop = y
-			// 		var itemBottom = y + cellH
-
-			// 		var visible = (itemTop >= top && itemBottom <= bottom)
-
-			// 		var s = visible ? 1 : 0
-
-			// 		if (v.visualScale === s && v.fadeOpacity === s)
-			// 			continue
-
-			// 		v.visualScale = s
-			// 		v.fadeOpacity = s
-			// 	}
-
-			// 	firstUpdateDone = true
-			// }
-
-		// function updateScales() {
-		// 		if (layoutLock) return
-		// 		// skip updates when disabled or no items
-		// 		if (!wallpaperRepeater || wallpaperRepeater.count === 0) return
-
-		// 		for (var i = 0; i < wallpaperRepeater.count; i++) {
-		// 			var item = wallpaperRepeater.itemAt(i)
-		// 			if (!item) continue
-
-		// 			// approximate vertical bounds of item (hex ≠ full cell height)
-		// 			var itemTop = item.y
-		// 			var itemBottom = item.y + wallpaperContainer.cellHeight * 0.6
-
-		// 			// --- SELECTED ITEM (independent behavior) ---
-		// 			if (item === wallpaperController.currentSelected) {
-
-		// 				// fully outside OR touching viewport edge → hide (prevents pop-in)
-		// 				if (
-		// 					itemBottom < viewportTop || itemTop > viewportBottom ||
-		// 					(itemTop < viewportTop && itemBottom > viewportTop) ||
-		// 					(itemBottom > viewportBottom && itemTop < viewportBottom)
-		// 				) {
-		// 					applyVisual(item, 0, 0)
-		// 				} else {
-		// 					// fully inside → keep highlighted scale
-		// 					applyVisual(item, 1.15, 1)
-		// 				}
-		// 				continue
-		// 			}
-
-		// 			// --- VISIBILITY STATES (non-selected items) ---
-
-		// 			// completely inside viewport bounds
-		// 			var fullyVisible =
-		// 				itemTop >= viewportTop && itemBottom <= viewportBottom
-
-		// 			// completely outside viewport bounds
-		// 			var completelyOutside =
-		// 				itemBottom <= viewportTop || itemTop >= viewportBottom
-
-		// 			// --- APPLY VISUAL STATE ---
-		// 			if (fullyVisible) {
-		// 				// normal visible item
-		// 				applyVisual(item, 1, 1)
-
-		// 			} else if (completelyOutside) {
-		// 				// far outside → shrink + hide
-		// 				applyVisual(item, 0.6, 0)
-
-		// 			} else {
-		// 				// partially overlapping viewport → hide (clean edge cutoff)
-		// 				applyVisual(item, 0, 0)
-		// 			}
-		// 		}
-
-		// 		// mark first full pass done 
-		// 		firstUpdateDone = true
-		// 	}
 
 			onMovementEnded: {
-				contentY = Math.round(contentY / rowStep) * rowStep
-				Qt.callLater(() => {
-					requestFrame()
-				})
+					flick.updateVisibility()
+			
+		
+			
 			}
+			
 			Behavior on contentY {
 				NumberAnimation {
 					duration: 150
@@ -779,18 +602,17 @@ Scope {
 					easing.bezierCurve: [0.25, 0.1, 0.25, 1.0]
 				}
 			}
-	
+			
 			Connections {
-				target: flick
-				function onContentYChanged() {
-				
-					wallpaperController.requestFrame()
-					// wallpaperController.runUpdateShift()
-					flick.forceActiveFocus()
-				
-				}
-			}
+					target: flick
 
+					function onContentYChanged() {
+						flick.updateScrollDir()
+						flick.updateVisibility()
+						flick.forceActiveFocus()
+					}
+				}
+				Component.onCompleted: flick.updateVisibility()
 				MouseArea {
 					anchors.fill: parent
 					focus: true
@@ -840,53 +662,9 @@ Scope {
 					// Derived value (important!)
     				property real effectiveCellStepX: cellWidth * cellWidthFactor + spacingX * spacingXFactor
 					width: columns * effectiveCellStepX
-		
 
 					clip: false
-					function ripple(index) {
-						var sel = wallpaperController.currentIndex
-						if (sel < 0) return Qt.point(0, 0)
 
-						if (!wallpaperController.selectedVisual
-							|| wallpaperController.selectedVisual.visualScale === 0)
-							return Qt.point(0, 0)
-
-						var cols = columns
-
-						var sx = sel % cols
-						var sy = Math.floor(sel / cols)
-
-						var x = index % cols
-						var y = Math.floor(index / cols)
-
-						var dx = x - sx
-						var dy = y - sy
-
-						var selParity = sy % 2
-
-						var shiftX = 0
-						var shiftY = 0
-
-						// HARD LEFT / RIGHT SPLIT (this is your original power)
-						var leftSide =
-							dx < 0 ||
-							(y < sy && x <= sx - (selParity === 0 ? 1 : 0)) ||
-							(y > sy && x <= sx - (selParity === 0 ? 1 : 0))
-
-						var rightSide =
-							dx > 0 ||
-							(y < sy && x >= sx + (selParity === 0 ? 0 : 1)) ||
-							(y > sy && x >= sx + (selParity === 0 ? 0 : 1))
-
-						if (leftSide) shiftX = -15
-						else if (rightSide) shiftX = 15
-
-						// Y original distance
-						if (dy < 0) shiftY = -10
-						else if (dy > 0) shiftY = 10
-
-						return Qt.point(shiftX, shiftY)
-					}
 					
 					property real baseOffsetX: Math.max((flick.width - gridWidth()) / 2, 0)
 					property real globalShiftX: 0
@@ -1013,7 +791,7 @@ Scope {
 
 						z: 9999
 						clip: false
-						visible: isContentVisible
+						visible: true
 						
 
 						layer.smooth: true
@@ -1021,30 +799,27 @@ Scope {
 						Shape {
 							
 							id: selectedHexBorder
-							visible: wallpaperController.currentSelected 
-							// visible: false
+							visible: false
 							width: wallpaperContainer.cellWidth - 10
 							height: wallpaperContainer.cellHeight - 10
 
 							// Handles selection animation + state transitions
-							
-							
-			
-
-					
-
-							
 
 							// Bind scale to the selected item's visualScale
-							scale: wallpaperController.currentSelected ? currentSelected.visualWrapperRef.visualScale : 1
+							scale:1
 					
 							opacity: 1
 			
 						
 							// Follow current selected position
-							x: currentSelected ? currentSelected.targetX: 0
-							y: currentSelected ? currentSelected.targetY : 0
-						
+							x: (currentSelected && currentSelected.targetX !== undefined)
+								? currentSelected.targetX
+								: 0
+
+							y: (currentSelected && currentSelected.targetY !== undefined)
+								? currentSelected.targetY
+								: 0
+
 							preferredRendererType: Shape.CurveRenderer
 							antialiasing: true
 							
@@ -1090,19 +865,7 @@ Scope {
 						
 						
 					}
-					// onCountChanged: {
-					// 	if (count > 0) {
-					// 		Qt.callLater(() => {
-					// 			var i = Math.min(wallpaperController.currentIndex, count - 1)
-
-					// 			wallpaperController.currentSelected =
-					// 				wallpaperRepeater.itemAt(i)
-
-					// 			wallpaperController.requestFrame()
-					// 		})
-					// 	}
-					// }
-
+					
 					Repeater {
 						id: wallpaperRepeater
 						model: filteredWallpapers
@@ -1118,18 +881,16 @@ Scope {
 								})
 							}
 						}
-						
+					
 						delegate: HexItem {
-							id: hexItems
-							property bool _inView: index >= flick.startIndex &&
-								index < flick.endIndex 
+							id: hexItem
 							controller: wallpaperController
 							container: wallpaperContainer
 							flickRef: flick
-							inView: _inView
-
-							// isSelected: index === wallpaperController.currentIndex
+							// repeater: wallpaperRepeater
 						}
+
+						
 					}
 				}
 				}

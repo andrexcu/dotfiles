@@ -1,3 +1,4 @@
+
 import QtQuick
 
 // Full-screen dark overlay with click-to-dismiss
