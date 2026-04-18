@@ -26,15 +26,9 @@ Item {
     property var controller
     property var container
     property var flickRef
-    property int itemIndex
-    property var itemData
-    property real targetX
-    property real targetY
-    x: targetX
 
-    y: targetY
     property bool inView
-    property bool isSelected: controller.currentIndex === itemIndex
+    property bool isSelected: controller.currentIndex === index
 
    
     width: container.cellWidth - 10
@@ -43,27 +37,22 @@ Item {
     property bool imageReady: thumbImage.status === Image.Ready && thumbImage.paintedWidth > 0
     property int currentScale
     property bool isHidden: false
-    
-    // property real baseX: container.itemX(itemIndex)
-    // property real baseY: container.itemY(itemIndex)
 
-    property var ripple: container.ripple(itemIndex)
+    property real baseX: container.itemX(index)
+    property real baseY: container.itemY(index)
 
-    // property real targetX: baseX + ripple.x
-    // property real targetY: baseY + ripple.y
+    property var ripple: container.ripple(index)
+
+    property real targetX: baseX + ripple.x
+    property real targetY: baseY + ripple.y
     // property real targetX: baseX + shiftX
 	//  property real targetY: baseY + shiftY
     property real _lastTop: -1
     property real _lastBottom: -1
     
-    // Component.onCompleted: {
-    //     console.log("i=", itemIndex,
-    //         "data= ", itemData)
-    // }
-
     function computeShiftX() {
         var selIndex = controller.currentIndex
-        if (itemIndex === selIndex) return 0
+        if (index === selIndex) return 0
 
         // If selected hex is scaled to 0 (offscreen), don't give space
         
@@ -72,8 +61,8 @@ Item {
         var cols = container.columns
         var selRow = Math.floor(selIndex / cols)
         var selCol = selIndex % cols
-        var row = Math.floor(itemIndex / cols)
-        var col = itemIndex % cols
+        var row = Math.floor(index / cols)
+        var col = index % cols
 
         // Left side of selection
         if (col < selCol || 
@@ -110,7 +99,7 @@ Item {
    
     function computeShiftY() {
         var selIndex = controller.currentIndex
-        if (itemIndex === selIndex) return 0
+        if (index === selIndex) return 0
 
         // If selected hex is scaled to 0 (offscreen), don't give space
         // var controller.selectedVisual = controller.currentSelected?.visualWrapperRef;
@@ -118,14 +107,16 @@ Item {
 
         var cols = container.columns
         var selRow = Math.floor(selIndex / cols)
-        var row = Math.floor(itemIndex / cols)
+        var row = Math.floor(index / cols)
 
         if (row < selRow) return -10
         if (row > selRow) return 10
         return 0
     }
 
-  
+    x: targetX
+
+    y: targetY
     
     Behavior on x {
         // enabled: flickRef.firstUpdateDone
@@ -154,39 +145,7 @@ Item {
 
     property bool _visibleState: true
 
-        Shape {
-            id: selectedHexBorder
-            z: 9999
-            visible: isSelected
-
-            width: container.cellWidth - 10
-            height: container.cellHeight - 10
-
-            x: 0
-            y: 0
-
-            scale: visualWrapper.visualScale
-            opacity: 1
-            preferredRendererType: Shape.CurveRenderer
-            antialiasing: true
-            ShapePath {
-                strokeWidth: 2
-                strokeColor: colorsPalette.primary
-                fillColor: "transparent"
-
-                PathMove { x: width * 0.5; y: 0 }
-                PathLine { x: width; y: height * 0.25 }
-                PathLine { x: width; y: height * 0.75 }
-                PathLine { x: width * 0.5; y: height }
-                PathLine { x: 0; y: height * 0.75 }
-                PathLine { x: 0; y: height * 0.25 }
-                PathLine { x: width * 0.5; y: 0 }
-            }
-
-            Behavior on scale {
-                SpringAnimation { spring: 6; damping: 0.9 }
-            }
-        }
+    
         Item {
         id: visualWrapper
   
@@ -203,7 +162,7 @@ Item {
 
         property real fadeOpacity: inView ? 1 : 0
         property real visualScale: inView ? (isSelected ? 1.12 : 1) : 0
-        scale: visualScale	
+         scale: visualScale	
         opacity: fadeOpacity
         Behavior on scale {
 
@@ -252,14 +211,14 @@ Item {
         sourceSize.width: width
         sourceSize.height: height
         smooth: true
-        property string thumbName: WallpaperCacheService.thumbnailPaths[itemData] || ""
+        property string thumbName: WallpaperCacheService.thumbnailPaths[modelData] || ""
         source: (WallpaperCacheService.thumbData && WallpaperCacheService.thumbData[thumbName])
                 ? ("file://" + Config.cacheDir + "/" + thumbName)
                 : ""
         layer.enabled: true
         layer.effect: MultiEffect {
             blurEnabled: true
-            blur: wallpaperController.currentIndex === itemIndex && 
+            blur: wallpaperController.currentIndex === index && 
             wallpaperController.blurTransition ? 1 : 0
             blurMax: 32
             Behavior on blur {
@@ -307,38 +266,17 @@ Item {
         }
     }
     
-  	// Connections {
-    //     target: wallpaperController
 
-    //     function onCurrentIndexChanged() {
-    //         controller.currentItem = hexItem
-
-    //         console.log(
-	// 		"current index: ", currentIndex,
-	// 		// "current item: ", currentItem,
-	// 		"current scale: ", currentItem.visualWrapperRef.visualScale,
-	// 		// "current opacity: ", currentItem.visualWrapperRef.fadeOpacity
-			
-	// 		)
-    //     }
-    // }
-    onIsSelectedChanged: {
-        controller.currentItem = hexItem
-
-    }
     MouseArea {
         anchors.fill: parent
         enabled: visualWrapperRef.visualScale > 0 
         && visualWrapperRef.fadeOpacity > 0
-      	onWheel: (wheel) => {
-                flick.flick(0, wheel.angleDelta.y * 12) // vertical
-                wheel.accepted = true
-            }
+        
         onClicked: {
-            controller.currentIndex = itemIndex
-            // Qt.callLater(() => flickRef.forceActiveFocus())
+            controller.currentIndex = index
+            Qt.callLater(() => flickRef.forceActiveFocus())
         }
 
-        onDoubleClicked: WallpaperApplyService.applyWallpaper(itemData)
+        onDoubleClicked: WallpaperApplyService.applyWallpaper(modelData)
     }
 }

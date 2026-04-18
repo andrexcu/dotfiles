@@ -28,11 +28,7 @@ Item {
     property var flickRef
     property int itemIndex
     property var itemData
-    property real targetX
-    property real targetY
-    x: targetX
-
-    y: targetY
+   
     property bool inView
     property bool isSelected: controller.currentIndex === itemIndex
 
@@ -56,10 +52,10 @@ Item {
     property real _lastTop: -1
     property real _lastBottom: -1
     
-    // Component.onCompleted: {
-    //     console.log("i=", itemIndex,
-    //         "data= ", itemData)
-    // }
+    Component.onCompleted: {
+        console.log("i=", itemIndex,
+            "data= ", itemData)
+    }
 
     function computeShiftX() {
         var selIndex = controller.currentIndex
@@ -125,7 +121,9 @@ Item {
         return 0
     }
 
-  
+    x: targetX
+
+    y: targetY
     
     Behavior on x {
         // enabled: flickRef.firstUpdateDone
@@ -154,39 +152,7 @@ Item {
 
     property bool _visibleState: true
 
-        Shape {
-            id: selectedHexBorder
-            z: 9999
-            visible: isSelected
-
-            width: container.cellWidth - 10
-            height: container.cellHeight - 10
-
-            x: 0
-            y: 0
-
-            scale: visualWrapper.visualScale
-            opacity: 1
-            preferredRendererType: Shape.CurveRenderer
-            antialiasing: true
-            ShapePath {
-                strokeWidth: 2
-                strokeColor: colorsPalette.primary
-                fillColor: "transparent"
-
-                PathMove { x: width * 0.5; y: 0 }
-                PathLine { x: width; y: height * 0.25 }
-                PathLine { x: width; y: height * 0.75 }
-                PathLine { x: width * 0.5; y: height }
-                PathLine { x: 0; y: height * 0.75 }
-                PathLine { x: 0; y: height * 0.25 }
-                PathLine { x: width * 0.5; y: 0 }
-            }
-
-            Behavior on scale {
-                SpringAnimation { spring: 6; damping: 0.9 }
-            }
-        }
+    
         Item {
         id: visualWrapper
   
@@ -203,7 +169,7 @@ Item {
 
         property real fadeOpacity: inView ? 1 : 0
         property real visualScale: inView ? (isSelected ? 1.12 : 1) : 0
-        scale: visualScale	
+         scale: visualScale	
         opacity: fadeOpacity
         Behavior on scale {
 
@@ -307,25 +273,7 @@ Item {
         }
     }
     
-  	// Connections {
-    //     target: wallpaperController
 
-    //     function onCurrentIndexChanged() {
-    //         controller.currentItem = hexItem
-
-    //         console.log(
-	// 		"current index: ", currentIndex,
-	// 		// "current item: ", currentItem,
-	// 		"current scale: ", currentItem.visualWrapperRef.visualScale,
-	// 		// "current opacity: ", currentItem.visualWrapperRef.fadeOpacity
-			
-	// 		)
-    //     }
-    // }
-    onIsSelectedChanged: {
-        controller.currentItem = hexItem
-
-    }
     MouseArea {
         anchors.fill: parent
         enabled: visualWrapperRef.visualScale > 0 
@@ -336,7 +284,7 @@ Item {
             }
         onClicked: {
             controller.currentIndex = itemIndex
-            // Qt.callLater(() => flickRef.forceActiveFocus())
+            Qt.callLater(() => flickRef.forceActiveFocus())
         }
 
         onDoubleClicked: WallpaperApplyService.applyWallpaper(itemData)

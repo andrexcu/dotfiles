@@ -22,44 +22,63 @@ import qs.services
 Item {
     id: hexItem
     // z: isSelected ? 2 : 1
-
+  
     property var controller
-    property var container
     property var flickRef
-    property int itemIndex
+    property var container
+
+    property bool inView
+    property bool isSelected: controller.currentIndex === itemIndex
+    onIsSelectedChanged: {
+        if (isSelected) {
+            wallpaperController.currentSelected = hexItem
+        }
+    }
     property var itemData
+    property int itemIndex
+    width: flickRef.cellWidth - 10
+    height: flickRef.cellHeight - 10
     property real targetX
     property real targetY
     x: targetX
-
     y: targetY
-    property bool inView
-    property bool isSelected: controller.currentIndex === itemIndex
-
    
-    width: container.cellWidth - 10
-    height: container.cellHeight - 10
-  
     property bool imageReady: thumbImage.status === Image.Ready && thumbImage.paintedWidth > 0
     property int currentScale
     property bool isHidden: false
-    
-    // property real baseX: container.itemX(itemIndex)
-    // property real baseY: container.itemY(itemIndex)
 
-    property var ripple: container.ripple(itemIndex)
+    MouseArea {
+        anchors.fill: parent
+         z: itemIndex
+        enabled: true
+        onWheel: (wheel) => {
+						flick.flick(0, wheel.angleDelta.y * 12) // vertical
+						wheel.accepted = true
+					}
+        onClicked: {
+            controller.currentIndex = itemIndex
+            Qt.callLater(() => flickRef.forceActiveFocus())
+        }
 
-    // property real targetX: baseX + ripple.x
-    // property real targetY: baseY + ripple.y
+        onDoubleClicked: WallpaperApplyService.applyWallpaper(itemData)
+    }
+//    property real baseX: flickRef.itemX(itemIndex)
+// property real baseY: flickRef.gridY(itemIndex)
+
+// property var ripple: flickRef.ripple(itemIndex)
+
+// property real targetX: baseX + ripple.x
+// property real targetY: baseY + flickRef.gridOffsetY() + ripple.y
+//  x: targetX
+
+//     y: targetY
+
+     
     // property real targetX: baseX + shiftX
 	//  property real targetY: baseY + shiftY
     property real _lastTop: -1
     property real _lastBottom: -1
     
-    // Component.onCompleted: {
-    //     console.log("i=", itemIndex,
-    //         "data= ", itemData)
-    // }
 
     function computeShiftX() {
         var selIndex = controller.currentIndex
@@ -69,7 +88,7 @@ Item {
         
         if (!controller.selectedVisual || controller.selectedVisual.visualScale < 1) return 0;
 
-        var cols = container.columns
+        var cols = flickRef.columns
         var selRow = Math.floor(selIndex / cols)
         var selCol = selIndex % cols
         var row = Math.floor(itemIndex / cols)
@@ -94,16 +113,26 @@ Item {
         shiftX = computeShiftX()
         shiftY = computeShiftY()
     }
+   
+   
+
+    Connections {
+        target: wallpaperController
+
+        function onCurrentIndexChanged() {
+            Qt.callLater(() => flick.updateGridFocusOffset())
+        }
+    }
     
     // Connections {
     //     target: controller.currentSelected
     //             ? controller.currentSelected.visualWrapperRef
     //             : null
                 
-    //     function onVisualScaleChanged() {
-         
-    //         updateShift()
-    //         container.updateGridFocusOffset() 
+    //     function onScaleChanged() {
+    //         // console.log("test")
+    //         // updateShift()
+    //         flickRef.updateGridFocusOffset() 
     //     }
     // }
     
@@ -116,7 +145,7 @@ Item {
         // var controller.selectedVisual = controller.currentSelected?.visualWrapperRef;
         if (!controller.selectedVisual || controller.selectedVisual.visualScale === 0) return 0;
 
-        var cols = container.columns
+        var cols = flickRef.columns
         var selRow = Math.floor(selIndex / cols)
         var row = Math.floor(itemIndex / cols)
 
@@ -125,7 +154,7 @@ Item {
         return 0
     }
 
-  
+   
     
     Behavior on x {
         // enabled: flickRef.firstUpdateDone
@@ -154,39 +183,7 @@ Item {
 
     property bool _visibleState: true
 
-        Shape {
-            id: selectedHexBorder
-            z: 9999
-            visible: isSelected
-
-            width: container.cellWidth - 10
-            height: container.cellHeight - 10
-
-            x: 0
-            y: 0
-
-            scale: visualWrapper.visualScale
-            opacity: 1
-            preferredRendererType: Shape.CurveRenderer
-            antialiasing: true
-            ShapePath {
-                strokeWidth: 2
-                strokeColor: colorsPalette.primary
-                fillColor: "transparent"
-
-                PathMove { x: width * 0.5; y: 0 }
-                PathLine { x: width; y: height * 0.25 }
-                PathLine { x: width; y: height * 0.75 }
-                PathLine { x: width * 0.5; y: height }
-                PathLine { x: 0; y: height * 0.75 }
-                PathLine { x: 0; y: height * 0.25 }
-                PathLine { x: width * 0.5; y: 0 }
-            }
-
-            Behavior on scale {
-                SpringAnimation { spring: 6; damping: 0.9 }
-            }
-        }
+    
         Item {
         id: visualWrapper
   
@@ -195,15 +192,27 @@ Item {
          
         property alias flipAnim: flipAnim
 
+        //  Component.onCompleted: {
+        //       Qt.callLater(() => {
+        //            console.log("i=", flatIndex, 
+        //             "data=", itemData,
+        //             "visualscale=", visualScale)
+        //       })
+         
+          
+        // }
+
+        property real fadeOpacity: inView ? 1 : 0
+        // property real visualScale: inView ? 1 : 0
 
         property real _yCenter: y + height * 0.5
         property real _viewTop: flick.contentY
         property real _viewBottom: flick.contentY + flick.height
         property real _fadeZone: flick.height * 0.2
 
-        property real fadeOpacity: inView ? 1 : 0
+        
         property real visualScale: inView ? (isSelected ? 1.12 : 1) : 0
-        scale: visualScale	
+         scale: visualScale	
         opacity: fadeOpacity
         Behavior on scale {
 
@@ -271,7 +280,7 @@ Item {
 
         Rectangle {
             anchors.fill: parent
-            visible: hexItem.controller.cardVisible && !fadeInAnim.running
+            visible: true
             color: "#000000"
             opacity: isSelected
             ? 0.6: 0
@@ -305,40 +314,8 @@ Item {
                 }
             }
         }
+        
     }
     
-  	// Connections {
-    //     target: wallpaperController
 
-    //     function onCurrentIndexChanged() {
-    //         controller.currentItem = hexItem
-
-    //         console.log(
-	// 		"current index: ", currentIndex,
-	// 		// "current item: ", currentItem,
-	// 		"current scale: ", currentItem.visualWrapperRef.visualScale,
-	// 		// "current opacity: ", currentItem.visualWrapperRef.fadeOpacity
-			
-	// 		)
-    //     }
-    // }
-    onIsSelectedChanged: {
-        controller.currentItem = hexItem
-
-    }
-    MouseArea {
-        anchors.fill: parent
-        enabled: visualWrapperRef.visualScale > 0 
-        && visualWrapperRef.fadeOpacity > 0
-      	onWheel: (wheel) => {
-                flick.flick(0, wheel.angleDelta.y * 12) // vertical
-                wheel.accepted = true
-            }
-        onClicked: {
-            controller.currentIndex = itemIndex
-            // Qt.callLater(() => flickRef.forceActiveFocus())
-        }
-
-        onDoubleClicked: WallpaperApplyService.applyWallpaper(itemData)
-    }
 }

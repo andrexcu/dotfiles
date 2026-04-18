@@ -21,7 +21,6 @@ QtObject {
 
         onExited: function(exitCode, exitStatus) {
             if (exitCode === 0) {
-              
                 
                 // Add logging here
                 console.log("Thumbnail dir set to:", Config.cacheDir)
