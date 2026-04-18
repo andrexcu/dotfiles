@@ -194,30 +194,40 @@ Scope {
 	}
 
 	function flipHex() {
-		var wSelected = wallpaperController.selectedItem
-		var wPrevious = wallpaperController.previousItem
 
-		if (!wSelected) return
+    var wSelected = wallpaperController.currentItem
+    var wPrevious = wallpaperController.previousItem
 
-		var direction = 1
-		if (wPrevious && wPrevious !== wSelected) {
-			direction = (wPrevious.x < wSelected.x) ? 1 : -1
-		}
+    if (!wSelected || !wSelected.visualWrapperRef)
+        return
 
-		if (wPrevious && wPrevious !== wSelected) {
-			var vwPrev = wPrevious.visualWrapperRef
-			vwPrev.flipAnim.stop()
-			vwPrev.flipAnim.from = vwPrev.flipAngle
-			vwPrev.flipAnim.to = 0
-			vwPrev.flipAnim.start()
-		}
+    var dir = 1
 
-		var vw = wSelected.visualWrapperRef
-		vw.flipAnim.stop()
-		vw.flipAnim.from = 0
-		vw.flipAnim.to = 180 * direction
-		vw.flipAnim.start()
-	}
+    if (wPrevious && wPrevious !== wSelected) {
+        dir =
+            (wallpaperController.currentIndex >
+             wallpaperController.previousIndex) ? 1 : -1
+    }
+
+    Qt.callLater(() => {
+
+        // previous exits
+        if (wPrevious?.visualWrapperRef) {
+            var vwPrev = wPrevious.visualWrapperRef
+            vwPrev.flipAnim.stop()
+            vwPrev.flipAnim.from = vwPrev.flipAngle
+            vwPrev.flipAnim.to = 0
+            vwPrev.flipAnim.start()
+        }
+
+        // current enters
+        var vw = wSelected.visualWrapperRef
+        vw.flipAnim.stop()
+        vw.flipAnim.from = 0
+        vw.flipAnim.to = 180 * dir
+        vw.flipAnim.start()
+    })
+}
 
 	function updateVisual() {
 		// flick.applyVisual(selectedItem, 1, 1)

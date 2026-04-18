@@ -30,12 +30,10 @@ Item {
     property var itemData
     property real targetX
     property real targetY
-    x: targetX
-
-    y: targetY
+   
     property bool inView
     property bool isSelected: controller.currentIndex === itemIndex
-
+    property bool rippleOff
    
     width: container.cellWidth - 10
     height: container.cellHeight - 10
@@ -47,12 +45,50 @@ Item {
     // property real baseX: container.itemX(itemIndex)
     // property real baseY: container.itemY(itemIndex)
 
-    property var ripple: container.ripple(itemIndex)
+    property var ripple
 
-    // property real targetX: baseX + ripple.x
-    // property real targetY: baseY + ripple.y
-    // property real targetX: baseX + shiftX
-	//  property real targetY: baseY + shiftY
+    // targetX: flick.baseX(itemIndex)
+    // flick.baseX(itemIndex) + ripple.x : 
+
+    // targetY: !rippleOff ?
+    // flick.baseY(itemIndex) + ripple.y : flick.baseY(itemIndex)
+    // x: targetX
+    // y: targetY
+
+x: flick.baseX(itemIndex)
+y: flick.baseY(itemIndex)
+
+//   Behavior on scale {
+
+//              NumberAnimation { duration: 350; easing.type: Easing.OutBack; easing.overshoot: 1.5 }
+       
+//         }
+
+property real rippleX: !rippleOff ? ripple.x : 0
+property real rippleY: !rippleOff ? ripple.y : 0
+
+transform: Translate {
+    x: rippleX
+    y: rippleY
+}
+
+Behavior on rippleX {
+      NumberAnimation {
+            duration: 400
+            easing.type: Easing.BezierSpline
+            easing.bezierCurve: [0.25, 0.1, 0.25, 1.0]
+        }
+}
+
+Behavior on rippleY {
+      NumberAnimation {
+            duration: 400
+            easing.type: Easing.BezierSpline
+            easing.bezierCurve: [0.25, 0.1, 0.25, 1.0]
+        }
+}
+
+   
     property real _lastTop: -1
     property real _lastBottom: -1
     
@@ -60,6 +96,12 @@ Item {
     //     console.log("i=", itemIndex,
     //         "data= ", itemData)
     // }
+
+    // onTargetXChanged: {
+    //     controller.registerItem(itemIndex, this)
+
+    // Component.onCompleted: controller.registerItem(flatIndex, this)
+    // Component.onDestruction: controller.unregisterItem(flatIndex)
 
     function computeShiftX() {
         var selIndex = controller.currentIndex
@@ -157,6 +199,7 @@ Item {
         Shape {
             id: selectedHexBorder
             z: 9999
+            // visible: false
             visible: isSelected
 
             width: container.cellWidth - 10
@@ -165,7 +208,7 @@ Item {
             x: 0
             y: 0
 
-            scale: visualWrapper.visualScale
+            scale: scale
             opacity: 1
             preferredRendererType: Shape.CurveRenderer
             antialiasing: true
@@ -187,6 +230,103 @@ Item {
                 SpringAnimation { spring: 6; damping: 0.9 }
             }
         }
+
+
+
+    //     property bool moveLeft: {
+    //     var selected = controller.currentIndex
+    //     var totalCols = container.columns
+    //     var selRow = Math.floor(selected / totalCols)
+    //     var selCol = selected % totalCols
+
+    //     var row = Math.floor(index / totalCols)
+    //     var col = index % totalCols
+
+    //     if (index === selected) return false
+
+    //     // 1. Left hexes in same row
+    //     if (row === selRow && col < selCol) return true
+
+    //     // 2. Upper-left column relative to selected
+    //     if (row < selRow) {
+    //         var offset = (selRow % 2 === 0) ? -1 : 0
+    //         if (col <= selCol + offset) return true
+    //     }
+
+    //     // 3. Lower-left column relative to selected
+    //     if (row > selRow) {
+    //         var offset = (selRow % 2 === 0) ? -1 : 0
+    //         if (col <= selCol + offset) return true
+    //     }
+
+    //     return false
+    // }
+
+    // property bool moveRight: {
+    //     var selected = controller.currentIndex
+    //     var totalCols = container.columns
+    //     var selRow = Math.floor(selected / totalCols)
+    //     var selCol = selected % totalCols
+
+    //     var row = Math.floor(index / totalCols)
+    //     var col = index % totalCols
+
+    //     if (index === selected) return false
+
+    //     // 1. Right hexes in same row
+    //     if (row === selRow && col > selCol) return true
+
+    //     // 2. Upper-right column relative to selected
+    //     if (row < selRow) {
+    //         var offset = (selRow % 2 === 0) ? 0 : 1
+    //         if (col >= selCol + offset) return true
+    //     }
+
+    //     // 3. Lower-right column relative to selected
+    //     if (row > selRow) {
+    //         var offset = (selRow % 2 === 0) ? 0 : 1
+    //         if (col >= selCol + offset) return true
+    //     }
+
+    //     return false
+    // }
+
+    //     property int dirScore: {
+    //         var selected = controller.currentIndex
+    //         var cols = container.columns
+
+    //         var sx = selected % cols
+    //         var sy = Math.floor(selected / cols)
+
+    //         var x = index % cols
+    //         var y = Math.floor(index / cols)
+
+    //         var dx = x - sx
+    //         var dy = y - sy
+
+    //         // IMPORTANT: weight horizontal stronger than vertical
+    //         return dx * 2 + dy
+    //     }
+        property bool _registered: false
+
+        // onItemIndexChanged: {
+        //     if (_registered) {
+        //         controller.unregisterItem(itemIndex)
+        //     }
+
+        //     controller.registerItem(itemIndex, this)
+        //     _registered = true
+        // }
+        // onTargetXChanged: {
+        //     controller.currentTargetX = targetX
+        //     console.log(controller.currentTargetX)
+        // }
+
+        // onTargetYChanged: {
+        //     controller.currentTargetY = targetY
+        //     console.log(controller.currentTargetY)
+        // }
+
         Item {
         id: visualWrapper
   
@@ -195,34 +335,31 @@ Item {
          
         property alias flipAnim: flipAnim
 
+     
+        // property real fadeOpacity: inView ? 1 : 0
+        // property real visualScale: inView ? (isSelected ? 1.12 : 1) : 0
 
-        property real _yCenter: y + height * 0.5
-        property real _viewTop: flick.contentY
-        property real _viewBottom: flick.contentY + flick.height
-        property real _fadeZone: flick.height * 0.2
+        // scale: visualScale	
+        // opacity: fadeOpacity
+        
+        // Behavior on scale {
 
-        property real fadeOpacity: inView ? 1 : 0
-        property real visualScale: inView ? (isSelected ? 1.12 : 1) : 0
-        scale: visualScale	
-        opacity: fadeOpacity
-        Behavior on scale {
+        //        NumberAnimation {
+        //         duration: 350
 
-               NumberAnimation {
-                duration: 350
-
-                easing.type: Easing.BezierSpline
-                easing.bezierCurve: [0.25, 0.1, 0.25, 1.0]
-            }
+        //         easing.type: Easing.BezierSpline
+        //         easing.bezierCurve: [0.25, 0.1, 0.25, 1.0]
+        //     }
        
-        }
-
-        Behavior on opacity { 
+        // }
+        
+        // Behavior on opacity { 
        
-            NumberAnimation { 
-                duration: 350; 
-                easing.type: Easing.InOutQuad 
-            } 
-        }
+        //     NumberAnimation { 
+        //         duration: 150; 
+        //         easing.type: Easing.InOutQuad 
+        //     } 
+        // }
          
         transform: Rotation {
             id: yRotation
@@ -269,6 +406,24 @@ Item {
         }
     }
 
+  
+        // Rectangle {
+        //     anchors.fill: parent
+        //     visible: hexItem.controller.cardVisible && !fadeInAnim.running
+       
+        //   color: {
+        //         if (isSelected)
+        //             return "transparent"
+
+        //         if (dirScore < 0)
+        //             return "red"
+
+        //         return "blue"
+        //     }
+
+        //     Behavior on opacity { NumberAnimation { duration: 350; easing.type: Easing.InOutQuad } }
+        // }
+        
         Rectangle {
             anchors.fill: parent
             visible: hexItem.controller.cardVisible && !fadeInAnim.running
@@ -322,21 +477,26 @@ Item {
 	// 		)
     //     }
     // }
+
     onIsSelectedChanged: {
+        if (!isSelected) return
+
+        controller.previousItem = controller.currentItem
         controller.currentItem = hexItem
 
     }
+
     MouseArea {
         anchors.fill: parent
-        enabled: visualWrapperRef.visualScale > 0 
-        && visualWrapperRef.fadeOpacity > 0
+        // enabled: visualWrapperRef.visualScale > 0 
+        // && visualWrapperRef.fadeOpacity > 0
       	onWheel: (wheel) => {
                 flick.flick(0, wheel.angleDelta.y * 12) // vertical
                 wheel.accepted = true
             }
         onClicked: {
             controller.currentIndex = itemIndex
-            // Qt.callLater(() => flickRef.forceActiveFocus())
+            Qt.callLater(() => flickRef.forceActiveFocus())
         }
 
         onDoubleClicked: WallpaperApplyService.applyWallpaper(itemData)

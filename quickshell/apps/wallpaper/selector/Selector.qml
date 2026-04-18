@@ -192,39 +192,14 @@ Scope {
 		}
 	}
 
-	function flipHex() {
-		var wSelected = wallpaperController.selectedItem
-		var wPrevious = wallpaperController.previousItem
 
-		if (!wSelected) return
-
-		var direction = 1
-		if (wPrevious && wPrevious !== wSelected) {
-			direction = (wPrevious.x < wSelected.x) ? 1 : -1
-		}
-
-		if (wPrevious && wPrevious !== wSelected) {
-			var vwPrev = wPrevious.visualWrapperRef
-			vwPrev.flipAnim.stop()
-			vwPrev.flipAnim.from = vwPrev.flipAngle
-			vwPrev.flipAnim.to = 0
-			vwPrev.flipAnim.start()
-		}
-
-		var vw = wSelected.visualWrapperRef
-		vw.flipAnim.stop()
-		vw.flipAnim.from = 0
-		vw.flipAnim.to = 180 * direction
-		vw.flipAnim.start()
-	}
-
-	function updateVisual() {
-		// flick.applyVisual(selectedItem, 1, 1)
-		wallpaperController.currentSelected = selectedItem
+	// function updateVisual() {
+	// 	// flick.applyVisual(selectedItem, 1, 1)
+		// wallpaperController.currentSelected = selectedItem
 	
-		wallpaperController.previousIndex = wallpaperController.currentIndex
+		// wallpaperController.previousIndex = wallpaperController.currentIndex
 
-	}
+	// }
 
 	function runFrame() {
 		flick.updateGridFocusOffset()
@@ -260,33 +235,102 @@ Scope {
 
 	// computed values
 	property int currentIndex: 0
+
 	property Item currentItem: null
+	property Item previousItem: null
+	property real currentTargetX
+	property real currentTargetY
+
 	property bool isSelected: false
+		
+
+	function setIndex(i) {
+
+		wallpaperController.previousIndex = wallpaperController.currentIndex
+		wallpaperController.currentIndex = i
+
+		wallpaperController.previousItem = wallpaperController.currentItem
+	}
+
+	function computeDir() {
+
+		var curr = wallpaperController.currentItem
+		var prev = wallpaperController.previousItem
+
+		if (!curr || !prev)
+			return 1
+
+		var cx = curr.mapToItem(null, 0, 0).x
+		var px = prev.mapToItem(null, 0, 0).x
+
+		return (cx > px) ? 1 : -1
+	}
+	function flipHex() {
+
+		var wSelected = wallpaperController.currentItem
+		var wPrevious = wallpaperController.previousItem
+
+		if (!wSelected?.visualWrapperRef || !wPrevious?.visualWrapperRef)
+			return
+
+		var cx = wSelected.mapToItem(null, 0, 0).x
+		var px = wPrevious.mapToItem(null, 0, 0).x
+
+		var dir = (cx > px) ? 1 : -1
+
+		Qt.callLater(() => {
+
+			var vPrev = wPrevious.visualWrapperRef
+
+			vPrev.flipAnim.stop()
+			vPrev.flipAnim.from = 0
+			vPrev.flipAnim.to = 180 * dir
+			vPrev.flipAnim.start()
+
+			var v = wSelected.visualWrapperRef
+
+			v.flipAnim.stop()
+			v.flipAnim.from = -180 * dir
+			v.flipAnim.to = 0
+			v.flipAnim.start()
+		})
+	}
+	
 	Connections {
     target: wallpaperController
 
     function onCurrentIndexChanged() {
-			var currentScale = currentItem.visualWrapperRef.visualScale
-			var currentOpacity = currentItem.visualWrapperRef.fadeOpacity
-			var currentTargetX = currentItem.targetX
-			var currentTargetY = currentItem.targetY
-			var currentX = currentItem.x
-			var currentY = currentItem.y
+			// console.log(
+			// 	"current item: ", currentItem.visualWrapperRef.visualScale,
+			// 	"previous item: ", previousItem?.visualWrapperRef.visualScale,
+			// )
+			// var currentScale = currentItem.visualWrapperRef.visualScale
+			// var currentOpacity = currentItem.visualWrapperRef.fadeOpacity
+			// var currentTargetX = currentItem.targetX
+			// var currentTargetY = currentItem.targetY
+			// var currentX = currentItem.x
+			// var currentY = currentItem.y
 			// flick.clampContent()
 			
 			// console.log(
-			// "current index: ", currentIndex,
-			// "current item: ", currentItem,
-			// "current scale: ", currentScale,
-			// "current opacity: ", currentOpacity,
+			// // "current index: ", currentIndex,
+			// // "current item: ", currentItem,
+			// // "current scale: ", currentScale,
+			// // "current opacity: ", currentOpacity,
 			// "current targetX: ", currentTargetX,
 			// "current targetY: ", currentTargetY,
 			// "current X: ", currentX,
 			// "current Y: ", currentY,
 			// )
 	
+		// highlightContainer.target =
+        //         wallpaperController.getItem(wallpaperController.currentIndex)
+       
+	    // console.log("target  X: ", highlightContainer.target.x, 
+		// "target  Y: ", highlightContainer.target.y
+		// )
 		
-        var wPrev = wallpaperController.currentIndex
+		var wPrev = wallpaperController.currentIndex
         // if (wPrev && wPrev !== wallpaperController.currentSelected) {
         //     var vwPrev = wPrev.visualWrapperRef
         //     vwPrev.scaleAnim.stop()
@@ -296,7 +340,10 @@ Scope {
         // }
 
         // scaleDelayTimer.start()
-        // flipHex()
+		Qt.callLater(() => {
+
+        flipHex()
+		})
 		// updateVisual()
         runUpdateShift()
         flick.updateGridFocusOffset()
@@ -305,8 +352,18 @@ Scope {
         imgBlurInTimer.restart()
     }
 }
+property var itemMap: ({})
+function registerItem(i, obj) {
+    itemMap[i] = obj
+}
 
+function unregisterItem(i) {
+    delete itemMap[i]
+}
 
+function getItem(i) {
+    return itemMap[i] ?? null
+}
 // property bool visibleModel: filteredWallpapers.slice(startIndex, endIndex)
     PanelWindow {
         id: selectorPanel
@@ -502,7 +559,7 @@ Scope {
 			property real viewportTop: contentY - (rowStep * topFactor)
 			property real viewportBottom: contentY + height - (rowStep * bottomFactor)
 			property bool layoutLock: false
-			contentHeight: childrenRect.height
+			contentHeight: Math.ceil(filteredWallpapers.length / columns) * rowStep
 			
 			function applyVisual(item, scale, opacity) {
 				item.visualWrapperRef.visualScale = scale
@@ -524,26 +581,10 @@ Scope {
 				startIndex + flick.visibleRows * cols
 
 
-			function clampContent() {
 
-    let rows = Math.ceil(filteredWallpapers.length / flick.columns)
-
-    let contentH =
-        rows * flick.rowStep
-
-    let maxY = Math.max(0, contentH - flick.height)
-
-    flick.contentY =
-        Math.max(0, Math.min(flick.contentY, maxY))
-}
-
-onMovingChanged: {
-    if (!moving)
-        flick.clampContent()
-}
 
 			onMovementEnded: {
-				flick.clampContent()
+	
 				contentY = Math.round(contentY / rowStep) * rowStep
 				Qt.callLater(() => {
 					requestFrame()
@@ -559,6 +600,7 @@ onMovingChanged: {
 			}
 	
 			Component.onCompleted: {
+				flick.updateGridFocusOffset()
 				flick.forceActiveFocus()
 			}
 			Connections {
@@ -585,10 +627,15 @@ onMovingChanged: {
 				// 	}
 					
 				// }
-				
+				// Rectangle {
+				// 	anchors.fill: parent
+				// 	color: "transparent" 
+				// 	border.color: "green"       
+				// 	border.width: 1
+				// }
 
+	
 
-				
 					property real cellWidthFactor: 0.95
 					property real spacingXFactor: 0.8
 					// Derived value (important!)
@@ -596,25 +643,50 @@ onMovingChanged: {
 					// width: gridWidth()
 					width: columns * effectiveCellStepX
 					
-					function ripple(index) {
+					// function ripple(index) {
 
-						var sel = wallpaperController.currentIndex
-						if (sel < 0) return Qt.point(0, 0)
+					// 	var sel = wallpaperController.currentIndex
+					// 	if (sel < 0) return Qt.point(0, 0)
 
-						// stable guard
-						if (sel < startIndex || sel >= endIndex)
-							return Qt.point(0, 0)
+					// 	// stable guard
+					// 	if (sel < startIndex || sel >= endIndex)
+					// 		return Qt.point(0, 0)
 
-						var cols = columns
+					// 	var cols = columns
 
-						var sx = sel % cols
-						var sy = Math.floor(sel / cols)
+					// 	var sx = sel % cols
+					// 	var sy = Math.floor(sel / cols)
 
-						var x = index % cols
-						var y = Math.floor(index / cols)
+					// 	var x = index % cols
+					// 	var y = Math.floor(index / cols)
 
-						var dx = x - sx
-						var dy = y - sy
+					// 	var dx = x - sx
+					// 	var dy = y - sy
+
+					// 	var selParity = sy % 2
+
+					// 	var shiftX = 0
+					// 	var shiftY = 0
+
+					// 	var leftSide =
+					// 		dx < 0 ||
+					// 		(y < sy && x <= sx - (selParity === 0 ? 1 : 0)) ||
+					// 		(y > sy && x <= sx - (selParity === 0 ? 1 : 0))
+
+					// 	var rightSide =
+					// 		dx > 0 ||
+					// 		(y < sy && x >= sx + (selParity === 0 ? 0 : 1)) ||
+					// 		(y > sy && x >= sx + (selParity === 0 ? 0 : 1))
+
+					// 	if (leftSide) shiftX = -15
+					// 	else if (rightSide) shiftX = 15
+
+					// 	if (dy < 0) shiftY = -10
+					// 	else if (dy > 0) shiftY = 10
+
+					// 	return Qt.point(shiftX, shiftY)
+					// }
+					function ripple(dx, dy, sx, sy) {
 
 						var selParity = sy % 2
 
@@ -623,13 +695,13 @@ onMovingChanged: {
 
 						var leftSide =
 							dx < 0 ||
-							(y < sy && x <= sx - (selParity === 0 ? 1 : 0)) ||
-							(y > sy && x <= sx - (selParity === 0 ? 1 : 0))
+							(dy < 0 && sx + dx <= sx - (selParity === 0 ? 1 : 0)) ||
+							(dy > 0 && sx + dx <= sx - (selParity === 0 ? 1 : 0))
 
 						var rightSide =
 							dx > 0 ||
-							(y < sy && x >= sx + (selParity === 0 ? 0 : 1)) ||
-							(y > sy && x >= sx + (selParity === 0 ? 0 : 1))
+							(dy < 0 && sx + dx >= sx + (selParity === 0 ? 0 : 1)) ||
+							(dy > 0 && sx + dx >= sx + (selParity === 0 ? 0 : 1))
 
 						if (leftSide) shiftX = -15
 						else if (rightSide) shiftX = 15
@@ -655,10 +727,10 @@ onMovingChanged: {
 						if (selIndex < 0) return
 
 						// stable guard
-						// if (selIndex < startIndex || selIndex >= endIndex) {
-						// 	globalShiftX = 0
-						// 	return
-						// }
+						if (selIndex < startIndex || selIndex >= endIndex) {
+							globalShiftX = 0
+							return
+						}
 
 						var col = selIndex % cols
 						var centerCol = Math.floor(cols / 2)
@@ -703,12 +775,12 @@ onMovingChanged: {
 
 						var totalRows = Math.ceil(filteredWallpapers.length / columns)
 
-						var visualPadding = cellHeight * 0.06
+						var visualPadding = cellHeight * 0.08
 
 						var gridHeight =
 							(totalRows - 1) * rowStep
 							+ cellHeight
-							// + visualPadding
+
 
 						var offset =
 							Math.max((flick.height - gridHeight) / 2, 0)
@@ -716,10 +788,6 @@ onMovingChanged: {
 						return offset + row - visualPadding
 					}
 					
-					// onGlobalShiftXChanged: console.log("SHIFT =", globalShiftX)
-					function itemX(index) {
-						return gridOffsetX() + baseX(index) + baseBiasX;
-					}
 
 					function gridOffsetX() {
 						return (flick.width - gridWidth()) / 2;
@@ -738,29 +806,6 @@ onMovingChanged: {
 					}
 
 
-					function itemY(index) {
-						// var columns = flick.columns;
-						// var row = Math.floor(index / columns);
-
-						// var totalRows = Math.ceil(wallpaperRepeater.count / columns);
-
-						// var stepY = flick.cellHeight * 0.75;
-
-						// // include full visual footprint of last row (important fix)
-						// var totalHeight = (totalRows - 1) * stepY
-						// 				+ flick.cellHeight;
-
-						// // optional safety margin for visual overflow (recommended)
-						// var visualPadding = flick.cellHeight * 0.1;
-
-						// var viewportHeight= flick.height
-
-						
-						// var verticalOffset =
-						// 	Math.max((viewportHeight - totalHeight) / 2 + visualPadding / 2, 0);
-
-						// return verticalOffset + row * stepY;
-					}
 			
 					
 					property real hexRadius: 90
@@ -792,84 +837,63 @@ onMovingChanged: {
 							}
 					
 					// Container outside the Flickable, so it’s not masked
-					// Item {
-					// 	id: highlightContainer
+			// 	Item {
+			// 	id: highlightContainer
 
-					// 	z: 9999
-					// 	clip: false
-					// 	// visible: isContentVisible
-						
+			// 	z: 9999
+			// 	clip: false
+			// 	layer.smooth: true
 
-					// 	layer.smooth: true
-						
-					// 	Shape {
-							
-					// 		id: selectedHexBorder
-					// 		visible: true 
-					// 		// visible: false
-					// 		width: flick.cellWidth - 10
-					// 		height: flick.cellHeight - 10
+			// 	property int index: wallpaperController.currentIndex
+			// 	property var target: wallpaperController.getItem(index)
 
-					// 		// Handles selection animation + state transitions
+			// 	Shape {
+			// 		id: selectedHexBorder
 
-					// 		// Bind scale to the selected item's visualScale
+			// 		width: flick.cellWidth - 10
+			// 		height: flick.cellHeight - 10
+
+			// 		 x: target
+			// 			? highlightContainer.target.mapToItem(highlightContainer.parent, 0, 0).x
+			// 			: 0
+
+			// 		y: target
+			// 			? highlightContainer.target.mapToItem(highlightContainer.parent, 0, 0).y
+			// 			: 0
+
+			// 		scale: highlightContainer.target?.visualWrapperRef?.visualScale ?? 1
+			// 		opacity: 1
 					
-					// 		x: flick.itemPosX(wallpaperController.currentIndex)
-					// 		y: flick.baseY(wallpaperController.currentIndex)
-					// 		opacity: 1
-			
-				
-						
+			// 		preferredRendererType: Shape.CurveRenderer
+			// 		antialiasing: true
 
-							
+			// 		ShapePath {
+			// 			strokeWidth: 4
+			// 			strokeColor: colorsPalette.primary
+			// 			fillColor: "transparent"
 
-					// 		scale: 1
-						
-							// preferredRendererType: Shape.CurveRenderer
-							// antialiasing: true
-							
-					// 		ShapePath {
-					// 			strokeWidth: 4
-					// 			strokeColor: colorsPalette.primary
-					// 			fillColor: "transparent"
+			// 			PathMove { x: selectedHexBorder.width * 0.5; y: 0 }
+			// 			PathLine { x: selectedHexBorder.width; y: selectedHexBorder.height * 0.25 }
+			// 			PathLine { x: selectedHexBorder.width; y: selectedHexBorder.height * 0.75 }
+			// 			PathLine { x: selectedHexBorder.width * 0.5; y: selectedHexBorder.height }
+			// 			PathLine { x: 0; y: selectedHexBorder.height * 0.75 }
+			// 			PathLine { x: 0; y: selectedHexBorder.height * 0.25 }
+			// 			PathLine { x: selectedHexBorder.width * 0.5; y: 0 }
+			// 		}
 
-					// 			PathMove { x: selectedHexBorder.width * 0.5; y: 0 }
-					// 			PathLine { x: selectedHexBorder.width; y: selectedHexBorder.height * 0.25 }
-					// 			PathLine { x: selectedHexBorder.width; y: selectedHexBorder.height * 0.75 }
-					// 			PathLine { x: selectedHexBorder.width * 0.5; y: selectedHexBorder.height }
-					// 			PathLine { x: 0; y: selectedHexBorder.height * 0.75 }
-					// 			PathLine { x: 0; y: selectedHexBorder.height * 0.25 }
-					// 			PathLine { x: selectedHexBorder.width * 0.5; y: 0 }
-								
-					// 		}
-					// 			Behavior on x {
-					// 				SpringAnimation {
-					// 					id: springX
-					// 					spring: 4
-					// 					damping: 0.25
-					// 				}
-					// 			}
+			// 		Behavior on x {
+			// 			SpringAnimation { spring: 4; damping: 0.25 }
+			// 		}
 
-					// 			Behavior on y {
-					// 				SpringAnimation {
-					// 					id: springY
-					// 					spring: 4
-					// 					damping: 0.25
-					// 				}
-					// 			}
-					// 			Behavior on scale {
-									
-					// 				SpringAnimation {
-					// 						spring: 6
-					// 						damping: 0.9 
-					// 					}
-					// 			}
+			// 		Behavior on y {
+			// 			SpringAnimation { spring: 4; damping: 0.25 }
+			// 		}
 
-
-					// 	}
-						
-						
-					// }
+			// 		Behavior on scale {
+			// 			SpringAnimation { spring: 6; damping: 0.9 }
+			// 		}
+			// 	}
+			// }
 
 
    		Keys.enabled: true
@@ -877,66 +901,62 @@ onMovingChanged: {
 
 		Keys.onPressed: function(event) {
 
-    let oldIndex = wallpaperController.currentIndex
+			let oldIndex = wallpaperController.currentIndex
 
-    let handled = InputHandler.navigate(event, {
-        size: filteredWallpapers.length,
-        columns: flick.columns,
-        currentIndex: oldIndex,
+			let handled = InputHandler.navigate(event, {
+				size: filteredWallpapers.length,
+				columns: flick.columns,
+				currentIndex: oldIndex,
 
-        onApply: (i) =>
-            WallpaperApplyService.applyWallpaper(filteredWallpapers[i]),
+				onApply: (i) =>
+					WallpaperApplyService.applyWallpaper(filteredWallpapers[i]),
 
-        onMove: (i) => {
+				onMove: (i) => {
 
-            flick.cancelFlick()
+					flick.cancelFlick()
 
-            wallpaperController.currentIndex = i
+					wallpaperController.currentIndex = i
 
-            smartScroll(i, oldIndex)
-        }
-    })
+					smartScroll(i, oldIndex)
+				}
+			})
 
-    if (handled)
-        event.accepted = true
-}
+			if (handled)
+				event.accepted = true
+		}
 
-function smartScroll(i, oldIndex) {
+		function smartScroll(i) {
 
     let cols = flick.columns
-    let count = filteredWallpapers.length
+    let row = Math.floor(i / cols)
 
-    let newRow = Math.floor(i / cols)
-    let oldRow = Math.floor(oldIndex / cols)
+    let rowTop = row * flick.rowStep
+    let rowBottom = rowTop + flick.rowStep
 
-    let firstVisibleRow = Math.floor(flick.startIndex / cols)
-    let lastVisibleRow = firstVisibleRow + flick.visibleRows - 1
+    let viewTop = flick.contentY
+    let viewBottom = flick.contentY + flick.height
 
-    let maxRow = Math.floor((count - 1) / cols)
+    let maxRow = Math.floor((filteredWallpapers.length - 1) / cols)
 
-    // ignore horizontal move
-    if (newRow === oldRow)
-        return
-
-    // UP only at real top edge
-    if (newRow < firstVisibleRow) {
-        flick.contentY = newRow * flick.rowStep
+    // UP → only if item fully above view
+    if (rowTop < viewTop) {
+        flick.contentY = Math.max(0, rowTop)
         return
     }
 
-    // DOWN only at real bottom edge
-    if (newRow > lastVisibleRow) {
-        let target = newRow - flick.visibleRows + 1
-        flick.contentY = Math.min(target, maxRow) * flick.rowStep
+    // DOWN → only if item fully below view
+    if (rowBottom > viewBottom) {
+        let target = row - Math.floor(flick.height / flick.rowStep) + 1
+        flick.contentY = Math.min(maxRow, target) * flick.rowStep
         return
     }
 }
 
 
-function snap() {
-    flick.contentY =
-        Math.round(flick.contentY / flick.rowStep) * flick.rowStep
-}
+		function snap() {
+			flick.contentY =
+				Math.round(flick.contentY / flick.rowStep) * flick.rowStep
+		}
 
 
 						
@@ -957,22 +977,51 @@ function snap() {
 									filteredWallpapers.length - rowIndex * flick.columns
 								)
 							)
-
+								// targetX: _inView ?
+								// flick.baseX(flatIndex) + ripple.x : flick.baseX(flatIndex)
+    							// targetY: _inView ?
+								// flick.baseY(flatIndex) + ripple.y : flick.baseY(flatIndex)
 							delegate: HexItem {
 								controller: wallpaperController
 
 								property int flatIndex: rowIndex * flick.columns + index
+								property bool _inView:  flatIndex >= flick.startIndex &&
+										flatIndex < flick.endIndex
 
+								property int cols: flick.columns
+
+								property int selIndex: wallpaperController.currentIndex
+
+								property int sx: selIndex % cols
+								property int sy: Math.floor(selIndex / cols)
+
+								property int xIdx: flatIndex % cols
+								property int yIdx: Math.floor(flatIndex / cols)
+
+								property int dx: xIdx - sx
+								property int dy: yIdx - sy
+							
+								property bool _rippleOff: selIndex < flick.startIndex || selIndex >= flick.endIndex
+								property var _ripple: flick.ripple(dx, dy, sx, sy) 
+								
+								property real _rowScale: _inView? 1 : 0
+								Behavior on _rowScale { NumberAnimation { duration: 350; easing.type: Easing.OutBack; easing.overshoot: 1.5 } }
+								opacity: _rowScale < 0.01 ? 0 : 1
 								container: flick
 								flickRef: flick
-								
+								rippleOff: _rippleOff
+								ripple: _ripple
+								scale: _rowScale
+								// targetX: !_rippleOff ?
+								// flick.baseX(flatIndex) + _ripple.x : flick.baseX(flatIndex)
+    							// targetY: !_rippleOff ?
+								// flick.baseY(flatIndex) + _ripple.y : flick.baseY(flatIndex)
+	
 								itemData: filteredWallpapers[flatIndex]
 								itemIndex: flatIndex
-								targetX: flick.baseX(flatIndex) + ripple.x
-        						targetY: flick.baseY(flatIndex) + ripple.y
+					
 
-								inView: flatIndex >= flick.startIndex &&
-										flatIndex < flick.endIndex
+								inView: _inView
 							}
 						}
 					}
