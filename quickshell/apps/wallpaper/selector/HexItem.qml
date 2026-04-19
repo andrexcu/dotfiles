@@ -28,73 +28,115 @@ Item {
     property var flickRef
     property int itemIndex
     property var itemData
-    property real targetX
-    property real targetY
+    property var hexBorder
+    // property real targetX
+    // property real targetY
    
     property bool inView
     property bool isSelected: controller.currentIndex === itemIndex
     property bool rippleOff
-   
+    property real originFixY
     width: container.cellWidth - 10
     height: container.cellHeight - 10
   
     property bool imageReady: thumbImage.status === Image.Ready && thumbImage.paintedWidth > 0
     property int currentScale
     property bool isHidden: false
-    
-    // property real baseX: container.itemX(itemIndex)
-    // property real baseY: container.itemY(itemIndex)
-
     property var ripple
+    property bool hasEntered: false
 
-    // targetX: flick.baseX(itemIndex)
-    // flick.baseX(itemIndex) + ripple.x : 
+    property real enterT: inView ? 0 : 1
+ 
+   function clamp(v) {
+        return Math.sign(v) * Math.min(Math.abs(v), 2)
+    }
+  
+    property point globalPos: mapToItem(highlightContainer, 0, 0)
+    property real globalX: globalPos.x
+    property real globalY: globalPos.y
+
+    property real layoutX: clamp(dx) * 30 * enterT
+    property real layoutY: clamp(dy) * 30 * enterT
+
+//    property real dirX: dx / Math.max(1, Math.abs(dx) + Math.abs(dy))
+//     property real dirY: dy / Math.max(1, Math.abs(dx) + Math.abs(dy))
+
+//     property real d: Math.sqrt(dx*dx + dy*dy)
+//     property real k: Math.min(1, d / 2)
+
+    // property real layoutX: dirX * 80 * k * enterT
+    // property real layoutY: dirY * 80 * k * enterT
+
+    // property real dist: Math.min(2, Math.sqrt(dx*dx + dy*dy))
+
+    // property real layoutX: dx * dist * 10 * enterT
+    // property real layoutY: dy * dist * 10 * enterT
+    // property real layoutX:0
+    // property real layoutY: 0
+
+    property real targetX: flick.baseX(itemIndex) + layoutX + (rippleOff ? 0 : ripple.x)
+    property real targetY: flick.baseY(itemIndex) + layoutY + (rippleOff ? 0 : ripple.y)
+    x: targetX
+    y: targetY
+
+    // onXChanged: {
+    //     console.log("hexItem X position: ", x)
+    // }
+    // y: flick.baseY(itemIndex) + ripple.y + originFixY * (1 - scale)
+    // property real layoutX: 0
+    // property real layoutY: 0
+    // targetX: !rippleOff ?
+    // flick.baseX(itemIndex) + layoutX + ripple.x : flick.baseX(itemIndex)
 
     // targetY: !rippleOff ?
-    // flick.baseY(itemIndex) + ripple.y : flick.baseY(itemIndex)
-    // x: targetX
-    // y: targetY
+    // flick.baseY(itemIndex) + layoutY + ripple.y : flick.baseY(itemIndex)
 
-x: flick.baseX(itemIndex)
-y: flick.baseY(itemIndex)
+   
+    // Behavior on scale {
+    //     // enabled: flickRef.firstUpdateDone
+    //     NumberAnimation {
+    //         duration: 400
+    //         easing.type: Easing.BezierSpline
+    //         easing.bezierCurve: [0.25, 0.1, 0.25, 1.0]
+    //     }
+    // }
+    Behavior on targetX {
+        NumberAnimation {
+                duration: 350
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: [0.25, 0.1, 0.25, 1.0]
+                onRunningChanged: {
+                    if (!running) {
+                        // highlightContainer.updateBorder()
+                        // controller.currentItemX = hexItem.x
+                        // console.log("final X:", controller.currentItem.x)
+                    }
+                }
+            }
+    }
 
-//   Behavior on scale {
-
-//              NumberAnimation { duration: 350; easing.type: Easing.OutBack; easing.overshoot: 1.5 }
-       
-//         }
-
-property real rippleX: !rippleOff ? ripple.x : 0
-property real rippleY: !rippleOff ? ripple.y : 0
-
-transform: Translate {
-    x: rippleX
-    y: rippleY
-}
-
-Behavior on rippleX {
-      NumberAnimation {
-            duration: 400
-            easing.type: Easing.BezierSpline
-            easing.bezierCurve: [0.25, 0.1, 0.25, 1.0]
+    Behavior on targetY {
+        NumberAnimation {
+                duration: 350
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: [0.25, 0.1, 0.25, 1.0]
+                // onRunningChanged: {
+                //     if (!running) {
+                //         controller.currentItemY = hexItem.y
+                //         console.log("final Y:", controller.currentItemY)
+                //     }
+                // }
+            }
         }
-}
-
-Behavior on rippleY {
-      NumberAnimation {
-            duration: 400
-            easing.type: Easing.BezierSpline
-            easing.bezierCurve: [0.25, 0.1, 0.25, 1.0]
-        }
-}
 
    
     property real _lastTop: -1
     property real _lastBottom: -1
-    
+    // Behavior on scale { NumberAnimation { duration: 350; easing.type: Easing.OutBack; easing.overshoot: 1.5 } }
     // Component.onCompleted: {
-    //     console.log("i=", itemIndex,
-    //         "data= ", itemData)
+    //     scale = 0
+    //     // console.log("i=", itemIndex,
+    //     //     "data= ", itemData)
     // }
 
     // onTargetXChanged: {
@@ -169,23 +211,23 @@ Behavior on rippleY {
 
   
     
-    Behavior on x {
-        // enabled: flickRef.firstUpdateDone
-        NumberAnimation {
-            duration: 400
-            easing.type: Easing.BezierSpline
-            easing.bezierCurve: [0.25, 0.1, 0.25, 1.0]
-        }
-    }
+    // Behavior on targetY {
+    //     // enabled: flickRef.firstUpdateDone
+    //     NumberAnimation {
+    //         duration: 400
+    //         easing.type: Easing.BezierSpline
+    //         easing.bezierCurve: [0.25, 0.1, 0.25, 1.0]
+    //     }
+    // }
 
-    Behavior on y {
-        // enabled: flickRef.firstUpdateDone
-        NumberAnimation {
-            duration: 400
-            easing.type: Easing.BezierSpline
-            easing.bezierCurve: [0.25, 0.1, 0.25, 1.0]
-        }
-    }
+    // Behavior on targetX {
+    //     // enabled: flickRef.firstUpdateDone
+    //     NumberAnimation {
+    //         duration: 400
+    //         easing.type: Easing.BezierSpline
+    //         easing.bezierCurve: [0.25, 0.1, 0.25, 1.0]
+    //     }
+    // }
                         
     
     property bool hiddenRow: false
@@ -199,8 +241,8 @@ Behavior on rippleY {
         Shape {
             id: selectedHexBorder
             z: 9999
-            // visible: false
             visible: isSelected
+            // visible: true
 
             width: container.cellWidth - 10
             height: container.cellHeight - 10
@@ -208,13 +250,13 @@ Behavior on rippleY {
             x: 0
             y: 0
 
-            scale: scale
+            scale: visualWrapperRef.visualScale
             opacity: 1
             preferredRendererType: Shape.CurveRenderer
             antialiasing: true
             ShapePath {
                 strokeWidth: 2
-                strokeColor: colorsPalette.primary
+                strokeColor: "#FAF9F6"
                 fillColor: "transparent"
 
                 PathMove { x: width * 0.5; y: 0 }
@@ -337,9 +379,16 @@ Behavior on rippleY {
 
      
         // property real fadeOpacity: inView ? 1 : 0
-        // property real visualScale: inView ? (isSelected ? 1.12 : 1) : 0
-
-        // scale: visualScale	
+        property real visualScale: isSelected ? 1.12 : 1
+        scale: visualScale	
+        Behavior on scale {
+                // enabled: flickRef.firstUpdateDone
+                NumberAnimation {
+                    duration: 400
+                    easing.type: Easing.BezierSpline
+                    easing.bezierCurve: [0.25, 0.1, 0.25, 1.0]
+                }
+            }
         // opacity: fadeOpacity
         
         // Behavior on scale {
@@ -376,13 +425,15 @@ Behavior on rippleY {
             id: flipAnim
             target: visualWrapper
             property: "flipAngle"
-            duration: 350
+            duration: 300
             easing.type: Easing.InOutQuad
         }
 
     Image {
         id: thumbImage
         fillMode: Image.PreserveAspectCrop
+        opacity: inView ? 1 : 0
+        Behavior on opacity { NumberAnimation { duration: 150 } }
         anchors.fill: parent
         anchors.centerIn: parent
         asynchronous: true
@@ -483,7 +534,7 @@ Behavior on rippleY {
 
         controller.previousItem = controller.currentItem
         controller.currentItem = hexItem
-
+        
     }
 
     MouseArea {
@@ -491,9 +542,9 @@ Behavior on rippleY {
         // enabled: visualWrapperRef.visualScale > 0 
         // && visualWrapperRef.fadeOpacity > 0
       	onWheel: (wheel) => {
-                flick.flick(0, wheel.angleDelta.y * 12) // vertical
-                wheel.accepted = true
-            }
+            flick.flick(0, wheel.angleDelta.y * 12) // vertical
+            wheel.accepted = true
+        }
         onClicked: {
             controller.currentIndex = itemIndex
             Qt.callLater(() => flickRef.forceActiveFocus())

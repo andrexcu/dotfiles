@@ -295,14 +295,25 @@ Scope {
 			v.flipAnim.start()
 		})
 	}
-	
+	property real currentItemX
+	property real currentItemY
+
+	Connections {
+		target: wallpaperController.currentItem
+		function onXChanged() { highlightContainer.updateBorder() }
+		function onYChanged() { highlightContainer.updateBorder() }
+	}
 	Connections {
     target: wallpaperController
-
+	
     function onCurrentIndexChanged() {
+			flick.updateGridFocusOffset()
+			
+			// console.log(currentItem.targetX)
+			// 
 			// console.log(
-			// 	"current item: ", currentItem.visualWrapperRef.visualScale,
-			// 	"previous item: ", previousItem?.visualWrapperRef.visualScale,
+			// 	"current item: ", currentItemX,
+			
 			// )
 			// var currentScale = currentItem.visualWrapperRef.visualScale
 			// var currentOpacity = currentItem.visualWrapperRef.fadeOpacity
@@ -346,7 +357,7 @@ Scope {
 		})
 		// updateVisual()
         runUpdateShift()
-        flick.updateGridFocusOffset()
+       
 
         wallpaperController.blurTransition = true
         imgBlurInTimer.restart()
@@ -431,7 +442,7 @@ function getItem(i) {
 	height: flick.height * 1.1 + paddingY * 2
 	Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
 	
-	clip: true
+	clip: false
 	// testing
 	Rectangle {
         anchors.fill: parent
@@ -603,15 +614,38 @@ function getItem(i) {
 				flick.updateGridFocusOffset()
 				flick.forceActiveFocus()
 			}
+			property real lastContentY: 0
+			property int scrollDir: 0
+			property int lastDir: 0
+			property real dirThreshold: 0.5   // tweak (0.5–2)
+
+			
 			Connections {
 				target: flick
-				function onContentYChanged() {
-				
+				property int lastDir: 0
+
+					onContentYChanged: {
+					var dy = flick.contentY - flick.lastContentY
+
+					if (Math.abs(dy) > flick.dirThreshold) {
+						flick.scrollDir = dy > 0 ? 1 : -1
+
+						if (flick.scrollDir !== lastDir) {
+							console.log(flick.scrollDir > 0 ? "scroll ↓" : "scroll ↑")
+							lastDir = flick.scrollDir
+						}
+
+						flick.lastContentY = flick.contentY
+					}
+
 					wallpaperController.requestFrame()
-					// wallpaperController.runUpdateShift()
-					// flick.forceActiveFocus()
-				
 				}
+				// function onContentYChanged() {
+				// 	flick.scrollDir = flick.contentY > flick.lastContentY ? 1 : -1
+				// 	flick.lastContentY = flick.contentY
+				// 	wallpaperController.requestFrame()
+				
+				// }
 			}
 
 				// MouseArea {
@@ -843,25 +877,19 @@ function getItem(i) {
 			// 	z: 9999
 			// 	clip: false
 			// 	layer.smooth: true
-
-			// 	property int index: wallpaperController.currentIndex
-			// 	property var target: wallpaperController.getItem(index)
-
+			
 			// 	Shape {
 			// 		id: selectedHexBorder
 
 			// 		width: flick.cellWidth - 10
 			// 		height: flick.cellHeight - 10
+			// 		x: wallpaperController.currentItem ?
+			// 		wallpaperController.currentItem.targetX : 0
+			// 		y: wallpaperController.currentItem ?
+			// 		wallpaperController.currentItem.targetY: 0
+			
 
-			// 		 x: target
-			// 			? highlightContainer.target.mapToItem(highlightContainer.parent, 0, 0).x
-			// 			: 0
-
-			// 		y: target
-			// 			? highlightContainer.target.mapToItem(highlightContainer.parent, 0, 0).y
-			// 			: 0
-
-			// 		scale: highlightContainer.target?.visualWrapperRef?.visualScale ?? 1
+			// 		scale: currentItem.visualWrapperRef.visualScale
 			// 		opacity: 1
 					
 			// 		preferredRendererType: Shape.CurveRenderer
@@ -958,17 +986,38 @@ function getItem(i) {
 				Math.round(flick.contentY / flick.rowStep) * flick.rowStep
 		}
 
+					// property real _r: flick.hexRadius
+					// property real _hexH: _r * 2
+					// highlightFollowsCurrentItem: true
+					// highlightMoveDuration: 350
+					// highlight: Item {}
+					// preferredHighlightBegin: (flick.height - flick._hexH) / 2
+					// preferredHighlightEnd: (flick.height - flick._hexH) / 2
+					// highlightRangeMode: ListView.StrictlyEnforceRange
 
-						
+					// header: Item { width: (flick.width - flick._hexH) / 2 }
+					// footer: Item { width: (flick.width - flick._hexH) / 2 }
+					
+
+
+					// add: Transition {
+					// 	NumberAnimation { property: "opacity"; from: 0; to: 1; duration: 250; easing.type: Easing.OutCubic }
+					// 	NumberAnimation { property: "scale"; from: 0.85; to: 1; duration: 250; easing.type: Easing.OutBack; easing.overshoot: 1.2 }
+					// }
+					// remove: Transition {
+					// 	NumberAnimation { property: "opacity"; to: 0; duration: 100; easing.type: Easing.InCubic }
+					// }
+					// displaced: Transition {
+					// 	NumberAnimation { properties: "x,y"; duration: 150; easing.type: Easing.OutCubic }
+					// }
 					model: Math.ceil(filteredWallpapers.length / flick.columns)
-
+					property real _fadeZone: flick.rowStep
+					
 					delegate: Item {
 						id: rowItem
 						width: flick.width
 						height: flick.rowStep
-
 						property int rowIndex: index
-
 						Repeater {
 							model: Math.max(
 								0,
@@ -977,21 +1026,76 @@ function getItem(i) {
 									filteredWallpapers.length - rowIndex * flick.columns
 								)
 							)
-								// targetX: _inView ?
-								// flick.baseX(flatIndex) + ripple.x : flick.baseX(flatIndex)
-    							// targetY: _inView ?
-								// flick.baseY(flatIndex) + ripple.y : flick.baseY(flatIndex)
+						
 							delegate: HexItem {
+								id: hexItem
 								controller: wallpaperController
+								states: [
+									State {
+										name: "in"
+										when: _inView
+										PropertyChanges {
+											target: hexItem
+											_rowScale: 1
+										}
+									},
+									State {
+										name: "out"
+										when: !_inView
+										PropertyChanges {
+											target: hexItem
+											_rowScale: 0
+										}
+									},
+								]
+									 
+								transitions: [
+								    // ENTER
+								    Transition {
+								        from: "out"
+								        to: "in"
+										NumberAnimation {
+											properties: "_rowScale"
+											from: 0
+											to: 1
+											duration: 180
+											easing.bezierCurve: [0.18, 1.0, 0.3, 1.0]
+										}
+							
+								    },
 
+								    // EXIT (normal)
+								    Transition {
+								        from: "in"
+								        to: "out"
+								       	NumberAnimation {
+											duration: 350
+											properties: "_rowScale"
+											from: 1; to: 0
+											easing.type: Easing.OutBack
+											easing.overshoot: 1.2
+											
+										}
+								    },
+								]
+										
 								property int flatIndex: rowIndex * flick.columns + index
-								property bool _inView:  flatIndex >= flick.startIndex &&
-										flatIndex < flick.endIndex
+								
+								property bool _isSelected: wallpaperController.currentIndex === flatIndex
 
 								property int cols: flick.columns
+								
+								
+								property real deadZone: 20
 
+								
+								property real itemCenterY: y + height * 0.5
+								property real viewCenterY: flick.contentY + flick.height * 0.5
+								property bool _nearTop: itemCenterY < viewCenterY - deadZone
+								
 								property int selIndex: wallpaperController.currentIndex
-
+								property bool _inView: flatIndex >= flick.startIndex &&
+										flatIndex < flick.endIndex
 								property int sx: selIndex % cols
 								property int sy: Math.floor(selIndex / cols)
 
@@ -1003,26 +1107,57 @@ function getItem(i) {
 							
 								property bool _rippleOff: selIndex < flick.startIndex || selIndex >= flick.endIndex
 								property var _ripple: flick.ripple(dx, dy, sx, sy) 
+								originFixY: (transformOrigin === Item.Top) ? height * 0.5 : -height * 0.5
+								property real _rowScale: 0
+
+								Behavior on opacity { 
+									NumberAnimation { 
+										duration: 350; 
+										easing.type: Easing.InOutQuad 
+									} 
+								}
+								// property real _selectScale: _isSelected ? 1.12 : 1
 								
-								property real _rowScale: _inView? 1 : 0
-								Behavior on _rowScale { NumberAnimation { duration: 350; easing.type: Easing.OutBack; easing.overshoot: 1.5 } }
+								scale: _rowScale
+								// Behavior on scale {
+								// 	// enabled: flickRef.firstUpdateDone
+								// 	NumberAnimation {
+								// 		duration: 400
+								// 		easing.type: Easing.BezierSpline
+								// 		easing.bezierCurve: [0.25, 0.1, 0.25, 1.0]
+								// 	}
+								// }
 								opacity: _rowScale < 0.01 ? 0 : 1
+								
 								container: flick
 								flickRef: flick
 								rippleOff: _rippleOff
 								ripple: _ripple
-								scale: _rowScale
-								// targetX: !_rippleOff ?
-								// flick.baseX(flatIndex) + _ripple.x : flick.baseX(flatIndex)
-    							// targetY: !_rippleOff ?
-								// flick.baseY(flatIndex) + _ripple.y : flick.baseY(flatIndex)
-	
+								hexBorder: highlightContainer
+								// scale: _rowScale
+								
 								itemData: filteredWallpapers[flatIndex]
 								itemIndex: flatIndex
-					
-
 								inView: _inView
+								// transformOrigin: Item.Center
+								transformOrigin: {
+									if (isSelected) return Item.Center
+									if (flick.scrollDir < 0) {
+										// scroll up → original
+										return _nearTop ? Item.Top : Item.Bottom
+									} else {
+										// scroll down → flipped
+										return _nearTop ? Item.Bottom : Item.Top
+									}
+								}
+							
 							}
+
+								
+															// targetX: _inView ?
+								// flick.baseX(flatIndex) + ripple.x : flick.baseX(flatIndex)
+    							// targetY: _inView ?
+								// flick.baseY(flatIndex) + ripple.y : flick.baseY(flatIndex)
 						}
 					}
 			}
