@@ -1,16 +1,20 @@
+pragma Singleton
 import QtQuick
 import Quickshell
 import Quickshell.Io
 
 
+
 QtObject {
     id: colors
+    
     property var colorFile: FileView {
         path: Quickshell.env("HOME") + "/.cache/matugen/quickshell-colors.json"
         preload: true
         watchChanges: true
         onFileChanged: this.reload()
     }
+
     property var colorData: {
         try {
             return JSON.parse(colorFile.text())

@@ -84,7 +84,7 @@ Scope {
 	// =======================
 	// CONFIGURATION
 	// =======================
-	property var colorsPalette: Colors {}
+	// property var colors: Colors {}
 	
 	property var filteredWallpapers: WallpaperService.wallpapers   // initially same as full list
 	property string selectedWallpaper: ""
@@ -244,137 +244,106 @@ Scope {
 	property bool isSelected: false
 		
 
-	function setIndex(i) {
+	// function setIndex(i) {
 
-		wallpaperController.previousIndex = wallpaperController.currentIndex
-		wallpaperController.currentIndex = i
+	// 	wallpaperController.previousIndex = wallpaperController.currentIndex
+	// 	wallpaperController.currentIndex = i
 
-		wallpaperController.previousItem = wallpaperController.currentItem
-	}
+	// 	wallpaperController.previousItem = wallpaperController.currentItem
+	// }
 
-	function computeDir() {
+	// function computeDir() {
 
-		var curr = wallpaperController.currentItem
-		var prev = wallpaperController.previousItem
+	// 	var curr = wallpaperController.currentItem
+	// 	var prev = wallpaperController.previousItem
 
-		if (!curr || !prev)
-			return 1
+	// 	if (!curr || !prev)
+	// 		return 1
 
-		var cx = curr.mapToItem(null, 0, 0).x
-		var px = prev.mapToItem(null, 0, 0).x
+	// 	var cx = curr.mapToItem(null, 0, 0).x
+	// 	var px = prev.mapToItem(null, 0, 0).x
 
-		return (cx > px) ? 1 : -1
-	}
-	function flipHex() {
+	// 	return (cx > px) ? 1 : -1
+	// }
+	// function flipHex() {
 
-		var wSelected = wallpaperController.currentItem
-		var wPrevious = wallpaperController.previousItem
+	// 	var wSelected = wallpaperController.currentItem
+	// 	var wPrevious = wallpaperController.previousItem
 
-		if (!wSelected?.visualWrapperRef || !wPrevious?.visualWrapperRef)
-			return
+	// 	if (!wSelected?.visualWrapperRef || !wPrevious?.visualWrapperRef)
+	// 		return
 
-		var cx = wSelected.mapToItem(null, 0, 0).x
-		var px = wPrevious.mapToItem(null, 0, 0).x
+	// 	var cx = wSelected.mapToItem(null, 0, 0).x
+	// 	var px = wPrevious.mapToItem(null, 0, 0).x
 
-		var dir = (cx > px) ? 1 : -1
+	// 	var dir = (cx > px) ? 1 : -1
 
-		Qt.callLater(() => {
+		// Qt.callLater(() => {
 
-			var vPrev = wPrevious.visualWrapperRef
+		// 	var vPrev = wPrevious.visualWrapperRef
 
-			vPrev.flipAnim.stop()
-			vPrev.flipAnim.from = 0
-			vPrev.flipAnim.to = 180 * dir
-			vPrev.flipAnim.start()
+		// 	vPrev.flipAnim.stop()
+		// 	vPrev.flipAnim.from = 0
+		// 	vPrev.flipAnim.to = 180 * dir
+		// 	vPrev.flipAnim.start()
 
-			var v = wSelected.visualWrapperRef
+		// 	var v = wSelected.visualWrapperRef
 
-			v.flipAnim.stop()
-			v.flipAnim.from = -180 * dir
-			v.flipAnim.to = 0
-			v.flipAnim.start()
-		})
-	}
+		// 	v.flipAnim.stop()
+		// 	v.flipAnim.from = -180 * dir
+		// 	v.flipAnim.to = 0
+		// 	v.flipAnim.start()
+		// })
+	// }
+
 	property real currentItemX
 	property real currentItemY
 
-	Connections {
-		target: wallpaperController.currentItem
-		function onXChanged() { highlightContainer.updateBorder() }
-		function onYChanged() { highlightContainer.updateBorder() }
-	}
+	// Connections {
+	// 	target: wallpaperController.currentItem
+	// 	function onXChanged() { highlightContainer.updateBorder() }
+	// 	function onYChanged() { highlightContainer.updateBorder() }
+	// }
+	property bool _flipLock: false
 	Connections {
     target: wallpaperController
 	
     function onCurrentIndexChanged() {
-			flick.updateGridFocusOffset()
-			
-			// console.log(currentItem.targetX)
-			// 
-			// console.log(
-			// 	"current item: ", currentItemX,
-			
-			// )
-			// var currentScale = currentItem.visualWrapperRef.visualScale
-			// var currentOpacity = currentItem.visualWrapperRef.fadeOpacity
-			// var currentTargetX = currentItem.targetX
-			// var currentTargetY = currentItem.targetY
-			// var currentX = currentItem.x
-			// var currentY = currentItem.y
-			// flick.clampContent()
-			
-			// console.log(
-			// // "current index: ", currentIndex,
-			// // "current item: ", currentItem,
-			// // "current scale: ", currentScale,
-			// // "current opacity: ", currentOpacity,
-			// "current targetX: ", currentTargetX,
-			// "current targetY: ", currentTargetY,
-			// "current X: ", currentX,
-			// "current Y: ", currentY,
-			// )
-	
-		// highlightContainer.target =
-        //         wallpaperController.getItem(wallpaperController.currentIndex)
-       
-	    // console.log("target  X: ", highlightContainer.target.x, 
-		// "target  Y: ", highlightContainer.target.y
-		// )
+		// console.log("item: ", wallpaperController.currentItem.itemIndex)
+			// console.log("current Index: ", currentItem.itemIndex)
+			// Qt.callLater(() => {
+			// 	flipHex()
+			// })
+			// console.log(previousItem, currentItem)
+			// flick.updateGridFocusOffset()
+			// if (_flipLock) return
+
+			// if (previousItem === currentItem) return
+
+			// _flipLock = true
+			// flipHex()
+			// Qt.callLater(() => _flipLock = false)
+			// // updateVisual()
+			// runUpdateShift()
 		
-		var wPrev = wallpaperController.currentIndex
-        // if (wPrev && wPrev !== wallpaperController.currentSelected) {
-        //     var vwPrev = wPrev.visualWrapperRef
-        //     vwPrev.scaleAnim.stop()
-        //     vwPrev.scaleAnim.from = vwPrev.visualScale
-        //     vwPrev.scaleAnim.to = 1
-        //     vwPrev.scaleAnim.start()
-        // }
 
-        // scaleDelayTimer.start()
-		Qt.callLater(() => {
+			wallpaperController.blurTransition = true
+			imgBlurInTimer.restart()
+		
+		}
+	}
+// property var itemMap: ({})
+// function registerItem(i, obj) {
+//     itemMap[i] = obj
+// }
 
-        flipHex()
-		})
-		// updateVisual()
-        runUpdateShift()
-       
+// function unregisterItem(i) {
+//     delete itemMap[i]
+// }
 
-        wallpaperController.blurTransition = true
-        imgBlurInTimer.restart()
-    }
-}
-property var itemMap: ({})
-function registerItem(i, obj) {
-    itemMap[i] = obj
-}
-
-function unregisterItem(i) {
-    delete itemMap[i]
-}
-
-function getItem(i) {
-    return itemMap[i] ?? null
-}
+// function getItem(i) {
+//     return itemMap[i] ?? null
+// }
 // property bool visibleModel: filteredWallpapers.slice(startIndex, endIndex)
     PanelWindow {
         id: selectorPanel
@@ -611,13 +580,14 @@ function getItem(i) {
 			}
 	
 			Component.onCompleted: {
-				flick.updateGridFocusOffset()
 				flick.forceActiveFocus()
+				flick.updateGridFocusOffset()
+				
 			}
 			property real lastContentY: 0
 			property int scrollDir: 0
 			property int lastDir: 0
-			property real dirThreshold: 0.5   // tweak (0.5–2)
+			property real dirThreshold: 0.5
 
 			
 			Connections {
@@ -631,7 +601,7 @@ function getItem(i) {
 						flick.scrollDir = dy > 0 ? 1 : -1
 
 						if (flick.scrollDir !== lastDir) {
-							console.log(flick.scrollDir > 0 ? "scroll ↓" : "scroll ↑")
+							// console.log(flick.scrollDir > 0 ? "scroll ↓" : "scroll ↑")
 							lastDir = flick.scrollDir
 						}
 
@@ -748,36 +718,77 @@ function getItem(i) {
 					
 					property real baseOffsetX: Math.max((flick.width - gridWidth()) / 2, 0)
 					property real globalShiftX: 0
+					property real globalShiftY: 0
 					property real baseBiasX: flick.width * 0.20 + 20
 
-					x: (flick.width - gridWidth()) / 2 + globalShiftX
+					x: (flick.width - gridWidth()) / 2
 					y: 0
+					
+			
+				function updateGridFocusOffset() {
 
-					function updateGridFocusOffset() {
+					var selIndex = wallpaperController.currentIndex
+					var cols = flick.columns
 
-						var selIndex = wallpaperController.currentIndex
-						var cols = flick.columns
-
-						if (selIndex < 0) return
-
-						// stable guard
-						if (selIndex < startIndex || selIndex >= endIndex) {
-							globalShiftX = 0
-							return
-						}
-
-						var col = selIndex % cols
-						var centerCol = Math.floor(cols / 2)
-
-						var offset = col - centerCol
-
-						var newShift = (offset !== 0) ? -offset * 25 : 0
-
-						if (Math.abs(newShift - globalShiftX) < 0.01)
-							return
-
-						globalShiftX = newShift
+					if (selIndex < 0) return
+					// stable guard
+					if (selIndex < startIndex || selIndex >= endIndex) {
+						globalShiftX = 0
+						globalShiftY = 0
+						return
 					}
+					var start = flick.startIndex
+
+					var col = selIndex % cols
+
+					// FIX: viewport-relative row
+					var localIndex = selIndex - start
+					var row = Math.floor(localIndex / cols)
+
+					var centerCol = Math.floor(cols / 2)
+
+					var visibleRows = Math.ceil(flick.height / flick.rowStep)
+					var centerRow = Math.floor(visibleRows / 2)
+
+					var offsetX = col - centerCol
+					var offsetY = row - centerRow
+
+					var newShiftX = (offsetX !== 0) ? -offsetX * 25 : 0
+					var newShiftY = (offsetY !== 0) ? -offsetY * 15 : 0
+
+					if (Math.abs(newShiftX - globalShiftX) < 0.01 &&
+						Math.abs(newShiftY - globalShiftY) < 0.01)
+						return
+
+					globalShiftX = newShiftX
+					globalShiftY = newShiftY
+				}
+					// function updateGridFocusOffset() {
+
+					// 	var selIndex = wallpaperController.currentIndex
+					// 	var cols = flick.columns
+
+					// 	if (selIndex < 0) return
+
+						// // stable guard
+						// if (selIndex < startIndex || selIndex >= endIndex) {
+						// 	globalShiftX = 0
+						// 	return
+						// }
+
+					// 	var col = selIndex % cols
+					// 	var centerCol = Math.floor(cols / 2)
+
+					// 	var offset = col - centerCol
+
+					// 	var newShift = (offset !== 0) ? -offset * 25 : 0
+
+					// 	if (Math.abs(newShift - globalShiftX) < 0.01)
+					// 		return
+
+					// 	globalShiftX = newShift
+					// }
+				
 
 				
 					Behavior on globalShiftX {
@@ -788,8 +799,14 @@ function getItem(i) {
 						}
 					}
 					
-
-			
+					Behavior on globalShiftY {
+						NumberAnimation {
+							duration: 500
+							easing.type: Easing.BezierSpline
+							easing.bezierCurve: [0.25, 0.1, 0.25, 1.0]
+						}
+					}
+					
 					function baseX(index) {
 						var col = index % columns;
 						var row = Math.floor(index / columns);
@@ -809,7 +826,7 @@ function getItem(i) {
 
 						var totalRows = Math.ceil(filteredWallpapers.length / columns)
 
-						var visualPadding = cellHeight * 0.08
+						var visualPadding = cellHeight * 0.10
 
 						var gridHeight =
 							(totalRows - 1) * rowStep
@@ -897,7 +914,7 @@ function getItem(i) {
 
 			// 		ShapePath {
 			// 			strokeWidth: 4
-			// 			strokeColor: colorsPalette.primary
+			// 			strokeColor: colors.primary
 			// 			fillColor: "transparent"
 
 			// 			PathMove { x: selectedHexBorder.width * 0.5; y: 0 }
@@ -955,30 +972,30 @@ function getItem(i) {
 
 		function smartScroll(i) {
 
-    let cols = flick.columns
-    let row = Math.floor(i / cols)
+		let cols = flick.columns
+		let row = Math.floor(i / cols)
 
-    let rowTop = row * flick.rowStep
-    let rowBottom = rowTop + flick.rowStep
+		let rowTop = row * flick.rowStep
+		let rowBottom = rowTop + flick.rowStep
 
-    let viewTop = flick.contentY
-    let viewBottom = flick.contentY + flick.height
+		let viewTop = flick.contentY
+		let viewBottom = flick.contentY + flick.height
 
-    let maxRow = Math.floor((filteredWallpapers.length - 1) / cols)
+		let maxRow = Math.floor((filteredWallpapers.length - 1) / cols)
 
-    // UP → only if item fully above view
-    if (rowTop < viewTop) {
-        flick.contentY = Math.max(0, rowTop)
-        return
-    }
+		// UP → only if item fully above view
+		if (rowTop < viewTop) {
+			flick.contentY = Math.max(0, rowTop)
+			return
+		}
 
-    // DOWN → only if item fully below view
-    if (rowBottom > viewBottom) {
-        let target = row - Math.floor(flick.height / flick.rowStep) + 1
-        flick.contentY = Math.min(maxRow, target) * flick.rowStep
-        return
-    }
-}
+		// DOWN → only if item fully below view
+		if (rowBottom > viewBottom) {
+			let target = row - Math.floor(flick.height / flick.rowStep) + 1
+			flick.contentY = Math.min(maxRow, target) * flick.rowStep
+			return
+		}
+	}
 
 
 		function snap() {
@@ -1064,17 +1081,17 @@ function getItem(i) {
 							
 								    },
 
-								    // EXIT (normal)
+								    // EXIT 
 								    Transition {
 								        from: "in"
 								        to: "out"
 								       	NumberAnimation {
 											duration: 350
 											properties: "_rowScale"
-											from: 1; to: 0
+											from: 1; 
+											to: 0
 											easing.type: Easing.OutBack
-											easing.overshoot: 1.2
-											
+											easing.overshoot: 1.5
 										}
 								    },
 								]
@@ -1084,10 +1101,8 @@ function getItem(i) {
 								property bool _isSelected: wallpaperController.currentIndex === flatIndex
 
 								property int cols: flick.columns
-								
-								
+									
 								property real deadZone: 20
-
 								
 								property real itemCenterY: y + height * 0.5
 								property real viewCenterY: flick.contentY + flick.height * 0.5
@@ -1104,7 +1119,7 @@ function getItem(i) {
 
 								property int dx: xIdx - sx
 								property int dy: yIdx - sy
-							
+								
 								property bool _rippleOff: selIndex < flick.startIndex || selIndex >= flick.endIndex
 								property var _ripple: flick.ripple(dx, dy, sx, sy) 
 								originFixY: (transformOrigin === Item.Top) ? height * 0.5 : -height * 0.5
@@ -1128,12 +1143,14 @@ function getItem(i) {
 								// 	}
 								// }
 								opacity: _rowScale < 0.01 ? 0 : 1
+								shiftX: flick.globalShiftX
+								shiftY: flick.globalShiftY
 								
 								container: flick
 								flickRef: flick
 								rippleOff: _rippleOff
 								ripple: _ripple
-								hexBorder: highlightContainer
+								// hexBorder: highlightContainer
 								// scale: _rowScale
 								
 								itemData: filteredWallpapers[flatIndex]

@@ -22,13 +22,14 @@ import qs.services
 Item {
     id: hexItem
     // z: isSelected ? 2 : 1
-
     property var controller
     property var container
     property var flickRef
     property int itemIndex
     property var itemData
     property var hexBorder
+    property real shiftX
+    property real shiftY
     // property real targetX
     // property real targetY
    
@@ -50,34 +51,15 @@ Item {
    function clamp(v) {
         return Math.sign(v) * Math.min(Math.abs(v), 2)
     }
-  
-    property point globalPos: mapToItem(highlightContainer, 0, 0)
-    property real globalX: globalPos.x
-    property real globalY: globalPos.y
 
     property real layoutX: clamp(dx) * 30 * enterT
     property real layoutY: clamp(dy) * 30 * enterT
 
-//    property real dirX: dx / Math.max(1, Math.abs(dx) + Math.abs(dy))
-//     property real dirY: dy / Math.max(1, Math.abs(dx) + Math.abs(dy))
-
-//     property real d: Math.sqrt(dx*dx + dy*dy)
-//     property real k: Math.min(1, d / 2)
-
-    // property real layoutX: dirX * 80 * k * enterT
-    // property real layoutY: dirY * 80 * k * enterT
-
-    // property real dist: Math.min(2, Math.sqrt(dx*dx + dy*dy))
-
-    // property real layoutX: dx * dist * 10 * enterT
-    // property real layoutY: dy * dist * 10 * enterT
-    // property real layoutX:0
-    // property real layoutY: 0
-
     property real targetX: flick.baseX(itemIndex) + layoutX + (rippleOff ? 0 : ripple.x)
-    property real targetY: flick.baseY(itemIndex) + layoutY + (rippleOff ? 0 : ripple.y)
-    x: targetX
-    y: targetY
+    property real targetY: flick.baseY(itemIndex) + layoutY + (rippleOff ? 0 : ripple.y) 
+    
+    x: targetX + shiftX
+    y: targetY + shiftY
 
     // onXChanged: {
     //     console.log("hexItem X position: ", x)
@@ -145,39 +127,6 @@ Item {
     // Component.onCompleted: controller.registerItem(flatIndex, this)
     // Component.onDestruction: controller.unregisterItem(flatIndex)
 
-    function computeShiftX() {
-        var selIndex = controller.currentIndex
-        if (itemIndex === selIndex) return 0
-
-        // If selected hex is scaled to 0 (offscreen), don't give space
-        
-        if (!controller.selectedVisual || controller.selectedVisual.visualScale < 1) return 0;
-
-        var cols = container.columns
-        var selRow = Math.floor(selIndex / cols)
-        var selCol = selIndex % cols
-        var row = Math.floor(itemIndex / cols)
-        var col = itemIndex % cols
-
-        // Left side of selection
-        if (col < selCol || 
-            (row < selRow && col <= selCol - (selRow % 2 === 0 ? 1 : 0)) || 
-            (row > selRow && col <= selCol - (selRow % 2 === 0 ? 1 : 0)))
-            return -20
-
-        // Right side of selection
-        if (col > selCol || 
-            (row < selRow && col >= selCol + (selRow % 2 === 0 ? 0 : 1)) ||
-            (row > selRow && col >= selCol + (selRow % 2 === 0 ? 0 : 1)))
-            return 20
-
-        return 0
-    }			
-
-    function updateShift() {
-        shiftX = computeShiftX()
-        shiftY = computeShiftY()
-    }
     
     // Connections {
     //     target: controller.currentSelected
@@ -187,27 +136,10 @@ Item {
     //     function onVisualScaleChanged() {
          
     //         updateShift()
-    //         container.updateGridFocusOffset() 
+            // container.updateGridFocusOffset() 
     //     }
     // }
     
-   
-    function computeShiftY() {
-        var selIndex = controller.currentIndex
-        if (itemIndex === selIndex) return 0
-
-        // If selected hex is scaled to 0 (offscreen), don't give space
-        // var controller.selectedVisual = controller.currentSelected?.visualWrapperRef;
-        if (!controller.selectedVisual || controller.selectedVisual.visualScale === 0) return 0;
-
-        var cols = container.columns
-        var selRow = Math.floor(selIndex / cols)
-        var row = Math.floor(itemIndex / cols)
-
-        if (row < selRow) return -10
-        if (row > selRow) return 10
-        return 0
-    }
 
   
     
@@ -233,16 +165,122 @@ Item {
     property bool hiddenRow: false
     property alias visualWrapperRef: visualWrapper
 
-    property real shiftX: 0
-    property real shiftY: 0
-
+    //  strokeColor: "#FAF9F6"
     property bool _visibleState: true
 
+    Shape {
+        id: selectedHexBorder
+        visible: isSelected
+        // visible: false
+        width: container.cellWidth - 10
+        height: container.cellHeight - 10
+        z: 9999
+        scale: visualWrapperRef.visualScale
+        property real t: 0   // progress 0→1
+        property real tt: Math.min(1, selectedHexBorder.t * 1.2)
+
+        Behavior on scale {
+            NumberAnimation {
+                duration: 400
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: [0.25, 0.1, 0.25, 1.0]
+            }
+        }
+        preferredRendererType: Shape.CurveRenderer
+        antialiasing: true
+        // TOP LEFT
+        ShapePath {
+            strokeWidth: 2
+            strokeColor: Colors.primary
+            fillColor: "transparent"
+
+            PathMove { x: width * 0.5; y: 0 }
+            PathLine {
+                x: width * 0.5 - (width * 0.5) * selectedHexBorder.t
+                y: (height * 0.25) * selectedHexBorder.t
+            }
+        }
+
+        // TOP RIGHT
+        ShapePath {
+            strokeWidth: 2
+            strokeColor: Colors.primary
+            fillColor: "transparent"
+
+            PathMove { x: width * 0.5; y: 0 }
+            PathLine {
+                x: width * 0.5 + (width * 0.5) * selectedHexBorder.t
+                y: (height * 0.25) * selectedHexBorder.t
+            }
+        }
+
+        // BOTTOM LEFT
+        ShapePath {
+            strokeWidth: 2
+            strokeColor: Colors.primary
+            fillColor: "transparent"
+
+            PathMove { x: width * 0.5; y: height }
+            PathLine {
+                x: width * 0.5 - (width * 0.5) * selectedHexBorder.t
+                y: height - (height * 0.25) * selectedHexBorder.t
+            }
+        }
+
+        // BOTTOM RIGHT
+        ShapePath {
+            strokeWidth: 2
+            strokeColor: Colors.primary
+            fillColor: "transparent"
+
+            PathMove { x: width * 0.5; y: height }
+            PathLine {
+                x: width * 0.5 + (width * 0.5) * selectedHexBorder.t
+                y: height - (height * 0.25) * selectedHexBorder.t
+            }
+        }
+        // LEFT SIDE (middle)
+        ShapePath {
+            id: leftShape
+            strokeWidth: 2
+            strokeColor: Colors.primary
+            fillColor: "transparent"
+
+            PathMove {
+                x: 0
+                y: height * 0.25
+            }
+
+            PathLine {
+                x: 0
+                y: height * (0.25 + 0.5 * selectedHexBorder.tt)
+            }
+        }
+
+        // RIGHT SIDE (middle)
+        ShapePath {
+            id: rightShape
+            strokeWidth: 2
+            strokeColor: Colors.primary
+            fillColor: "transparent"
+
+           
+            PathMove {
+                x: width
+                y: height * 0.75
+            }
+
+            PathLine {
+                x: width
+                y: height * (0.75 - 0.5 * selectedHexBorder.tt)
+            }
+        }
+    }
         Shape {
-            id: selectedHexBorder
-            z: 9999
+            id: selectedDefaultBorder
+            z: 10
             visible: isSelected
-            // visible: true
+            // visible: false
 
             width: container.cellWidth - 10
             height: container.cellHeight - 10
@@ -251,14 +289,22 @@ Item {
             y: 0
 
             scale: visualWrapperRef.visualScale
+
+            Behavior on scale {
+                NumberAnimation {
+                    duration: 400
+                    easing.type: Easing.BezierSpline
+                    easing.bezierCurve: [0.25, 0.1, 0.25, 1.0]
+                }
+            }
             opacity: 1
             preferredRendererType: Shape.CurveRenderer
             antialiasing: true
             ShapePath {
                 strokeWidth: 2
-                strokeColor: "#FAF9F6"
+               
                 fillColor: "transparent"
-
+                strokeColor: "#4d4d4d"
                 PathMove { x: width * 0.5; y: 0 }
                 PathLine { x: width; y: height * 0.25 }
                 PathLine { x: width; y: height * 0.75 }
@@ -268,9 +314,9 @@ Item {
                 PathLine { x: width * 0.5; y: 0 }
             }
 
-            Behavior on scale {
-                SpringAnimation { spring: 6; damping: 0.9 }
-            }
+            // Behavior on scale {
+            //     SpringAnimation { spring: 6; damping: 0.9 }
+            // }
         }
 
 
@@ -368,28 +414,8 @@ Item {
         //     controller.currentTargetY = targetY
         //     console.log(controller.currentTargetY)
         // }
-
-        Item {
-        id: visualWrapper
-  
-        width: parent.width
-        height: parent.height
-         
-        property alias flipAnim: flipAnim
-
-     
-        // property real fadeOpacity: inView ? 1 : 0
-        property real visualScale: isSelected ? 1.12 : 1
-        scale: visualScale	
-        Behavior on scale {
-                // enabled: flickRef.firstUpdateDone
-                NumberAnimation {
-                    duration: 400
-                    easing.type: Easing.BezierSpline
-                    easing.bezierCurve: [0.25, 0.1, 0.25, 1.0]
-                }
-            }
-        // opacity: fadeOpacity
+  // property real fadeOpacity: inView ? 1 : 0
+              // opacity: fadeOpacity
         
         // Behavior on scale {
 
@@ -409,14 +435,69 @@ Item {
         //         easing.type: Easing.InOutQuad 
         //     } 
         // }
+                 // Rectangle {
+        //     anchors.fill: parent
+        //     visible: hexItem.controller.cardVisible && !fadeInAnim.running
+       
+        //   color: {
+        //         if (isSelected)
+        //             return "transparent"
+
+        //         if (dirScore < 0)
+        //             return "red"
+
+        //         return "blue"
+        //     }
+
+        //     Behavior on opacity { NumberAnimation { duration: 350; easing.type: Easing.InOutQuad } }
+        // }
+        Item {
+        id: visualWrapper
+  
+        width: parent.width
+        height: parent.height
          
-        transform: Rotation {
+        property alias flipAnim: flipAnim
+
+     
+      
+        property real visualScale: isSelected ? 1.125 : 1
+        scale: visualScale	
+        Behavior on scale {
+            NumberAnimation {
+                duration: 250
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: [0.25, 0.1, 0.25, 1.0]
+            }
+        }
+
+   property real wave: 0
+    property real wavePhase: 0
+
+    transform: [
+
+     
+        Rotation {
             id: yRotation
             origin.x: visualWrapper.width / 2
             origin.y: visualWrapper.height / 2
             axis { x: 0; y: 1; z: 0 }
             angle: visualWrapper.flipAngle
-        }
+        },
+
+        // Rotation {
+        //     origin.x: width/2
+        //     origin.y: height/2
+        //     angle:
+        //         Math.sin(visualWrapper.wavePhase * Math.PI * 2) * 3 +
+        //         Math.sin(visualWrapper.wavePhase * Math.PI * 4) * 1.2
+        // },
+
+        // Scale {
+        //     xScale: 1 + visualWrapper.wave * 0.03 + Math.sin(visualWrapper.wavePhase * Math.PI * 6) * 0.005
+        //     yScale: 1 - visualWrapper.wave * 0.015 + Math.sin(visualWrapper.wavePhase * Math.PI * 6) * 0.005
+        // }
+    ]
  
         property real flipAngle: 0
 
@@ -425,7 +506,7 @@ Item {
             id: flipAnim
             target: visualWrapper
             property: "flipAngle"
-            duration: 300
+            duration: 350
             easing.type: Easing.InOutQuad
         }
 
@@ -458,22 +539,7 @@ Item {
     }
 
   
-        // Rectangle {
-        //     anchors.fill: parent
-        //     visible: hexItem.controller.cardVisible && !fadeInAnim.running
-       
-        //   color: {
-        //         if (isSelected)
-        //             return "transparent"
 
-        //         if (dirScore < 0)
-        //             return "red"
-
-        //         return "blue"
-        //     }
-
-        //     Behavior on opacity { NumberAnimation { duration: 350; easing.type: Easing.InOutQuad } }
-        // }
         
         Rectangle {
             anchors.fill: parent
@@ -484,7 +550,6 @@ Item {
             Behavior on opacity { NumberAnimation { duration: 350; easing.type: Easing.InOutQuad } }
         }
 
-        // : ((!controller.selectedVisual || controller.selectedVisual.visualScale < 1) ? 0 : Math.min(0.6, gen * 0.12))
 
         layer.enabled: true
         layer.smooth: true
@@ -528,14 +593,148 @@ Item {
 	// 		)
     //     }
     // }
+  
+    NumberAnimation {
+        id: anim
+        target: selectedHexBorder
+        property: "t"
+        from: 0
+        to: 1
+        duration: 350
+        easing.type: Easing.BezierSpline
+        easing.bezierCurve: [0.22, 1.0, 0.36, 1.0]
+    }
 
+    Component.onCompleted: {
+        
+         if (itemIndex === 0) {
+            controller.previousItem = hexItem
+            controller.currentItem = hexItem
+        }
+        anim.restart()
+    }
+    // Connections {
+    //     target: wallpaperController
+
+    //     function onCurrentIndexChanged() {
+    //         anim.restart()
+        
+    //     }
+    // }
+
+
+    // SequentialAnimation {
+    //     id: waveAnim
+
+    //     NumberAnimation {
+    //         target: visualWrapper
+    //         property: "wavePhase"
+    //         from: 0
+    //         to: 2
+    //         duration: 250
+    //     }
+    //     NumberAnimation {
+    //         target: visualWrapper
+    //         property: "wave"
+    //         from: 1
+    //         to: 0
+    //         duration: 600
+    //     }
+    // }
+//   Connections {
+//     target: wallpaperController
+
+//     function onCurrentIndexChanged() {
+
+//         var prev = controller.currentItem
+//         var curr = hexItem
+
+//         if (!isSelected)
+//             return
+
+//         controller.previousItem = prev
+//         controller.currentItem = curr
+
+//        controller.flipHex()
+//     }
+// }
+  
+	function flipHex() {
+
+		var wSelected = controller.currentItem
+		var wPrevious = controller.previousItem
+
+		if (!wSelected?.visualWrapperRef || !wPrevious?.visualWrapperRef)
+			return
+
+		var cx = wSelected.mapToItem(null, 0, 0).x
+		var px = wPrevious.mapToItem(null, 0, 0).x
+
+		var dir = (cx > px) ? 1 : -1
+        var vPrev = wPrevious.visualWrapperRef
+        var v = wSelected.visualWrapperRef
+        Qt.callLater(() => {
+
+            if (wPrevious?.visualWrapperRef) {
+			
+
+			vPrev.flipAnim.stop()
+			vPrev.flipAnim.from = 180 * dir
+			vPrev.flipAnim.to = 0
+			vPrev.flipAnim.start()
+            }
+            if(wSelected?.visualWrapperRef) {
+			v.flipAnim.stop()
+			v.flipAnim.from = 0
+			v.flipAnim.to = -180 * dir
+			v.flipAnim.start()
+            }
+		})
+	}
+    property bool _flipLock: false
+    property bool _flipQueued: false
+    // function triggerFlip() {
+
+    //     if (_flipLock) {
+    //         _flipQueued = true
+    //         return
+    //     }
+
+    //     _flipLock = true
+
+    //     Qt.callLater(() => flipHex())
+    // }
     onIsSelectedChanged: {
         if (!isSelected) return
-
-        controller.previousItem = controller.currentItem
-        controller.currentItem = hexItem
-        
+            anim.restart()
+            
+            controller.previousItem = controller.currentItem
+            controller.currentItem = hexItem        
+            // console.log("previous: ", controller.previousItem.itemIndex)
+            // console.log("item: ", controller.currentItem.itemIndex)
+            Qt.callLater(() => {
+                flipHex()
+            })
+            container.updateGridFocusOffset() 
     }
+    // property Item currentItem: null
+    // property Item previousItem: null
+    // Connections {
+    //     target: wallpaperController
+
+    //     function onCurrentIndexChanged() {
+    //         anim.restart()
+    //         if (!isSelected) return
+    //         controller.previousItem = controller.currentItem
+    //         controller.currentItem = hexItem        
+    //         console.log("previous: ", controller.previousItem.itemIndex)
+    //         console.log("item: ", controller.currentItem.itemIndex)
+    //         Qt.callLater(() => {
+    //             flipHex()
+    //         })
+    //     }
+    // }
+ 
 
     MouseArea {
         anchors.fill: parent
@@ -547,6 +746,7 @@ Item {
         }
         onClicked: {
             controller.currentIndex = itemIndex
+
             Qt.callLater(() => flickRef.forceActiveFocus())
         }
 

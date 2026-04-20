@@ -6,6 +6,7 @@ import QtQuick.Layouts
 import QtQuick.Shapes
 import qs.services
 import qs.components
+import qs.colors
 
 ColumnLayout {
     id: settingsPanel
@@ -46,7 +47,7 @@ ColumnLayout {
             SkewShape {
                 width: 260
                 height: 36
-                fill: colorsPalette.background
+                fill: Colors.background
             }
                     
             Item {
@@ -63,11 +64,11 @@ ColumnLayout {
                     background: null
                     
                     placeholderText: "Filter Images..."
-                    placeholderTextColor: colorsPalette.backgroundText70
+                    placeholderTextColor: Colors.backgroundText70
 
                     font.pixelSize: 16
                     font.family: "JetBrainsMono Nerd Font"
-                    color: colorsPalette.backgroundText70
+                    color: Colors.backgroundText70
 
                     focus: true
                     cursorVisible: false
@@ -121,7 +122,7 @@ ColumnLayout {
         // 	}
         // 	background: Rectangle {
         // 		radius: 8
-        // 		color: rescanBtn.down ? Qt.darker(colorSurfaceContainer, 1.3) : (rescanBtn.hovered ? Qt.lighter(colorSurfaceContainer, 1.2) : colorSurfaceContainer)
+        // 		color: rescanBtn.down ? Qt.darker(ColorsurfaceContainer, 1.3) : (rescanBtn.hovered ? Qt.lighter(ColorsurfaceContainer, 1.2) : ColorsurfaceContainer)
         // 		border.color: colorOutline
         // 		border.width: 1
         // 	}
@@ -140,7 +141,7 @@ ColumnLayout {
         // 	onClicked: utils.randomWallpaperFisherYates(filteredWallpapers, filteredWallpapers[wallpaperController.currentIndex]);
         // 	background: Rectangle {
         // 		radius: 8
-        // 		color: randomBtn.down ? Qt.darker(colorSurfaceContainer, 1.3) : (randomBtn.hovered ? Qt.lighter(colorSurfaceContainer, 1.2) : colorSurfaceContainer)
+        // 		color: randomBtn.down ? Qt.darker(ColorsurfaceContainer, 1.3) : (randomBtn.hovered ? Qt.lighter(ColorsurfaceContainer, 1.2) : ColorsurfaceContainer)
         // 		border.color: colorOutline
         // 		border.width: 1
         // 	}
@@ -159,7 +160,7 @@ ColumnLayout {
         // 	onClicked: settingsOpen = true
         // 	background: Rectangle {
         // 		radius: 8
-        // 		color: settingsBtn.down ? Qt.darker(colorSurfaceContainer, 1.3) : (settingsBtn.hovered ? Qt.lighter(colorSurfaceContainer, 1.2) : colorSurfaceContainer)
+        // 		color: settingsBtn.down ? Qt.darker(ColorsurfaceContainer, 1.3) : (settingsBtn.hovered ? Qt.lighter(ColorsurfaceContainer, 1.2) : ColorsurfaceContainer)
         // 		border.color: colorOutline
         // 		border.width: 1
         // 	}
@@ -208,7 +209,7 @@ ColumnLayout {
                 SkewShape {
                     width: 350
                     height: 36
-                    fill: colorsPalette.background
+                    fill: Colors.background
                 }
                   
             
@@ -225,10 +226,10 @@ ColumnLayout {
                         background: null
 
                         placeholderText: Config.options.wallpaperDir
-                        placeholderTextColor: colorsPalette.backgroundText70
+                        placeholderTextColor: Colors.backgroundText70
                         font.pixelSize: 16
                         font.family: "JetBrainsMono Nerd Font"
-                        color: colorsPalette.backgroundText70
+                        color: Colors.backgroundText70
                         
                         focus: true
                         cursorVisible: false
