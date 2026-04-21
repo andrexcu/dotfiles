@@ -35,6 +35,7 @@ Item {
    
     property bool inView
     property bool isSelected: controller.currentIndex === itemIndex
+    property bool isPrevious: controller.previousIndex === itemIndex
     property bool rippleOff
     property real originFixY
     width: container.cellWidth - 10
@@ -45,22 +46,23 @@ Item {
     property bool isHidden: false
     property var ripple
     property bool hasEntered: false
-
+    property real rowScale
     property real enterT: inView ? 0 : 1
- 
+    property bool entering: _rowScale < 1 && _inView
    function clamp(v) {
         return Math.sign(v) * Math.min(Math.abs(v), 2)
     }
 
-    property real layoutX: clamp(dx) * 30 * enterT
-    property real layoutY: clamp(dy) * 30 * enterT
-
+    property real layoutX: entering ? 0 : clamp(dx) * 30 * enterT
+    property real layoutY: entering ? 0 : clamp(dy) * 30 * enterT
+  
     property real targetX: flick.baseX(itemIndex) + layoutX + (rippleOff ? 0 : ripple.x)
     property real targetY: flick.baseY(itemIndex) + layoutY + (rippleOff ? 0 : ripple.y) 
     
     x: targetX + shiftX
     y: targetY + shiftY
-
+      //  property real layoutX: 0
+    // property real layoutY: 0
     // onXChanged: {
     //     console.log("hexItem X position: ", x)
     // }
@@ -169,155 +171,196 @@ Item {
     property bool _visibleState: true
 
     Shape {
-        id: selectedHexBorder
-        visible: isSelected
+    id: selectedHexBorder
+    
+    opacity: _inView && (isSelected || isPrevious)
+         ? Math.min(1, selectedHexBorder.t * 1.2)
+         : 0
+    // opacity: selectedHexBorder.t
+    // Behavior on opacity { 
+    //     NumberAnimation { 
+    //         duration: 180; 
+    //         easing.type: Easing.InOutQuad 
+    //     } 
+    // }
+   scale: visualWrapperRef.visualScale
+
+    Behavior on scale {
+        NumberAnimation {
+            duration: 350
+            easing.type: Easing.BezierSpline
+            easing.bezierCurve: [0.25, 0.1, 0.25, 1.0]
+        }
+    }
+    
+    width: container.cellWidth - 10
+    height: container.cellHeight - 10
+    z: 9999
+
+    property real t: 0
+    property real tt: Math.min(1, selectedHexBorder.t * 1.2)
+
+    property bool active: isSelected
+    property bool leaving: isPrevious && !isSelected
+
+    preferredRendererType: Shape.CurveRenderer
+    antialiasing: true
+
+    // ======================
+    // ANIMATION DRIVER
+    // ======================
+
+    NumberAnimation {
+        id: anim
+        target: selectedHexBorder
+        property: "t"
+        duration: 400
+        easing.type: Easing.BezierSpline
+        easing.bezierCurve: [0.25, 0.1, 0.25, 1.0]
+    }
+
+    onActiveChanged: {
+        if (!active) return
+        anim.stop()
+        anim.from = 0
+        anim.to = 1
+        anim.restart()
+    }
+
+    onLeavingChanged: {
+        if (!leaving) return
+        anim.stop()
+        anim.from = 1
+        anim.to = 0
+        anim.restart()
+    }
+
+    // ======================
+    // PATHS (ALL USE SELECTEDHEX)
+    // ======================
+
+    ShapePath {
+        strokeWidth: isSelected ? 2 : 1.125
+        strokeColor: Colors.primary
+        fillColor: "transparent"
+
+        PathMove { x: width * 0.5; y: 0 }
+        PathLine {
+            x: width * 0.5 - (width * 0.5) * selectedHexBorder.t
+            y: (height * 0.25) * selectedHexBorder.t
+        }
+    }
+
+    ShapePath {
+        strokeWidth: isSelected ? 2 : 1.125
+        strokeColor: Colors.primary
+        fillColor: "transparent"
+
+        PathMove { x: width * 0.5; y: 0 }
+        PathLine {
+            x: width * 0.5 + (width * 0.5) * selectedHexBorder.t
+            y: (height * 0.25) * selectedHexBorder.t
+        }
+    }
+
+    ShapePath {
+        strokeWidth: isSelected ? 2 : 1.125
+        strokeColor: Colors.primary
+        fillColor: "transparent"
+
+        PathMove { x: width * 0.5; y: height }
+        PathLine {
+            x: width * 0.5 - (width * 0.5) * selectedHexBorder.t
+            y: height - (height * 0.25) * selectedHexBorder.t
+        }
+    }
+
+    ShapePath {
+        strokeWidth: isSelected ? 2 : 1.125
+        strokeColor: Colors.primary
+        fillColor: "transparent"
+
+        PathMove { x: width * 0.5; y: height }
+        PathLine {
+            x: width * 0.5 + (width * 0.5) * selectedHexBorder.t
+            y: height - (height * 0.25) * selectedHexBorder.t
+        }
+    }
+
+    ShapePath {
+        strokeWidth: isSelected ? 2 : 1.125
+        strokeColor: Colors.primary
+        fillColor: "transparent"
+
+        PathMove { x: 0; y: height * 0.25 }
+        PathLine {
+            x: 0
+            y: height * (0.25 + 0.5 * selectedHexBorder.tt)
+        }
+    }
+
+    ShapePath {
+        strokeWidth: isSelected ? 2 : 1.125
+        strokeColor: Colors.primary
+        fillColor: "transparent"
+
+        PathMove { x: width; y: height * 0.75 }
+        PathLine {
+            x: width
+            y: height * (0.75 - 0.5 * selectedHexBorder.tt)
+        }
+    }
+}
+
+    Shape {
+        id: selectedDefaultBorder
+        z: 10
+        opacity: _inView ? 1 : 0
+        // opacity: 
+        // _inView && isSelected ? 1 : 0
+        // visible: _inView && isSelected
         // visible: false
+
         width: container.cellWidth - 10
         height: container.cellHeight - 10
-        z: 9999
+
+        x: 0
+        y: 0
+
         scale: visualWrapperRef.visualScale
-        property real t: 0   // progress 0→1
-        property real tt: Math.min(1, selectedHexBorder.t * 1.2)
 
         Behavior on scale {
             NumberAnimation {
-                duration: 400
+                duration: 350
                 easing.type: Easing.BezierSpline
                 easing.bezierCurve: [0.25, 0.1, 0.25, 1.0]
             }
         }
+        Behavior on opacity { 
+            NumberAnimation { 
+                duration: 350; 
+                easing.type: Easing.InOutQuad 
+            } 
+        }
+        
         preferredRendererType: Shape.CurveRenderer
         antialiasing: true
-        // TOP LEFT
         ShapePath {
-            strokeWidth: 2
-            strokeColor: Colors.primary
+            strokeWidth: 1.125
+            
             fillColor: "transparent"
-
+            strokeColor: "#4d4d4d"
             PathMove { x: width * 0.5; y: 0 }
-            PathLine {
-                x: width * 0.5 - (width * 0.5) * selectedHexBorder.t
-                y: (height * 0.25) * selectedHexBorder.t
-            }
+            PathLine { x: width; y: height * 0.25 }
+            PathLine { x: width; y: height * 0.75 }
+            PathLine { x: width * 0.5; y: height }
+            PathLine { x: 0; y: height * 0.75 }
+            PathLine { x: 0; y: height * 0.25 }
+            PathLine { x: width * 0.5; y: 0 }
         }
 
-        // TOP RIGHT
-        ShapePath {
-            strokeWidth: 2
-            strokeColor: Colors.primary
-            fillColor: "transparent"
-
-            PathMove { x: width * 0.5; y: 0 }
-            PathLine {
-                x: width * 0.5 + (width * 0.5) * selectedHexBorder.t
-                y: (height * 0.25) * selectedHexBorder.t
-            }
-        }
-
-        // BOTTOM LEFT
-        ShapePath {
-            strokeWidth: 2
-            strokeColor: Colors.primary
-            fillColor: "transparent"
-
-            PathMove { x: width * 0.5; y: height }
-            PathLine {
-                x: width * 0.5 - (width * 0.5) * selectedHexBorder.t
-                y: height - (height * 0.25) * selectedHexBorder.t
-            }
-        }
-
-        // BOTTOM RIGHT
-        ShapePath {
-            strokeWidth: 2
-            strokeColor: Colors.primary
-            fillColor: "transparent"
-
-            PathMove { x: width * 0.5; y: height }
-            PathLine {
-                x: width * 0.5 + (width * 0.5) * selectedHexBorder.t
-                y: height - (height * 0.25) * selectedHexBorder.t
-            }
-        }
-        // LEFT SIDE (middle)
-        ShapePath {
-            id: leftShape
-            strokeWidth: 2
-            strokeColor: Colors.primary
-            fillColor: "transparent"
-
-            PathMove {
-                x: 0
-                y: height * 0.25
-            }
-
-            PathLine {
-                x: 0
-                y: height * (0.25 + 0.5 * selectedHexBorder.tt)
-            }
-        }
-
-        // RIGHT SIDE (middle)
-        ShapePath {
-            id: rightShape
-            strokeWidth: 2
-            strokeColor: Colors.primary
-            fillColor: "transparent"
-
-           
-            PathMove {
-                x: width
-                y: height * 0.75
-            }
-
-            PathLine {
-                x: width
-                y: height * (0.75 - 0.5 * selectedHexBorder.tt)
-            }
-        }
+    
     }
-        Shape {
-            id: selectedDefaultBorder
-            z: 10
-            visible: isSelected
-            // visible: false
-
-            width: container.cellWidth - 10
-            height: container.cellHeight - 10
-
-            x: 0
-            y: 0
-
-            scale: visualWrapperRef.visualScale
-
-            Behavior on scale {
-                NumberAnimation {
-                    duration: 400
-                    easing.type: Easing.BezierSpline
-                    easing.bezierCurve: [0.25, 0.1, 0.25, 1.0]
-                }
-            }
-            opacity: 1
-            preferredRendererType: Shape.CurveRenderer
-            antialiasing: true
-            ShapePath {
-                strokeWidth: 2
-               
-                fillColor: "transparent"
-                strokeColor: "#4d4d4d"
-                PathMove { x: width * 0.5; y: 0 }
-                PathLine { x: width; y: height * 0.25 }
-                PathLine { x: width; y: height * 0.75 }
-                PathLine { x: width * 0.5; y: height }
-                PathLine { x: 0; y: height * 0.75 }
-                PathLine { x: 0; y: height * 0.25 }
-                PathLine { x: width * 0.5; y: 0 }
-            }
-
-            // Behavior on scale {
-            //     SpringAnimation { spring: 6; damping: 0.9 }
-            // }
-        }
 
 
 
@@ -462,16 +505,18 @@ Item {
      
       
         property real visualScale: isSelected ? 1.125 : 1
-        scale: visualScale	
+
+        scale: visualScale
+
         Behavior on scale {
             NumberAnimation {
-                duration: 250
+                duration: 150
                 easing.type: Easing.BezierSpline
                 easing.bezierCurve: [0.25, 0.1, 0.25, 1.0]
             }
         }
 
-   property real wave: 0
+    property real wave: 0
     property real wavePhase: 0
 
     transform: [
@@ -506,7 +551,7 @@ Item {
             id: flipAnim
             target: visualWrapper
             property: "flipAngle"
-            duration: 350
+            duration: 300
             easing.type: Easing.InOutQuad
         }
 
@@ -516,7 +561,7 @@ Item {
         opacity: inView ? 1 : 0
         Behavior on opacity { NumberAnimation { duration: 150 } }
         anchors.fill: parent
-        anchors.centerIn: parent
+        // anchors.centerIn: parent
         asynchronous: true
         sourceSize.width: width
         sourceSize.height: height
@@ -594,25 +639,7 @@ Item {
     //     }
     // }
   
-    NumberAnimation {
-        id: anim
-        target: selectedHexBorder
-        property: "t"
-        from: 0
-        to: 1
-        duration: 350
-        easing.type: Easing.BezierSpline
-        easing.bezierCurve: [0.22, 1.0, 0.36, 1.0]
-    }
-
-    Component.onCompleted: {
-        
-         if (itemIndex === 0) {
-            controller.previousItem = hexItem
-            controller.currentItem = hexItem
-        }
-        anim.restart()
-    }
+    
     // Connections {
     //     target: wallpaperController
 
@@ -683,7 +710,9 @@ Item {
 			vPrev.flipAnim.to = 0
 			vPrev.flipAnim.start()
             }
+
             if(wSelected?.visualWrapperRef) {
+                
 			v.flipAnim.stop()
 			v.flipAnim.from = 0
 			v.flipAnim.to = -180 * dir
@@ -704,19 +733,46 @@ Item {
 
     //     Qt.callLater(() => flipHex())
     // }
+    // NumberAnimation {
+    //     id: anim
+    //     target: selectedHexBorder
+    //     property: "t"
+    //     from: 0
+    //     to: 1
+    //     duration: 350
+    //     // loops: Animation.Infinite
+    //     easing.type: Easing.BezierSpline
+    //     easing.bezierCurve: [0.22, 1.0, 0.36, 1.0]
+    // }
+
+    Component.onCompleted: {
+        
+         if (itemIndex === 0) {
+            controller.previousItem = hexItem
+            controller.currentItem = hexItem
+        }
+        anim.restart()
+    }
+        Timer {
+        interval: 350
+        running: isSelected
+        repeat: true
+        onTriggered: flipColor = !flipColor
+    }
+    property bool flipColor: false
     onIsSelectedChanged: {
         if (!isSelected) return
             anim.restart()
             
             controller.previousItem = controller.currentItem
             controller.currentItem = hexItem        
-            // console.log("previous: ", controller.previousItem.itemIndex)
-            // console.log("item: ", controller.currentItem.itemIndex)
             Qt.callLater(() => {
                 flipHex()
             })
             container.updateGridFocusOffset() 
     }
+            // console.log("previous: ", controller.previousItem.itemIndex)
+            // console.log("item: ", controller.currentItem.itemIndex)
     // property Item currentItem: null
     // property Item previousItem: null
     // Connections {
@@ -745,8 +801,9 @@ Item {
             wheel.accepted = true
         }
         onClicked: {
+            controller.previousIndex = controller.currentIndex
             controller.currentIndex = itemIndex
-
+            
             Qt.callLater(() => flickRef.forceActiveFocus())
         }
 

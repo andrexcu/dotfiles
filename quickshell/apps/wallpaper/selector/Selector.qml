@@ -128,7 +128,6 @@ Scope {
 								? wallpaperController.currentSelected.visualWrapperRef
 								: null
 
-	property int previousIndex: 0
 
 	
 	
@@ -235,6 +234,7 @@ Scope {
 
 	// computed values
 	property int currentIndex: 0
+	property int previousIndex: 0
 
 	property Item currentItem: null
 	property Item previousItem: null
@@ -309,6 +309,11 @@ Scope {
     target: wallpaperController
 	
     function onCurrentIndexChanged() {
+		// console.log(
+		// 	"prev: ", previousIndex,
+		// 	"current: ", currentIndex,
+			
+		// 	)
 		// console.log("item: ", wallpaperController.currentItem.itemIndex)
 			// console.log("current Index: ", currentItem.itemIndex)
 			// Qt.callLater(() => {
@@ -690,43 +695,42 @@ Scope {
 
 					// 	return Qt.point(shiftX, shiftY)
 					// }
-					function ripple(dx, dy, sx, sy) {
+				function ripple(dx, dy, sx, sy) {
 
-						var selParity = sy % 2
+					var selParity = sy % 2
 
-						var shiftX = 0
-						var shiftY = 0
+					var shiftX = 0
+					var shiftY = 0
 
-						var leftSide =
-							dx < 0 ||
-							(dy < 0 && sx + dx <= sx - (selParity === 0 ? 1 : 0)) ||
-							(dy > 0 && sx + dx <= sx - (selParity === 0 ? 1 : 0))
+					var leftSide =
+						dx < 0 ||
+						(dy < 0 && sx + dx <= sx - (selParity === 0 ? 1 : 0)) ||
+						(dy > 0 && sx + dx <= sx - (selParity === 0 ? 1 : 0))
 
-						var rightSide =
-							dx > 0 ||
-							(dy < 0 && sx + dx >= sx + (selParity === 0 ? 0 : 1)) ||
-							(dy > 0 && sx + dx >= sx + (selParity === 0 ? 0 : 1))
+					var rightSide =
+						dx > 0 ||
+						(dy < 0 && sx + dx >= sx + (selParity === 0 ? 0 : 1)) ||
+						(dy > 0 && sx + dx >= sx + (selParity === 0 ? 0 : 1))
 
-						if (leftSide) shiftX = -15
-						else if (rightSide) shiftX = 15
+					if (leftSide) shiftX = -15
+					else if (rightSide) shiftX = 15
 
-						if (dy < 0) shiftY = -10
-						else if (dy > 0) shiftY = 10
+					if (dy < 0) shiftY = -10
+					else if (dy > 0) shiftY = 10
 
-						return Qt.point(shiftX, shiftY)
-					}
-					
-					property real baseOffsetX: Math.max((flick.width - gridWidth()) / 2, 0)
-					property real globalShiftX: 0
-					property real globalShiftY: 0
-					property real baseBiasX: flick.width * 0.20 + 20
+					return Qt.point(shiftX, shiftY)
+				}
+				
+				property real baseOffsetX: Math.max((flick.width - gridWidth()) / 2, 0)
+				property real globalShiftX: 0
+				property real globalShiftY: 0
+				property real baseBiasX: flick.width * 0.20 + 20
 
-					x: (flick.width - gridWidth()) / 2
-					y: 0
+				x: (flick.width - gridWidth()) / 2
+				y: 0
 					
 			
 				function updateGridFocusOffset() {
-
 					var selIndex = wallpaperController.currentIndex
 					var cols = flick.columns
 
@@ -740,7 +744,7 @@ Scope {
 					var start = flick.startIndex
 
 					var col = selIndex % cols
-
+					
 					// FIX: viewport-relative row
 					var localIndex = selIndex - start
 					var row = Math.floor(localIndex / cols)
@@ -878,14 +882,14 @@ Scope {
 						}
 					}
 
-						function itemPosX(i) {
-								return gridOffsetX() + baseX(i) + baseBiasX
-							}
+					function itemPosX(i) {
+						return gridOffsetX() + baseX(i) + baseBiasX
+					}
 
-							function itemPosY(i) {
-								let row = Math.floor(i / columns)
-								return row * rowStep + gridVerticalOffset()
-							}
+					function itemPosY(i) {
+						let row = Math.floor(i / columns)
+						return row * rowStep + gridVerticalOffset()
+					}
 					
 					// Container outside the Flickable, so it’s not masked
 			// 	Item {
@@ -940,7 +944,7 @@ Scope {
 			// 	}
 			// }
 
-
+		
    		Keys.enabled: true
 	
 
@@ -959,7 +963,7 @@ Scope {
 				onMove: (i) => {
 
 					flick.cancelFlick()
-
+					wallpaperController.previousIndex = wallpaperController.currentIndex
 					wallpaperController.currentIndex = i
 
 					smartScroll(i, oldIndex)
@@ -1003,33 +1007,21 @@ Scope {
 				Math.round(flick.contentY / flick.rowStep) * flick.rowStep
 		}
 
-					// property real _r: flick.hexRadius
-					// property real _hexH: _r * 2
-					// highlightFollowsCurrentItem: true
-					// highlightMoveDuration: 350
-					// highlight: Item {}
-					// preferredHighlightBegin: (flick.height - flick._hexH) / 2
-					// preferredHighlightEnd: (flick.height - flick._hexH) / 2
-					// highlightRangeMode: ListView.StrictlyEnforceRange
-
-					// header: Item { width: (flick.width - flick._hexH) / 2 }
-					// footer: Item { width: (flick.width - flick._hexH) / 2 }
 					
-
-
-					// add: Transition {
-					// 	NumberAnimation { property: "opacity"; from: 0; to: 1; duration: 250; easing.type: Easing.OutCubic }
-					// 	NumberAnimation { property: "scale"; from: 0.85; to: 1; duration: 250; easing.type: Easing.OutBack; easing.overshoot: 1.2 }
-					// }
-					// remove: Transition {
-					// 	NumberAnimation { property: "opacity"; to: 0; duration: 100; easing.type: Easing.InCubic }
-					// }
-					// displaced: Transition {
-					// 	NumberAnimation { properties: "x,y"; duration: 150; easing.type: Easing.OutCubic }
-					// }
 					model: Math.ceil(filteredWallpapers.length / flick.columns)
 					property real _fadeZone: flick.rowStep
+				
+					add: Transition {
+						NumberAnimation { property: "opacity"; from: 0; to: 1; duration: 800; easing.type: Easing.OutCubic }
+						NumberAnimation { property: "scale"; from: 0.25; to: 1; duration: 800; easing.type: Easing.OutBack; easing.overshoot: 1.2 }
 					
+					}
+					remove: Transition {
+						NumberAnimation { property: "opacity"; to: 0; duration: 180; easing.type: Easing.InCubic }
+					}
+					// displaced: Transition {
+					// 	NumberAnimation { properties: "x,y"; duration: 180; easing.type: Easing.OutCubic }
+					// }
 					delegate: Item {
 						id: rowItem
 						width: flick.width
@@ -1047,6 +1039,11 @@ Scope {
 							delegate: HexItem {
 								id: hexItem
 								controller: wallpaperController
+								// property bool isReady: false
+								// visible: true
+								// Component.onCompleted: {
+								// 	isReady = true
+								// }
 								states: [
 									State {
 										name: "in"
@@ -1073,14 +1070,17 @@ Scope {
 								        to: "in"
 										NumberAnimation {
 											properties: "_rowScale"
-											from: 0
+											from: 0.5
 											to: 1
-											duration: 180
+											duration: 250
+											// easing.type: Easing.OutBack
+											// easing.overshoot: 1.2
+											easing.type: Easing.BezierSpline
 											easing.bezierCurve: [0.18, 1.0, 0.3, 1.0]
 										}
 							
 								    },
-
+									
 								    // EXIT 
 								    Transition {
 								        from: "in"
@@ -1091,7 +1091,7 @@ Scope {
 											from: 1; 
 											to: 0
 											easing.type: Easing.OutBack
-											easing.overshoot: 1.5
+											easing.overshoot: 1.2
 										}
 								    },
 								]
@@ -1123,15 +1123,15 @@ Scope {
 								property bool _rippleOff: selIndex < flick.startIndex || selIndex >= flick.endIndex
 								property var _ripple: flick.ripple(dx, dy, sx, sy) 
 								originFixY: (transformOrigin === Item.Top) ? height * 0.5 : -height * 0.5
+								 
 								property real _rowScale: 0
-
+								// property real _selectedScale: _isSelected ? 1.125 : 1
 								Behavior on opacity { 
 									NumberAnimation { 
 										duration: 350; 
 										easing.type: Easing.InOutQuad 
 									} 
 								}
-								// property real _selectScale: _isSelected ? 1.12 : 1
 								
 								scale: _rowScale
 								// Behavior on scale {
@@ -1143,13 +1143,21 @@ Scope {
 								// 	}
 								// }
 								opacity: _rowScale < 0.01 ? 0 : 1
+								
+
+								// Component.onCompleted: {
+								// 	_rowScale = 0
+								// 	opacity = 1   // visible immediately
+								// 	Qt.callLater(() => _rowScale = 1)
+								// }
 								shiftX: flick.globalShiftX
 								shiftY: flick.globalShiftY
-								
+								rowScale: _rowScale
 								container: flick
 								flickRef: flick
 								rippleOff: _rippleOff
 								ripple: _ripple
+								
 								// hexBorder: highlightContainer
 								// scale: _rowScale
 								
@@ -1157,6 +1165,21 @@ Scope {
 								itemIndex: flatIndex
 								inView: _inView
 								// transformOrigin: Item.Center
+								// transformOrigin: {
+								// 	if (isSelected) return Item.Center
+								// 	if (flick.scrollDir < 0) {
+								// 		// scroll up → original
+								// 		return _nearTop ? Item.Top : Item.Bottom
+								// 	} else {
+								// 		// scroll down → flipped
+								// 		return _nearTop ? Item.Bottom : Item.Top
+								// 	}
+								// }
+								property bool entering: _inView && _rowScale === 0
+								property bool leaving: !_inView && _rowScale > 0
+							
+
+
 								transformOrigin: {
 									if (isSelected) return Item.Center
 									if (flick.scrollDir < 0) {
@@ -1167,6 +1190,24 @@ Scope {
 										return _nearTop ? Item.Bottom : Item.Top
 									}
 								}
+
+								// transformOrigin: {
+								// 	if (isSelected) return Item.Center
+
+								// 	var base
+								// 	if (flick.scrollDir < 0) {
+								// 		base = _nearTop ? Item.Top : Item.Bottom
+								// 	} else {
+								// 		base = _nearTop ? Item.Bottom : Item.Top
+								// 	}
+
+								// 	// ENTER = invert base
+								// 	// if (entering) {
+								// 	// 	return base === Item.Top ? Item.Bottom : Item.Top
+								// 	// }
+
+								// 	return base
+								// }
 							
 							}
 
