@@ -7,7 +7,7 @@ import qs.services
 Singleton {
     id: root
 
-    function _resolve(path) { return path ? path.replace("~", homeDir) : "" }
+    // function _resolve(path) { return path ? path.replace("~", homeDir) : "" }
     readonly property string homeDir: Quickshell.env("HOME")
     readonly property string cacheDir: (Quickshell.env("XDG_CACHE_HOME") || (homeDir + "/.cache")) + "/wall-select"
     readonly property string shellConfigPath:

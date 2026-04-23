@@ -13,10 +13,6 @@ QtObject {
     property string selectedWallpaper: ""
 
 	// Process for getting wallpaper home directory
-    Component.onCompleted: {
-        console.log("modelCount: ", WatcherService.wallpaperModel.count)
-    }
-
     property QtObject homeProcess: Io.Process {
         command: []
         stdout: Io.StdioCollector {
@@ -25,13 +21,10 @@ QtObject {
 
         onExited: function(exitCode, exitStatus) {
             if (exitCode === 0) {
-                let current = wallpaperService.relevantCount()
-                let total = WatcherService.wallpaperModel.count
-                if (current === total) {
-                    // WatcherService.thumbModel.folder = "file://" + Config.cacheDir
-                }
+                
                 // Add logging here
                 console.log("Thumbnail dir set to:", Config.cacheDir)
+                WatcherService.thumbModel.folder = "file://" + Config.cacheDir
                 WatcherService.wallpaperModel.folder = "file://" + Config.options.wallpaperDir
                 
             } else {
@@ -40,7 +33,6 @@ QtObject {
             }
         }
     }
-    
     // Fisher-Yates shuffle: shuffles array in place
     function shuffleArray(arr) {
         for (let i = arr.length - 1; i > 0; i--) {
@@ -98,18 +90,5 @@ QtObject {
         // }
 
         WallpaperCacheService.updateThumbs()
-    }
-
-    function relevantCount() {
-        let set = {}
-        for (let i = 0; i < WatcherService.thumbModel.count; i++) {
-            set[WatcherService.thumbModel.get(i, "fileName")] = true
-        }
-
-        let c = 0
-        for (let key in WallpaperCacheService.thumbnailPaths) {
-            if (set[WallpaperCacheService.thumbnailPaths[key]]) c++
-        }
-        return c
     }
 }

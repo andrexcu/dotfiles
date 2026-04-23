@@ -11,8 +11,31 @@ QtObject {
     property var thumbData: {}
     property bool pendingUpdate: false
     // ffmpeg batch thumbnail generator
-	property string setupCmd: "mkdir -p '" + Config.cacheDir + "' && find '" + Config.options.WallpaperDir + "' -maxdepth 1 -type f \\( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' -o -iname '*.bmp' \\) -print0 | xargs -0 -P 4 -I {} bash -c 'base=$(basename \"{}\"); name=\"${base%.*}\"; thumb=\"" + Config.cacheDir + "/${name}.png\"; [ ! -f \"$thumb\" ] && ffmpeg -y -i \"{}\" -vf \"scale=200:208:force_original_aspect_ratio=increase,crop=200:208:(in_w-200)/2:(in_h-208)/2,format=rgb24\" -q:v 5 -frames:v 1 \"$thumb\" 2>/dev/null || true'"
+	// property string setupCmd: "mkdir -p '" + Config.cacheDir + "' && find '" + Config.options.wallpaperDir + "' -maxdepth 1 -type f \\( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' -o -iname '*.bmp' \\) -print0 | xargs -0 -P 4 -I {} bash -c 'base=$(basename \"{}\"); name=\"${base%.*}\"; thumb=\"" + Config.cacheDir + "/${name}.png\"; [ ! -f \"$thumb\" ] && ffmpeg -y -i \"{}\" -vf \"scale=200:208:force_original_aspect_ratio=increase,crop=200:208:(in_w-200)/2:(in_h-208)/2,format=rgb24\" -q:v 5 -frames:v 1 \"$thumb\" 2>/dev/null || true'"
+    
+    property string setupCmd:
+    "mkdir -p '" + Config.cacheDir + "' && " +
+    "find '" + Config.options.wallpaperDir + "' -maxdepth 1 -type f " +
+    "\\( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' -o -iname '*.bmp' \\) -print0 | " +
+    "xargs -0 -P 4 -I {} bash -c 'file=\"{}\"; base=$(basename \"$file\"); name=\"${base%.*}\"; " +
+    "thumb=\"" + Config.cacheDir + "/${name}.png\"; " +
+    "[ -f \"$thumb\" ] || ffmpeg -y -i \"$file\" -vf \"scale=200:208:force_original_aspect_ratio=increase,crop=200:208:(in_w-200)/2:(in_h-208)/2\" " +
+    "-frames:v 1 \"$thumb\" >/dev/null 2>&1'"
+
     property var thumbnailPaths: ({})
+    
+//     property QtObject mkdirProcess: Io.Process {
+//     command: []
+
+//     onExited: function(code) {
+//         if (code === 0) {
+//             WatcherService.thumbModel.folder =
+//                 "file://" + Config.cacheDir
+
+//             thumbnailProcess.exec(["sh", "-c", setupCmd])
+//         }
+//     }
+// }
     function updateThumbs() {
         pendingUpdate = false
         let data = {}
@@ -33,7 +56,7 @@ QtObject {
         }
         
         if (!allExist && !thumbnailProcess.running) {
-            console.log("Missing thumbnails, generating...")
+            // console.log("Missing thumbnails, generating...")
             thumbnailProcess.exec(["sh", "-c", setupCmd])
         } else {
             console.log("All thumbnails exist, skipping generation")
@@ -51,18 +74,42 @@ QtObject {
         console.log("Using thumbModel.count: " + WatcherService.thumbModel.count)
         // check missing thumbnails
     }
+    // sibling process
+	property QtObject listThumbsProcess: Io.Process {
+		command: []
+		stdout: Io.StdioCollector { id: listThumbsCollector }
 
+		onExited: function(exitCode) {
+			if (exitCode === 0) {
+				wallpaperCacheService.onListThumbsExited()
+			}
+		}
+	}
+    // onStarted: console.log("Generating thumbnails...")
+    property bool thumbsGenerating: false
+    
     property QtObject thumbnailProcess: Io.Process {
         command: []
+        onStarted: {
+            WatcherService.thumbModel.folder =
+                "file://" + Config.cacheDir
+            thumbsGenerating = true
+        }    
 
-        onStarted: console.log("Generating thumbnails...")
+        onExited: function(exitCode) {
+            if (exitCode !== 0)
+                return
 
-        onExited: function(exitCode, exitStatus) {
-            if (exitCode === 0) {
-                console.log("Thumbnails generated successfully")
-                // Only refresh if some thumbnails were missing
-                updateThumbs() 
-            }
+            Qt.callLater(() => {
+                
+                updateThumbs()
+                // let m = WatcherService.thumbModel
+                // let p = m.folder
+
+                // m.folder = ""
+                // m.folder = p
+                thumbsGenerating = false
+            })
         }
     }
 }

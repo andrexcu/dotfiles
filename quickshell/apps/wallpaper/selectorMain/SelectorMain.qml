@@ -84,7 +84,7 @@ Scope {
 	// =======================
 	// CONFIGURATION
 	// =======================
-	property var colorsPalette: Colors {}
+	// property var Color: Colors {}
 	
 	property var filteredWallpapers: WallpaperService.wallpapers   // initially same as full list
 	property string selectedWallpaper: ""
@@ -1067,7 +1067,7 @@ Scope {
 							
 							ShapePath {
 								strokeWidth: 4
-								strokeColor: colorsPalette.primary
+								strokeColor: Color.primary
 								fillColor: "transparent"
 
 								PathMove { x: selectedHexBorder.width * 0.5; y: 0 }

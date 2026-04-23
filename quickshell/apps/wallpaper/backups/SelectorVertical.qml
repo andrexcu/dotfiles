@@ -183,8 +183,8 @@ Scope {
 			if (exitCode === 0) {
 				homeDir = homeCollector.text.trim()
 				// Defaults
-				let defaultWall = homeDir + "/Pictures/Wallpaper"
-				let defaultThumb = homeDir + "/.cache/wallpaper-picker"
+				let defaultWall = homeDir + "/Pictures/Wallpapers"
+				let defaultThumb = homeDir + "/.cache/wall-select"
 				// Load saved settings if present
 				wallpaperDir = wallpaperController.savedWallpaperDir && wallpaperController.savedWallpaperDir.length > 0 ? wallpaperController.savedWallpaperDir : defaultWall
 				thumbnailDir = wallpaperController.savedThumbnailDir && wallpaperController.savedThumbnailDir.length > 0 ? wallpaperController.savedThumbnailDir : defaultThumb
@@ -369,7 +369,7 @@ Scope {
 	// =======================
 	// CONFIGURATION
 	// =======================
-	property var colorsPalette: Colors {}
+	// property var Colors: Colors {}
 	property var wallpapers: []
 	property var filteredWallpapers: wallpapers   // initially same as full list
 	property string selectedWallpaper: ""
@@ -1212,7 +1212,7 @@ Scope {
 							
 							ShapePath {
 								strokeWidth: 4
-								strokeColor: colorsPalette.primary
+								strokeColor: Colors.primary
 								fillColor: "transparent"
 
 								PathMove { x: selectedHexBorder.width * 0.5; y: 0 }
@@ -1817,7 +1817,7 @@ Scope {
 					preferredRendererType: Shape.CurveRenderer
 					antialiasing: true
 					ShapePath {
-						fillColor: colorsPalette.background
+						fillColor: Colors.background
                 		strokeColor: "transparent"
 						strokeWidth: 1
 
@@ -1843,11 +1843,11 @@ Scope {
 						background: null
 
 						placeholderText: "Filter Images..."
-						placeholderTextColor: colorsPalette.backgroundText70
+						placeholderTextColor: Colors.backgroundText70
 
 						font.pixelSize: 16
 						font.family: "JetBrainsMono Nerd Font"
-						color: colorsPalette.backgroundText70
+						color: Colors.backgroundText70
 
 						focus: true
 						cursorVisible: false

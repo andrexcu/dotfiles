@@ -21,7 +21,6 @@ import qs.services
 
 Item {
     id: hexItem
-    // z: isSelected ? 2 : 1
     property var controller
     property var container
     property var flickRef
@@ -37,7 +36,7 @@ Item {
     property bool isSelected: controller.currentIndex === itemIndex
     property bool isPrevious: controller.previousIndex === itemIndex
     property bool rippleOff
-    property real originFixY
+    // property real originFixY
     width: container.cellWidth - 10
     height: container.cellHeight - 10
   
@@ -49,15 +48,26 @@ Item {
     property real rowScale
     property real enterT: inView ? 0 : 1
     property bool entering: _rowScale < 1 && _inView
-   function clamp(v) {
+    
+    function clamp(v) {
         return Math.sign(v) * Math.min(Math.abs(v), 2)
     }
 
     property real layoutX: entering ? 0 : clamp(dx) * 30 * enterT
     property real layoutY: entering ? 0 : clamp(dy) * 30 * enterT
   
-    property real targetX: flick.baseX(itemIndex) + layoutX + (rippleOff ? 0 : ripple.x)
-    property real targetY: flick.baseY(itemIndex) + layoutY + (rippleOff ? 0 : ripple.y) 
+    property real targetX:
+    flick.baseX(itemIndex)
+    + layoutX
+    + (entering ? 0 : (rippleOff ? 0 : ripple.x))
+
+    property real targetY:
+    flick.baseY(itemIndex)
+    + layoutY
+    + (entering ? 0 : (rippleOff ? 0 : ripple.y))
+
+    // x: targetX + (entering ? 0 : shiftX)
+    // y: targetY + (entering ? 0 : shiftY)
     
     x: targetX + shiftX
     y: targetY + shiftY
@@ -169,20 +179,14 @@ Item {
 
     //  strokeColor: "#FAF9F6"
     property bool _visibleState: true
-
+    
     Shape {
     id: selectedHexBorder
     
     opacity: _inView && (isSelected || isPrevious)
          ? Math.min(1, selectedHexBorder.t * 1.2)
          : 0
-    // opacity: selectedHexBorder.t
-    // Behavior on opacity { 
-    //     NumberAnimation { 
-    //         duration: 180; 
-    //         easing.type: Easing.InOutQuad 
-    //     } 
-    // }
+
    scale: visualWrapperRef.visualScale
 
     Behavior on scale {
@@ -192,6 +196,13 @@ Item {
             easing.bezierCurve: [0.25, 0.1, 0.25, 1.0]
         }
     }
+    //  Behavior on opacity {
+    //     NumberAnimation {
+    //         duration: 350
+    //         easing.type: Easing.BezierSpline
+    //         easing.bezierCurve: [0.25, 0.1, 0.25, 1.0]
+    //     }
+    // }
     
     width: container.cellWidth - 10
     height: container.cellHeight - 10
@@ -214,7 +225,7 @@ Item {
         id: anim
         target: selectedHexBorder
         property: "t"
-        duration: 400
+        duration: 350
         easing.type: Easing.BezierSpline
         easing.bezierCurve: [0.25, 0.1, 0.25, 1.0]
     }
@@ -222,7 +233,7 @@ Item {
     onActiveChanged: {
         if (!active) return
         anim.stop()
-        anim.from = 0
+        anim.from = 1
         anim.to = 1
         anim.restart()
     }
@@ -336,6 +347,7 @@ Item {
                 easing.bezierCurve: [0.25, 0.1, 0.25, 1.0]
             }
         }
+
         Behavior on opacity { 
             NumberAnimation { 
                 duration: 350; 
@@ -555,21 +567,27 @@ Item {
             easing.type: Easing.InOutQuad
         }
 
+    // property bool thumbLoaded: false
     Image {
         id: thumbImage
         fillMode: Image.PreserveAspectCrop
         opacity: inView ? 1 : 0
-        Behavior on opacity { NumberAnimation { duration: 150 } }
+        Behavior on opacity { NumberAnimation { duration: 200 } }
         anchors.fill: parent
         // anchors.centerIn: parent
         asynchronous: true
         sourceSize.width: width
         sourceSize.height: height
         smooth: true
+
         property string thumbName: WallpaperCacheService.thumbnailPaths[itemData] || ""
-        source: (WallpaperCacheService.thumbData && WallpaperCacheService.thumbData[thumbName])
-                ? ("file://" + Config.cacheDir + "/" + thumbName)
-                : ""
+        source: WallpaperCacheService.thumbVersion,
+        (WallpaperCacheService.thumbData && WallpaperCacheService.thumbData[thumbName])
+        ? "file://" + Config.cacheDir + "/" + thumbName
+        : ""
+        // source: (WallpaperCacheService.thumbData && WallpaperCacheService.thumbData[thumbName])
+        //         ? ("file://" + Config.cacheDir + "/" + thumbName)
+        //         : ""
         layer.enabled: true
         layer.effect: MultiEffect {
             blurEnabled: true
@@ -744,13 +762,14 @@ Item {
     //     easing.type: Easing.BezierSpline
     //     easing.bezierCurve: [0.22, 1.0, 0.36, 1.0]
     // }
-
+   
     Component.onCompleted: {
-        
+        //  console.log(itemIndex)
          if (itemIndex === 0) {
             controller.previousItem = hexItem
             controller.currentItem = hexItem
         }
+
         anim.restart()
     }
         Timer {
@@ -767,7 +786,7 @@ Item {
             controller.previousItem = controller.currentItem
             controller.currentItem = hexItem        
             Qt.callLater(() => {
-                flipHex()
+                // flipHex()
             })
             container.updateGridFocusOffset() 
     }
@@ -790,14 +809,41 @@ Item {
     //         })
     //     }
     // }
- 
 
     MouseArea {
         anchors.fill: parent
-        // enabled: visualWrapperRef.visualScale > 0 
-        // && visualWrapperRef.fadeOpacity > 0
-      	onWheel: (wheel) => {
-            flick.flick(0, wheel.angleDelta.y * 12) // vertical
+
+        // DEBUGGING VERSIONS
+        // onWheel: (wheel) => {
+
+        //     if (flick.atYEnd && wheel.angleDelta.y < 0) return
+        //     if (flick.atYBeginning && wheel.angleDelta.y > 0) return
+
+        //     flick.flick(0, wheel.angleDelta.y * 12)
+        //     wheel.accepted = true
+        // }
+
+        // onWheel: (wheel) => {
+
+        //     const atTop = flick.contentY <= 0
+        //     const atBottom = flick.contentY >= flick.contentHeight - flick.height
+
+        //     if (atBottom && wheel.angleDelta.y < 0) return
+        //     if (atTop && wheel.angleDelta.y > 0) return
+
+        //     flick.flick(0, wheel.angleDelta.y * 12)
+        //     wheel.accepted = true
+        // }
+        onWheel: (wheel) => {
+            const maxY = flick.contentHeight - flick.height
+
+            const atTop = flick.contentY <= 0
+            const atBottom = flick.contentY >= maxY - 0.5
+
+            if (atBottom && wheel.angleDelta.y < 0) return
+            if (atTop && wheel.angleDelta.y > 0) return
+
+            flick.flick(0, wheel.angleDelta.y * 12)
             wheel.accepted = true
         }
         onClicked: {

@@ -477,9 +477,7 @@ Scope {
         anchors.fill: parent
         focus: true
 		clip: false
-     
-	
-
+    	
 
 	ColumnLayout {
 		anchors.fill: parent
@@ -505,17 +503,15 @@ Scope {
 		// }
 		Item {
 			Layout.fillHeight: true
-		}
-			
-	
+		}	
 
 		ListView {
 			id: flick
 
 			boundsBehavior: Flickable.StopAtBounds
-			
-			flickDeceleration: 1800
-			maximumFlickVelocity: 2900
+			flickDeceleration: 1500
+			flickableDirection: Flickable.VerticalFlick
+			maximumFlickVelocity: 3000
 			orientation: ListView.Vertical
 			property int verticalMargin: 15
 			property real maxItemScale: 1
@@ -546,6 +542,7 @@ Scope {
 			property bool layoutLock: false
 			contentHeight: Math.ceil(filteredWallpapers.length / columns) * rowStep
 			
+			
 			function applyVisual(item, scale, opacity) {
 				item.visualWrapperRef.visualScale = scale
 				item.visualWrapperRef.fadeOpacity = opacity
@@ -565,11 +562,7 @@ Scope {
 			property int endIndex:
 				startIndex + flick.visibleRows * cols
 
-
-
-
 			onMovementEnded: {
-	
 				contentY = Math.round(contentY / rowStep) * rowStep
 				Qt.callLater(() => {
 					requestFrame()
@@ -599,7 +592,7 @@ Scope {
 				target: flick
 				property int lastDir: 0
 
-					onContentYChanged: {
+					function onContentYChanged() {
 					var dy = flick.contentY - flick.lastContentY
 
 					if (Math.abs(dy) > flick.dirThreshold) {
@@ -840,7 +833,7 @@ Scope {
 						var offset =
 							Math.max((flick.height - gridHeight) / 2, 0)
 
-						return offset + row - visualPadding
+						return offset - visualPadding
 					}
 					
 
@@ -1073,8 +1066,6 @@ Scope {
 											from: 0.5
 											to: 1
 											duration: 250
-											// easing.type: Easing.OutBack
-											// easing.overshoot: 1.2
 											easing.type: Easing.BezierSpline
 											easing.bezierCurve: [0.18, 1.0, 0.3, 1.0]
 										}
@@ -1091,7 +1082,7 @@ Scope {
 											from: 1; 
 											to: 0
 											easing.type: Easing.OutBack
-											easing.overshoot: 1.2
+											easing.overshoot: 1.4
 										}
 								    },
 								]
@@ -1122,7 +1113,7 @@ Scope {
 								
 								property bool _rippleOff: selIndex < flick.startIndex || selIndex >= flick.endIndex
 								property var _ripple: flick.ripple(dx, dy, sx, sy) 
-								originFixY: (transformOrigin === Item.Top) ? height * 0.5 : -height * 0.5
+								// originFixY: (transformOrigin === Item.Top) ? height * 0.5 : -height * 0.5
 								 
 								property real _rowScale: 0
 								// property real _selectedScale: _isSelected ? 1.125 : 1
@@ -1177,8 +1168,6 @@ Scope {
 								// }
 								property bool entering: _inView && _rowScale === 0
 								property bool leaving: !_inView && _rowScale > 0
-							
-
 
 								transformOrigin: {
 									if (isSelected) return Item.Center

@@ -3,13 +3,11 @@ import QtQuick
 import Quickshell
 import Qt.labs.folderlistmodel
 import qs
-import qs.services
 
 QtObject {
     id: watcherService
 
     property FolderListModel thumbModel: FolderListModel {
-        // folder: Config.cacheDir
         nameFilters: ["*.png"]
         showDirs: false
         showHidden: false
@@ -24,20 +22,6 @@ QtObject {
         sortField: FolderListModel.Name
     }
 
-
-
-    property Connections _thumbCon: Connections {
-        target: WatcherService.thumbModel       
-
-        function onCountChanged() {
-
-            let current = WallpaperService.relevantCount()
-            let total = WatcherService.wallpaperModel.count
-            console.log("thumbs updated:", current, "/", total)
-            
-        }
-    }
-    
     property Connections _setupCon: Connections { 
 		target: WatcherService.wallpaperModel
 		function onStatusChanged() {
@@ -57,7 +41,7 @@ QtObject {
 			}
 		}
 	}
-    
+
     property Connections _pathCon: Connections {
         target: Config.options
         function onWallpaperDirChanged() {
