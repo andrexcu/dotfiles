@@ -326,9 +326,9 @@ Item {
     Shape {
         id: selectedDefaultBorder
         z: 10
-        opacity: _inView ? 1 : 0
-        // opacity: 
-        // _inView && isSelected ? 1 : 0
+        // opacity: _inView ? 1 : 0
+        opacity: 
+        _inView && isSelected ? 1 : 0
         // visible: _inView && isSelected
         // visible: false
 
@@ -581,13 +581,24 @@ Item {
         smooth: true
 
         property string thumbName: WallpaperCacheService.thumbnailPaths[itemData] || ""
-        source: WallpaperCacheService.thumbVersion,
-        (WallpaperCacheService.thumbData && WallpaperCacheService.thumbData[thumbName])
-        ? "file://" + Config.cacheDir + "/" + thumbName
-        : ""
+        // source: (WallpaperCacheService.thumbData && WallpaperCacheService.thumbData[thumbName])
+        // ? "file://" + Config.cacheDir + "/" + thumbName + "  -.png"
+        // : ""
+        // source: "file://" + Config.cacheDir + "/" + thumbName + "  -.png"
+       
+        // source: (WallpaperCacheService.thumbData && WallpaperCacheService.thumbData[thumbName])
+        // ? "file://" + Config.cacheDir + "/" + thumbName
+        // : ""
+
         // source: (WallpaperCacheService.thumbData && WallpaperCacheService.thumbData[thumbName])
         //         ? ("file://" + Config.cacheDir + "/" + thumbName)
         //         : ""
+         source: (WallpaperCacheService.thumbData && WallpaperCacheService.thumbData[thumbName])
+                ? ("file://" + Config.cacheDir + "/" + thumbName)
+                : ""
+        // source: thumbName !== ""
+        // ? ("file://" + Config.cacheDir + "/" + thumbName)
+        // : ""
         layer.enabled: true
         layer.effect: MultiEffect {
             blurEnabled: true
@@ -762,10 +773,20 @@ Item {
     //     easing.type: Easing.BezierSpline
     //     easing.bezierCurve: [0.22, 1.0, 0.36, 1.0]
     // }
-   
+    // property string hash: WallpaperCacheService.hashPath(itemData)
+    // property string thumbFile: Config.cacheDir + "/" + hash + ".png"
+    property string hash: ""
+    property string thumbFile: ""
     Component.onCompleted: {
-        //  console.log(itemIndex)
+
+        Qt.callLater(() => {
+            console.log("testhexitem:",  WallpaperCacheService.thumbnailPaths[itemData])
+        // console.log("hexitem ",  
+        // itemIndex + " " + Config.cacheDir + "/"
+        // + WallpaperCacheService.thumbnailPaths[itemData]) + "  -.png"
+        })
          if (itemIndex === 0) {
+            
             controller.previousItem = hexItem
             controller.currentItem = hexItem
         }

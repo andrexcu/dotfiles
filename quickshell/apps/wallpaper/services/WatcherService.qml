@@ -7,6 +7,10 @@ import qs.services
 
 QtObject {
     id: watcherService
+    property int current: WallpaperService.relevantCount()
+    property int total: WatcherService.wallpaperModel.count
+    property bool thumbsGenerated: current === total
+    property bool pathEmpty: total === 0
 
     property FolderListModel thumbModel: FolderListModel {
         // folder: Config.cacheDir
@@ -31,8 +35,8 @@ QtObject {
 
         function onCountChanged() {
 
-            let current = WallpaperService.relevantCount()
-            let total = WatcherService.wallpaperModel.count
+            // let current = WallpaperService.relevantCount()
+            // let total = WatcherService.wallpaperModel.count
             console.log("thumbs updated:", current, "/", total)
             
         }

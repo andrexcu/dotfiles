@@ -384,7 +384,8 @@ Scope {
 			sequence: "Escape"
 			onActivated: {
 				wallpaperController.cardVisible = false
-				Qt.quit()
+				
+				WallpaperService.killAllAndQuit()
 			}
 		}
 		DimOverlay {
@@ -397,7 +398,8 @@ Scope {
 		anchors.fill: parent
 		onClicked: {
 				wallpaperController.cardVisible = false
-				Qt.quit()
+				WallpaperService.killAllAndQuit()
+				
 		}
 		
 		}
@@ -425,6 +427,83 @@ Scope {
         border.width: 1
     }
 	
+						
+						Rectangle {
+						opacity: !WatcherService.thumbsGenerated
+						Behavior on opacity { 
+							NumberAnimation { 
+								duration: 350; 
+								easing.type: Easing.InOutQuad 
+							} 
+						}
+					
+						anchors.centerIn: parent
+						color: "transparent" 
+						border.color: "red"       
+						border.width: 1
+  		
+						ColumnLayout {
+							anchors.centerIn: parent
+							spacing: 26
+
+							// ICON (top, big)
+							Text {
+								id: spinner
+								text: "ⴵ"
+								font.pixelSize: 135
+								color: Colors.primary
+								property real rot: 0
+								rotation: rot
+								horizontalAlignment: Text.AlignHCenter
+								Layout.alignment: Qt.AlignHCenter
+
+								NumberAnimation on rot {
+									from: 0
+									to: 360
+									duration: 2500
+									// loops: Animation.Infinite
+        							running: !WatcherService.thumbsGenerated
+								}
+								
+								SequentialAnimation on opacity {
+									loops: Animation.Infinite
+
+									NumberAnimation { to: 0.3; duration: 1400 }
+									NumberAnimation { to: 0.85; duration: 1400 }
+								}
+								
+							}
+							// progress bar
+							ProgressBar {
+								id: bar
+								from: 0
+								to: WatcherService.total
+								value: WatcherService.current
+								width: cardContainer.width * 0.25
+								height: 6
+								background: Rectangle {
+									color: Colors.background
+									radius: 3
+									height: 6
+								}
+
+								contentItem: Rectangle {
+									width: bar.visualPosition * bar.width
+									height: 6
+									radius: 3
+									color: Colors.primary
+								}
+							}
+							// TEXT (bottom, small)
+							Text {
+								text: WatcherService.current + " / " + WatcherService.total
+								color: Colors.primary
+								font.pixelSize: 20
+								horizontalAlignment: Text.AlignHCenter
+								Layout.alignment: Qt.AlignHCenter
+							}
+						}
+					}
 	// anchors {
 	// 	top: parent.top
 	// 	bottom: parent.bottom
@@ -507,7 +586,13 @@ Scope {
 
 		ListView {
 			id: flick
-
+			opacity: WatcherService.thumbsGenerated ? 1 : 0
+			Behavior on opacity { 
+				NumberAnimation { 
+					duration: 350; 
+					easing.type: Easing.InOutQuad 
+				} 
+			}
 			boundsBehavior: Flickable.StopAtBounds
 			flickDeceleration: 1500
 			flickableDirection: Flickable.VerticalFlick
@@ -1015,11 +1100,14 @@ Scope {
 					// displaced: Transition {
 					// 	NumberAnimation { properties: "x,y"; duration: 180; easing.type: Easing.OutCubic }
 					// }
+
 					delegate: Item {
 						id: rowItem
 						width: flick.width
 						height: flick.rowStep
 						property int rowIndex: index
+						// visible: false
+						visible: WatcherService.thumbsGenerated
 						Repeater {
 							model: Math.max(
 								0,
@@ -1028,10 +1116,11 @@ Scope {
 									filteredWallpapers.length - rowIndex * flick.columns
 								)
 							)
-						
+							
 							delegate: HexItem {
 								id: hexItem
 								controller: wallpaperController
+								
 								// property bool isReady: false
 								// visible: true
 								// Component.onCompleted: {
