@@ -11,6 +11,7 @@ QtObject {
     property int total: WatcherService.wallpaperModel.count
     property bool thumbsGenerated: current === total
     property bool pathEmpty: total === 0
+    
 
     property FolderListModel thumbModel: FolderListModel {
         // folder: Config.cacheDir

@@ -563,11 +563,39 @@ Item {
             id: flipAnim
             target: visualWrapper
             property: "flipAngle"
-            duration: 300
+            duration: 350
             easing.type: Easing.InOutQuad
         }
 
     // property bool thumbLoaded: false
+    // Connections {
+    //     target: WatcherService
+
+    //     function onThumbsGeneratedChanged() {
+    //         let source = "file://" 
+    //             + Config.cacheDir + "/" + thumbImage.thumbName
+    //         if (WallpaperCacheService.thumbData[thumbName] || WatcherService.thumbsGenerated) {
+    //             thumbImage.source = source
+    //         }
+
+    //         console.log("thumb  status:", WatcherService.thumbsGenerated,
+    //         "source: ", source)
+    //     }
+    // }
+    // Connections {
+    //     target: WallpaperCacheService
+
+    //     function onThumbVersionChanged() {
+    //         let thumbName = thumbImage.thumbName
+    //         let source = "file://" 
+    //             + Config.cacheDir + "/" + thumbName
+    //         thumbImage.source = source
+     
+    //         console.log("thumb  status:", WatcherService.thumbsGenerated,
+    //         "source: ", source)
+    //     }
+    // }
+
     Image {
         id: thumbImage
         fillMode: Image.PreserveAspectCrop
@@ -580,11 +608,49 @@ Item {
         sourceSize.height: height
         smooth: true
 
-        property string thumbName: WallpaperCacheService.thumbnailPaths[itemData] || ""
-        // source: (WallpaperCacheService.thumbData && WallpaperCacheService.thumbData[thumbName])
-        // ? "file://" + Config.cacheDir + "/" + thumbName + "  -.png"
-        // : ""
-        // source: "file://" + Config.cacheDir + "/" + thumbName + "  -.png"
+        property string thumbName:
+        WallpaperCacheService.thumbnailPaths[itemData] || ""
+        // source: "file://" + Config.cacheDir + "/" + thumbName
+        source: {
+            WallpaperCacheService.thumbVersion
+
+            return "file://" +
+                Config.cacheDir + "/" +
+                thumbName +
+                "?v=" + WallpaperCacheService.thumbVersion
+        }
+
+        // source: ""
+        // source: {
+        //     WallpaperCacheService.thumbVersion
+
+        //     return "file://" +
+        //         Config.cacheDir + "/" +
+        //         thumbName +
+        //         "?v=" + WallpaperCacheService.thumbVersion
+        // }
+        // source: {
+        //     let name = thumbName
+        //     if (!name) return ""
+
+        //     // immediate check (already cached)
+        //     if (WatcherService.thumbModel && WatcherService.thumbModel.count > 0) {
+
+        //         for (let i = 0; i < WatcherService.thumbModel.count; i++) {
+        //             let n = WatcherService.thumbModel.get(i, "fileName")
+        //             if (n === name) {
+        //                 return "file://" + Config.cacheDir + "/" + name
+        //             }
+        //         }
+        //     }
+
+        //     // fallback → wait for generation
+        //     if (WallpaperCacheService.thumbData[name]) {
+        //         return "file://" + Config.cacheDir + "/" + name
+        //     }
+
+        //     return ""
+        // }
        
         // source: (WallpaperCacheService.thumbData && WallpaperCacheService.thumbData[thumbName])
         // ? "file://" + Config.cacheDir + "/" + thumbName
@@ -593,9 +659,9 @@ Item {
         // source: (WallpaperCacheService.thumbData && WallpaperCacheService.thumbData[thumbName])
         //         ? ("file://" + Config.cacheDir + "/" + thumbName)
         //         : ""
-         source: (WallpaperCacheService.thumbData && WallpaperCacheService.thumbData[thumbName])
-                ? ("file://" + Config.cacheDir + "/" + thumbName)
-                : ""
+        //  source: (WallpaperCacheService.thumbData && WallpaperCacheService.thumbData[thumbName])
+        //         ? ("file://" + Config.cacheDir + "/" + thumbName)
+        //         : ""
         // source: thumbName !== ""
         // ? ("file://" + Config.cacheDir + "/" + thumbName)
         // : ""
@@ -780,11 +846,11 @@ Item {
     Component.onCompleted: {
 
         Qt.callLater(() => {
-            console.log("testhexitem:",  WallpaperCacheService.thumbnailPaths[itemData])
-        // console.log("hexitem ",  
-        // itemIndex + " " + Config.cacheDir + "/"
-        // + WallpaperCacheService.thumbnailPaths[itemData]) + "  -.png"
+        console.log("hexitem ",  
+        itemIndex + " " + Config.cacheDir + "/"
+        + WallpaperCacheService.thumbnailPaths[itemData]) 
         })
+            // console.log("testhexitem:",  WallpaperCacheService.thumbnailPaths[itemData])
          if (itemIndex === 0) {
             
             controller.previousItem = hexItem
@@ -807,7 +873,7 @@ Item {
             controller.previousItem = controller.currentItem
             controller.currentItem = hexItem        
             Qt.callLater(() => {
-                // flipHex()
+                flipHex()
             })
             container.updateGridFocusOffset() 
     }
@@ -855,18 +921,18 @@ Item {
         //     flick.flick(0, wheel.angleDelta.y * 12)
         //     wheel.accepted = true
         // }
-        onWheel: (wheel) => {
-            const maxY = flick.contentHeight - flick.height
+        // onWheel: (wheel) => {
+        //     const maxY = flick.contentHeight - flick.height
 
-            const atTop = flick.contentY <= 0
-            const atBottom = flick.contentY >= maxY - 0.5
+        //     const atTop = flick.contentY <= 0
+        //     const atBottom = flick.contentY >= maxY - 0.5
 
-            if (atBottom && wheel.angleDelta.y < 0) return
-            if (atTop && wheel.angleDelta.y > 0) return
+        //     if (atBottom && wheel.angleDelta.y < 0) return
+        //     if (atTop && wheel.angleDelta.y > 0) return
 
-            flick.flick(0, wheel.angleDelta.y * 12)
-            wheel.accepted = true
-        }
+        //     flick.flick(0, wheel.angleDelta.y * 12)
+        //     wheel.accepted = true
+        // }
         onClicked: {
             controller.previousIndex = controller.currentIndex
             controller.currentIndex = itemIndex

@@ -15,9 +15,24 @@ QtObject {
     //     console.log("[" + title + "] " + message)
     // }
     // this generates matugen colors from wallpaper
-    function applyWallpaper(wallpaperName) {
-        WallpaperService.selectedWallpaper = wallpaperName
-        WallpaperService.currentFullPath = Config.options.wallpaperDir + "/" + wallpaperName
+    function applyWallpaper(input) {
+
+        if (input.includes("/")) {
+        // already full path
+            WallpaperService.currentFullPath = input
+        } else {
+            // reject thumbnail names explicitly
+           if (/_\d+\.(png|jpg|jpeg|webp|bmp)$/i.test(input)) {
+                console.log("INVALID INPUT: thumbnail passed")
+                return
+            }
+
+            WallpaperService.currentFullPath =
+                Config.options.wallpaperDir + "/" + input
+        }
+
+        WallpaperService.selectedWallpaper =
+            WallpaperService.currentFullPath.split("/").pop()
 
         let awwwArgs = [
             "img", `"${WallpaperService.currentFullPath}"`,

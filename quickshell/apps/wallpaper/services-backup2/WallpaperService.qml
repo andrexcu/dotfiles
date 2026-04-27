@@ -13,7 +13,6 @@ QtObject {
     property string selectedWallpaper: ""
     property bool thumbsGenerated: WatcherService.current === WatcherService.total
     property string lastFilePath: lastFolder(Config.options.wallpaperDir)
-    
 	// Process for getting wallpaper home directory
     function lastFolder(path) {
         let clean = path.replace(/\/$/, "")
@@ -43,20 +42,9 @@ QtObject {
         running: true
         repeat: false
 
-       onTriggered: {
-
-            // let file = WatcherService.wallpaperModel.get(0, "filePath")
-
-            // console.log("MODEL:", WatcherService.thumbModel.get(0, "fileName"))
-            // console.log("FILE:", file)
-            // console.log("CACHE JSON:", JSON.stringify(WallpaperCacheService.thumbnailPaths, null, 2))
-        }
-    }
-    Component.onCompleted: {
-        startTimer.start()
-
-
-    }
+        onTriggered: {
+            console.log("MODEL:", WatcherService.thumbModel.get(0, "fileName"))
+            console.log("CACHE:", WallpaperCacheService.thumbnailPaths[0])
             // for (let k in WallpaperCacheService.thumbnailPaths) {
             //     console.log("KEY:", k)
             //     console.log("VAL:", WallpaperCacheService.thumbnailPaths[k])
@@ -67,10 +55,15 @@ QtObject {
 
             //     break
             // }
-     
+        }
+    }
 
 
+   Component.onCompleted: {
+    startTimer.start()
 
+
+    }
 
 
 
@@ -125,42 +118,41 @@ QtObject {
         actions.applyWallpaper(chosen);
     }
 
-//    function makeKey(filePath) {
-//     let parts = filePath.split("/")
+   function makeKey(filePath) {
+    let parts = filePath.split("/")
 
-//     let base = parts[parts.length - 1] || ""
-//     let folder = parts.length > 1 ? parts[parts.length - 2] : ""
+    let base = parts[parts.length - 1] || ""
+    let folder = parts.length > 1 ? parts[parts.length - 2] : ""
 
-//     let name = base.split(".")[0]
+    let name = base.split(".")[0]
 
-//     return folder ? (folder + "-" + name + ".png") : (name + ".png")
-// }
+    return folder ? (folder + "-" + name + ".png") : (name + ".png")
+}
+function startListingFromModel() {
+    if (!WatcherService.wallpaperModel.count) {
+        lastError = "No wallpapers found in " + Config.options.wallpaperDir
+        NotificationService.show("Error", lastError, 0, "dialog-error")
+        return
+    }
 
-// function startListingFromModel() {
-//     if (!WatcherService.wallpaperModel.count) {
-//         lastError = "No wallpapers found in " + Config.options.wallpaperDir
-//         NotificationService.show("Error", lastError, 0, "dialog-error")
-//         return
-//     }
+    let processed = []
+    let paths = {}
 
-//     let processed = []
-//     let paths = {}
+    for (let i = 0; i < WatcherService.wallpaperModel.count; i++) {
 
-//     for (let i = 0; i < WatcherService.wallpaperModel.count; i++) {
+        let filePath = WatcherService.wallpaperModel.get(i, "filePath")
+        if (!filePath) continue
 
-//         let filePath = WatcherService.wallpaperModel.get(i, "filePath")
-//         if (!filePath) continue
+        processed.push(filePath)
 
-//         processed.push(filePath)
+        paths[filePath] = makeKey(filePath)
+    }
 
-//         paths[filePath] = makeKey(filePath)
-//     }
+    wallpapers = shuffleArray(processed)
 
-//     wallpapers = shuffleArray(processed)
-
-//     WallpaperCacheService.thumbnailPaths = paths
-//     WallpaperCacheService.updateThumbs()
-// }
+    WallpaperCacheService.thumbnailPaths = paths
+    WallpaperCacheService.updateThumbs()
+}
 
     // function startListingFromModel() {
     //     if (!WatcherService.wallpaperModel.count) {
@@ -235,44 +227,14 @@ QtObject {
     //     return c
     // }
 
-function makeKey(fileName, fileSize) {
-    let base = fileName.replace(/\.[^/.]+$/, "")
-    return base + "_" + fileSize + ".png"
-}
+   
+// function key(file) {
+//     let base = file.split("/").pop()
 
-function startListingFromModel() {
-
-    if (!WatcherService.wallpaperModel.count) return
-
-    let processed = []
-    let paths = {}
-
-    for (let i = 0; i < WatcherService.wallpaperModel.count; i++) {
-
-        let filePath = WatcherService.wallpaperModel.get(i, "filePath")
-        let fileName = WatcherService.wallpaperModel.get(i, "fileName")
-        let fileSize = WatcherService.wallpaperModel.get(i, "fileSize")
-
-        if (!filePath || !fileName || fileSize === undefined) continue
-
-        processed.push(filePath)
-
-        paths[filePath] = makeKey(fileName, fileSize)   // 🔥 FIX
-    }
-
-    wallpapers = shuffleArray(processed)
-
-    WallpaperCacheService.thumbnailPaths = paths
-    WallpaperCacheService.updateThumbs()
-}
-
-function key(file) {
-    let base = file.split("/").pop()
-
-    // convert "Wallpapers-0anime.png" → "0anime.png"
-    let parts = base.split("-")
-    return parts.length > 1 ? parts[1] : base
-}
+//     // convert "Wallpapers-0anime.png" → "0anime.png"
+//     let parts = base.split("-")
+//     return parts.length > 1 ? parts[1] : base
+// }
 
 function relevantCount() {
     let set = {}

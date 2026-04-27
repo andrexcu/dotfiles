@@ -412,8 +412,8 @@ Scope {
 	
  Item {
 	id: cardContainer
-	property real paddingY: flick.cellHeight * 0.4
-	property real paddingX: Math.max(flick.cellWidth, flick.width * 1.2)
+	property real paddingY: flick.cellHeight * 0.25
+	property real paddingX: Math.max(flick.cellWidth, flick.width * 1.18)
 	width: paddingX
 	height: flick.height * 1.1 + paddingY * 2
 	Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
@@ -428,82 +428,107 @@ Scope {
     }
 	
 						
-						Rectangle {
-						opacity: !WatcherService.thumbsGenerated
-						Behavior on opacity { 
-							NumberAnimation { 
-								duration: 350; 
-								easing.type: Easing.InOutQuad 
-							} 
-						}
-					
-						anchors.centerIn: parent
-						color: "transparent" 
-						border.color: "red"       
-						border.width: 1
-  		
-						ColumnLayout {
-							anchors.centerIn: parent
-							spacing: 26
+		Rectangle {
+		opacity: !WatcherService.thumbsGenerated
+		// opacity:(WallpaperCacheService.thumbData && WallpaperCacheService.thumbData[thumbName])
+		Behavior on opacity { 
+			NumberAnimation { 
+				duration: 350; 
+				easing.type: Easing.InOutQuad 
+			} 
+		}
 
-							// ICON (top, big)
-							Text {
-								id: spinner
-								text: "ⴵ"
-								font.pixelSize: 135
-								color: Colors.primary
-								property real rot: 0
-								rotation: rot
-								horizontalAlignment: Text.AlignHCenter
-								Layout.alignment: Qt.AlignHCenter
+		anchors.centerIn: parent
+		color: "transparent" 
+		border.color: "red"       
+		border.width: 1
 
-								NumberAnimation on rot {
-									from: 0
-									to: 360
-									duration: 2500
-									// loops: Animation.Infinite
-        							running: !WatcherService.thumbsGenerated
-								}
-								
-								SequentialAnimation on opacity {
-									loops: Animation.Infinite
+		ColumnLayout {
+			anchors.centerIn: parent
+			spacing: 26
 
-									NumberAnimation { to: 0.3; duration: 1400 }
-									NumberAnimation { to: 0.85; duration: 1400 }
-								}
-								
-							}
-							// progress bar
-							ProgressBar {
-								id: bar
-								from: 0
-								to: WatcherService.total
-								value: WatcherService.current
-								width: cardContainer.width * 0.25
-								height: 6
-								background: Rectangle {
-									color: Colors.background
-									radius: 3
-									height: 6
-								}
+			// ICON (top, big)
+			Text {
+				id: spinner
+				text: "ⴵ"
+				font.pixelSize: 135
+				color: Colors.primary
+				property real rot: 0
+				rotation: rot
+				horizontalAlignment: Text.AlignHCenter
+				Layout.alignment: Qt.AlignHCenter
 
-								contentItem: Rectangle {
-									width: bar.visualPosition * bar.width
-									height: 6
-									radius: 3
-									color: Colors.primary
-								}
-							}
-							// TEXT (bottom, small)
-							Text {
-								text: WatcherService.current + " / " + WatcherService.total
-								color: Colors.primary
-								font.pixelSize: 20
-								horizontalAlignment: Text.AlignHCenter
-								Layout.alignment: Qt.AlignHCenter
-							}
-						}
-					}
+				NumberAnimation on rot {
+					from: 0
+					to: 360
+					duration: 2500
+					loops: Animation.Infinite
+					running: !WatcherService.thumbsGenerated
+				}
+				
+				SequentialAnimation on opacity {
+					loops: Animation.Infinite
+
+					NumberAnimation { to: 0.3; duration: 1400 }
+					NumberAnimation { to: 0.85; duration: 1400 }
+				}
+				
+			}
+			// progress bar
+			ProgressBar {
+				id: bar
+				from: 0
+				to: WatcherService.total
+				value: WatcherService.current
+				width: cardContainer.width * 0.25
+				height: 6
+				background: Rectangle {
+					color: Colors.background
+					radius: 3
+					height: 6
+				}
+
+				contentItem: Rectangle {
+					width: bar.visualPosition * bar.width
+					height: 6
+					radius: 3
+					color: Colors.primary
+				}
+			}
+			// TEXT (bottom, small)
+			Text {
+				text: WatcherService.current + " / " + WatcherService.total
+				color: Colors.primary
+				font.pixelSize: 20
+				horizontalAlignment: Text.AlignHCenter
+				Layout.alignment: Qt.AlignHCenter
+			}
+		}
+	}
+	MouseArea {
+		anchors.fill: parent
+		focus: true
+
+		propagateComposedEvents: true
+
+		onWheel: (wheel) => {
+            const maxY = flick.contentHeight - flick.height
+
+            const atTop = flick.contentY <= 0
+            const atBottom = flick.contentY >= maxY - 0.5
+
+            if (atBottom && wheel.angleDelta.y < 0) return
+            if (atTop && wheel.angleDelta.y > 0) return
+
+            flick.flick(0, wheel.angleDelta.y * 12)
+            wheel.accepted = true
+        }
+
+		onClicked: (mouse) => {
+			flick.forceActiveFocus()
+			// mouse.accepted = true   // 🔥 allow background click
+		}
+	}
 	// anchors {
 	// 	top: parent.top
 	// 	bottom: parent.bottom
@@ -545,10 +570,10 @@ Scope {
     }
 
 	// prevent clicks from closing when clicking inside
-	MouseArea {
-		anchors.fill: parent
-		onClicked: {}
-	}
+	// MouseArea {
+	// 	anchors.fill: parent
+	// 	onClicked: {}
+	// }
 
 	
     Item {
@@ -583,7 +608,7 @@ Scope {
 		Item {
 			Layout.fillHeight: true
 		}	
-
+		
 		ListView {
 			id: flick
 			opacity: WatcherService.thumbsGenerated ? 1 : 0

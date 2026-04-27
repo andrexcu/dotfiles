@@ -32,6 +32,15 @@ QtObject {
     //         "name=$(printf \"%s\" \"$file\" | md5sum | awk \"{print \$1}\"); " +
     //         "thumb=\"" + Config.cacheDir + "/${name}.png\"; " +
 
+    // filename_size
+    // "file=\"{}\"; " +
+    //     "base=$(basename \"$file\"); " +
+    //     "base=\"${base%.*}\"; " +
+    //     "size=$(stat -c%s \"$file\"); " +
+    //     "id=\"${base}_${size}\"; " +
+
+    //     "echo \"$file|$id\"; " +
+    //     "thumb=\"" + Config.cacheDir + "/${id}.png\"; " +
 
     property string setupCmd:
         "mkdir -p '" + Config.cacheDir + "' && " +
@@ -51,7 +60,6 @@ QtObject {
 
         "echo \"$file|$id\"; " +
         "thumb=\"" + Config.cacheDir + "/${id}.png\"; " +
-
         // "file=\"{}\"; " +
         // "base=$(basename \"$file\"); " +
         // "name=\"${base%.*}\"; " +
@@ -66,12 +74,12 @@ QtObject {
             "-vf \"scale=200:208:force_original_aspect_ratio=increase,crop=200:208:(in_w-200)/2:(in_h-208)/2\" " +
             "-frames:v 1 \"$thumb\" >/dev/null' "
             
-    
+    property var thumbnailPaths: ({})
     
   
-// function hashPath(file) {
-//     return Qt.md5(file)
-// }
+function hashPath(file) {
+    return Qt.md5(file)
+}
 // function updateThumbs() {
 //     pendingUpdate = false
 
@@ -105,8 +113,6 @@ QtObject {
 //         console.log("SKIP")
 //     }
 // }
-
-    property var thumbnailPaths: ({})
     function updateThumbs() {
         pendingUpdate = false
         let data = {}
@@ -177,17 +183,17 @@ QtObject {
 		}
 	}
     // onStarted: console.log("Generating thumbnails...")
+    property bool thumbsGenerating: false
     // property int thumbPid: -1
-    // property bool thumbsGenerating: false
-    property int thumbVersion: 0
-    property bool ready: false
+
+
     property QtObject thumbnailProcess: Io.Process {
         command: []
         onStarted: {
             // thumbPid = thumbnailProcess.pid
             WatcherService.thumbModel.folder =
                 "file://" + Config.cacheDir
-            // thumbsGenerating = true
+            thumbsGenerating = true
         }    
 
         onExited: function(exitCode) {
@@ -197,17 +203,16 @@ QtObject {
             Qt.callLater(() => {
                 
                 updateThumbs()
-                thumbVersion++
-                ready = true
-                // thumbsGenerating = false
-            })
-        }
-    }
                 // let m = WatcherService.thumbModel
                 // let p = m.folder
 
                 // m.folder = ""
                 // m.folder = p
+                
+                thumbsGenerating = false
+            })
+        }
+    }
 
     property QtObject killProcess: Io.Process {
         command: []
