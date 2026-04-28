@@ -33,24 +33,30 @@ QtObject {
     //         "thumb=\"" + Config.cacheDir + "/${name}.png\"; " +
 
 
-    property string setupCmd:
-        "mkdir -p '" + Config.cacheDir + "' && " +
+    // property string setupCmd:
+    //     "mkdir -p '" + Config.cacheDir + "' && " +
 
-        "STOP_FILE='" + Config.cacheDir + "/.stop' && " +
-        "rm -f \"$STOP_FILE\" && " +
+    //     "STOP_FILE='" + Config.cacheDir + "/.stop' && " +
+    //     "rm -f \"$STOP_FILE\" && " +
 
-        "find '" + Config.options.wallpaperDir + "' -maxdepth 1 -type f " +
-        "\\( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' -o -iname '*.bmp' \\) -print0 | " +
+    //     "find '" + Config.options.wallpaperDir + "' -maxdepth 1 -type f " +
+    //     "\\( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' -o -iname '*.bmp' \\) -print0 | " +
 
-        "xargs -0 -P 4 -I {} bash -c '" +
-        "file=\"{}\"; " +
-        "base=$(basename \"$file\"); " +
-        "base=\"${base%.*}\"; " +
-        "size=$(stat -c%s \"$file\"); " +
-        "id=\"${base}_${size}\"; " +
+    //     "xargs -0 -P 4 -I {} bash -c '" +
+    //     "file=\"{}\"; " +
+    //     "base=$(basename \"$file\"); " +
+    //     "base=\"${base%.*}\"; " +
+    //     "size=$(stat -c%s \"$file\"); " +
+    //     "id=\"${base}_${size}\"; " +
 
-        "echo \"$file|$id\"; " +
-        "thumb=\"" + Config.cacheDir + "/${id}.png\"; " +
+    //     "echo \"$file|$id\"; " +
+    //     "thumb=\"" + Config.cacheDir + "/${id}.png\"; " +
+
+    //         "if [ -f \"$STOP_FILE\" ]; then exit 0; fi; " +
+
+    //         "[ -f \"$thumb\" ] || ffmpeg -y -i \"$file\" " +
+    //         "-vf \"scale=200:208:force_original_aspect_ratio=increase,crop=200:208:(in_w-200)/2:(in_h-208)/2\" " +
+    //         "-frames:v 1 \"$thumb\" >/dev/null' "
 
         // "file=\"{}\"; " +
         // "base=$(basename \"$file\"); " +
@@ -60,15 +66,27 @@ QtObject {
         // "thumb=\"" + Config.cacheDir + "/${folder}-${name}.png\"; " +
            
 
-            "if [ -f \"$STOP_FILE\" ]; then exit 0; fi; " +
+property string setupCmd:
+    "mkdir -p '" + Config.cacheDir + "' && " +
 
-            "[ -f \"$thumb\" ] || ffmpeg -y -i \"$file\" " +
-            "-vf \"scale=200:208:force_original_aspect_ratio=increase,crop=200:208:(in_w-200)/2:(in_h-208)/2\" " +
-            "-frames:v 1 \"$thumb\" >/dev/null' "
-            
-    
-    
-  
+    "find '" + Config.options.wallpaperDir + "' -maxdepth 1 -type f " +
+    "\\( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' -o -iname '*.bmp' \\) -print0 | " +
+
+    "xargs -0 -P 4 -I {} bash -c '" +
+    "file=\"{}\"; " +
+    "base=$(basename \"$file\"); " +
+    "base=\"${base%.*}\"; " +
+    "size=$(stat -c%s \"$file\"); " +
+    "id=\"${base}_${size}\"; " +
+
+    "echo \"$file|$id\"; " +
+    "thumb=\"" + Config.cacheDir + "/${id}.png\"; " +
+
+    "[ -f \"$thumb\" ] || ffmpeg -y -i \"$file\" " +
+    "-vf \"scale=200:208:force_original_aspect_ratio=increase,crop=200:208:(in_w-200)/2:(in_h-208)/2\" " +
+    "-frames:v 1 \"$thumb\" >/dev/null' "
+
+
 // function hashPath(file) {
 //     return Qt.md5(file)
 // }
@@ -107,6 +125,39 @@ QtObject {
 // }
 
     property var thumbnailPaths: ({})
+    property bool forceRescan: false
+    // function updateThumbs() {
+
+    //     if (thumbsGenerating && !forceRescan)
+    //         return
+
+    //     forceRescan = false
+
+    //     pendingUpdate = false
+    //     let data = {}
+
+    //     for (var i = 0; i < WatcherService.thumbModel.count; i++) {
+    //         let name = WatcherService.thumbModel.get(i, "fileName")
+    //         data[name] = true
+    //     }
+
+    //     thumbData = data
+
+    //     let allExist = true
+    //     for (let key in thumbnailPaths) {
+    //         if (!thumbData[thumbnailPaths[key]]) {
+    //             allExist = false
+    //             break
+    //         }
+    //     }
+
+    //     if (!allExist && !thumbnailProcess.running) {
+    //         // console.log("Missing thumbnails, generating...")
+    //         thumbnailProcess.exec(["sh", "-c", setupCmd])
+    //     } else {
+    //         console.log("All thumbnails exist, skipping generation")
+    //     }
+    // }
     function updateThumbs() {
         pendingUpdate = false
         let data = {}
@@ -178,16 +229,36 @@ QtObject {
 	}
     // onStarted: console.log("Generating thumbnails...")
     // property int thumbPid: -1
-    // property bool thumbsGenerating: false
+    // property bool ready: false
+    // ready = true
     property int thumbVersion: 0
-    property bool ready: false
+    property bool initialLoadDone: false
+
+    property bool thumbsGenerating: false
+
+    // function triggerThumbReset() {
+
+    //     forceRescan = true
+
+    //     // HARD reset model state
+    //     WatcherService.thumbModel.folder = ""
+
+    //     Qt.callLater(() => {
+    //         WatcherService.thumbModel.folder =
+    //             "file://" + Config.options.wallpaperDir
+
+    //         Qt.callLater(() => {
+    //             updateThumbs()
+    //         })
+    //     })
+    // }
+
     property QtObject thumbnailProcess: Io.Process {
         command: []
         onStarted: {
-            // thumbPid = thumbnailProcess.pid
             WatcherService.thumbModel.folder =
                 "file://" + Config.cacheDir
-            // thumbsGenerating = true
+            thumbsGenerating = true
         }    
 
         onExited: function(exitCode) {
@@ -197,12 +268,13 @@ QtObject {
             Qt.callLater(() => {
                 
                 updateThumbs()
-                thumbVersion++
-                ready = true
-                // thumbsGenerating = false
+                thumbsGenerating = false
+                
+                 
             })
         }
     }
+                // thumbsGenerating = false
                 // let m = WatcherService.thumbModel
                 // let p = m.folder
 

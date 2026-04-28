@@ -326,9 +326,9 @@ Item {
     Shape {
         id: selectedDefaultBorder
         z: 10
-        // opacity: _inView ? 1 : 0
-        opacity: 
-        _inView && isSelected ? 1 : 0
+        opacity: _inView ? 1 : 0
+        // opacity: 
+        // _inView && isSelected ? 1 : 0
         // visible: _inView && isSelected
         // visible: false
 
@@ -522,7 +522,7 @@ Item {
 
         Behavior on scale {
             NumberAnimation {
-                duration: 150
+                duration: 200
                 easing.type: Easing.BezierSpline
                 easing.bezierCurve: [0.25, 0.1, 0.25, 1.0]
             }
@@ -596,29 +596,93 @@ Item {
     //     }
     // }
 
+        // anchors.centerIn: parent
     Image {
         id: thumbImage
-        fillMode: Image.PreserveAspectCrop
-        opacity: inView ? 1 : 0
-        Behavior on opacity { NumberAnimation { duration: 200 } }
+
         anchors.fill: parent
-        // anchors.centerIn: parent
+        fillMode: Image.PreserveAspectCrop
+
+        opacity: inView ? 1 : 0
+        Behavior on opacity {
+            NumberAnimation { duration: 200 }
+        }
+
         asynchronous: true
+
         sourceSize.width: width
         sourceSize.height: height
-        smooth: true
 
         property string thumbName:
-        WallpaperCacheService.thumbnailPaths[itemData] || ""
-        // source: "file://" + Config.cacheDir + "/" + thumbName
-        source: {
-            WallpaperCacheService.thumbVersion
+            WallpaperCacheService.thumbnailPaths[itemData] || ""
 
-            return "file://" +
-                Config.cacheDir + "/" +
-                thumbName +
-                "?v=" + WallpaperCacheService.thumbVersion
+        property bool isSelected:
+            wallpaperController.currentIndex === itemIndex
+
+        source: WatcherService.thumbsGenerated
+            ? "file://" + Config.cacheDir + "/" + thumbName
+            : ""
+
+        // ZOOM EFFECT
+        scale: isSelected ? 1.1 : 1.0
+        transformOrigin: Item.Center
+
+        Behavior on scale {
+            NumberAnimation {
+                duration: 350
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: [0.22, 1.0, 0.36, 1.0]
+        
+            }
         }
+
+        smooth: !isSelected
+
+        layer.enabled: true
+        layer.effect: MultiEffect {
+        blurEnabled: true
+
+        blur: wallpaperController.currentIndex === itemIndex &&
+              wallpaperController.blurTransition ? 1 : 0
+
+        blurMax: 32
+
+        Behavior on blur {
+            NumberAnimation {
+                duration: 150
+                easing.type: Easing.InOutQuad
+            }
+        }
+    }
+}
+        // source: "file://" + Config.cacheDir + "/" + thumbName
+    //    source: {
+    //         WallpaperCacheService.thumbVersion   // MUST be used
+
+    //         let name = WallpaperCacheService.thumbnailPaths[itemData]
+    //         if (!name) return ""
+
+    //         return "file://" + Config.cacheDir + "/" + name
+    //     }
+        // source: "file://" + Config.cacheDir + "/" + thumbName
+        // source: {
+        //     let v = WallpaperCacheService.thumbVersion   // MUST be used
+
+        //     let name = WallpaperCacheService.thumbnailPaths[itemData]
+        //     if (!name) return ""
+
+        //     return "file://" + Config.cacheDir + "/" + name + "?v=" + v
+        // }
+
+        
+        // source: {
+        //     WallpaperCacheService.thumbVersion
+
+        //     return "file://" +
+        //         Config.cacheDir + "/" +
+        //         thumbName +
+        //         "?v=" + WallpaperCacheService.thumbVersion
+        // }
 
         // source: ""
         // source: {
@@ -665,18 +729,7 @@ Item {
         // source: thumbName !== ""
         // ? ("file://" + Config.cacheDir + "/" + thumbName)
         // : ""
-        layer.enabled: true
-        layer.effect: MultiEffect {
-            blurEnabled: true
-            blur: wallpaperController.currentIndex === itemIndex && 
-            wallpaperController.blurTransition ? 1 : 0
-            blurMax: 32
-            Behavior on blur {
-                enabled: true
-                NumberAnimation { duration: 150; easing.type: Easing.InOutQuad }
-            }
-        }
-    }
+
 
   
 
@@ -836,8 +889,8 @@ Item {
     //     to: 1
     //     duration: 350
     //     // loops: Animation.Infinite
-    //     easing.type: Easing.BezierSpline
-    //     easing.bezierCurve: [0.22, 1.0, 0.36, 1.0]
+        // easing.type: Easing.BezierSpline
+        // easing.bezierCurve: [0.22, 1.0, 0.36, 1.0]
     // }
     // property string hash: WallpaperCacheService.hashPath(itemData)
     // property string thumbFile: Config.cacheDir + "/" + hash + ".png"
@@ -850,6 +903,7 @@ Item {
         itemIndex + " " + Config.cacheDir + "/"
         + WallpaperCacheService.thumbnailPaths[itemData]) 
         })
+        console.log("thumbversion: ", WallpaperCacheService.thumbVersion)
             // console.log("testhexitem:",  WallpaperCacheService.thumbnailPaths[itemData])
          if (itemIndex === 0) {
             
@@ -873,7 +927,7 @@ Item {
             controller.previousItem = controller.currentItem
             controller.currentItem = hexItem        
             Qt.callLater(() => {
-                flipHex()
+                // flipHex()
             })
             container.updateGridFocusOffset() 
     }
@@ -934,12 +988,19 @@ Item {
         //     wheel.accepted = true
         // }
         onClicked: {
+            if(!inView) {
+                flick.forceActiveFocus() 
+                return
+            }
             controller.previousIndex = controller.currentIndex
             controller.currentIndex = itemIndex
-            
-            Qt.callLater(() => flickRef.forceActiveFocus())
+            flick.forceActiveFocus() 
+            // Qt.callLater(() => flickRef.forceActiveFocus())
         }
 
-        onDoubleClicked: WallpaperApplyService.applyWallpaper(itemData)
+        onDoubleClicked: {
+            if(!inView) return
+            WallpaperApplyService.applyWallpaper(itemData)
+        }
     }
 }

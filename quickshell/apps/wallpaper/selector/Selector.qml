@@ -155,10 +155,13 @@ Scope {
 
 	Component.onCompleted: {  
 		cardShowTimer.start()
+		// wallpaperController.cardVisible = true
 		// scaleDelayTimer.start()
 		// selectedItem.visualWrapperRef.width = flick.cellWidth - 10
 		// selectedItem.visualWrapperRef.height = flick.cellHeight - 10
 		console.log("path: " + Config.options.wallpaperDir)
+		console.log("thumbs generated: ", WatcherService.thumbsGenerated)
+		console.log("pathisempty: ", WatcherService.pathEmpty)
 	}
 
 	property bool blurTransition: false
@@ -385,7 +388,7 @@ Scope {
 			onActivated: {
 				wallpaperController.cardVisible = false
 				
-				WallpaperService.killAllAndQuit()
+				WallpaperService.selectorQuit()
 			}
 		}
 		DimOverlay {
@@ -398,10 +401,9 @@ Scope {
 		anchors.fill: parent
 		onClicked: {
 				wallpaperController.cardVisible = false
-				WallpaperService.killAllAndQuit()
+				WallpaperService.selectorQuit()
 				
 		}
-		
 		}
 	
   ColumnLayout {
@@ -428,60 +430,88 @@ Scope {
     }
 	
 						
+		// opacity: wallpaperController.cardVisible ? 1 : 0
+
+		// Behavior on opacity {
+		// 	NumberAnimation {
+		// 		duration: 150
+		// 		easing.type: Easing.InOutQuad
+		// 	}
+		// }
 		Rectangle {
-		opacity: !WatcherService.thumbsGenerated
-		// opacity:(WallpaperCacheService.thumbData && WallpaperCacheService.thumbData[thumbName])
-		Behavior on opacity { 
-			NumberAnimation { 
-				duration: 350; 
-				easing.type: Easing.InOutQuad 
-			} 
+		id: selectorState
+		// STATE
+		property bool isLoading: !WatcherService.thumbsGenerated && !WatcherService.pathEmpty
+		property bool isEmpty: !WatcherService.thumbsGenerated && WatcherService.pathEmpty
+		property bool isDone: WatcherService.thumbsGenerated
+
+		opacity: wallpaperController.cardVisible ? 1 : 0
+
+		Behavior on opacity {
+			NumberAnimation {
+				duration: 150
+				easing.type: Easing.InOutQuad
+			}
 		}
 
 		anchors.centerIn: parent
-		color: "transparent" 
-		border.color: "red"       
+		color: "transparent"
+		border.color: "red"
 		border.width: 1
 
 		ColumnLayout {
 			anchors.centerIn: parent
 			spacing: 26
 
-			// ICON (top, big)
+			// ICON
 			Text {
 				id: spinner
-				text: "ⴵ"
-				font.pixelSize: 135
+
+				text: selectorState.isLoading ? "ⴵ"
+					: selectorState.isEmpty  ? "(⋟﹏⋞)"
+					: ""
+
+				font.pixelSize: selectorState.isLoading ? 135 : 30
 				color: Colors.primary
+
 				property real rot: 0
-				rotation: rot
+				rotation: selectorState.isLoading ? rot : 0
+
 				horizontalAlignment: Text.AlignHCenter
 				Layout.alignment: Qt.AlignHCenter
+
+				// IMPORTANT: base opacity for non-loading
+				opacity: selectorState.isLoading ? spinnerOpacity : 1
+				property real spinnerOpacity: 1
 
 				NumberAnimation on rot {
 					from: 0
 					to: 360
 					duration: 2500
 					loops: Animation.Infinite
-					running: !WatcherService.thumbsGenerated
+					running: selectorState.isLoading
 				}
-				
-				SequentialAnimation on opacity {
-					loops: Animation.Infinite
 
+				SequentialAnimation on spinnerOpacity {
+					loops: Animation.Infinite
+					running: selectorState.isLoading
 					NumberAnimation { to: 0.3; duration: 1400 }
 					NumberAnimation { to: 0.85; duration: 1400 }
 				}
-				
 			}
-			// progress bar
+
+			// PROGRESS BAR
 			ProgressBar {
 				id: bar
 				from: 0
 				to: WatcherService.total
 				value: WatcherService.current
+
 				width: cardContainer.width * 0.25
 				height: 6
+
+				visible: selectorState.isLoading
+
 				background: Rectangle {
 					color: Colors.background
 					radius: 3
@@ -495,16 +525,24 @@ Scope {
 					color: Colors.primary
 				}
 			}
-			// TEXT (bottom, small)
+
+			// TEXT
 			Text {
-				text: WatcherService.current + " / " + WatcherService.total
+				text: selectorState.isLoading
+						? WatcherService.current + " / " + WatcherService.total
+					: selectorState.isEmpty
+						? "No Wallpapers Found."
+					: ""
+
 				color: Colors.primary
 				font.pixelSize: 20
+
 				horizontalAlignment: Text.AlignHCenter
 				Layout.alignment: Qt.AlignHCenter
 			}
 		}
 	}
+
 	MouseArea {
 		anchors.fill: parent
 		focus: true
@@ -526,7 +564,7 @@ Scope {
 
 		onClicked: (mouse) => {
 			flick.forceActiveFocus()
-			// mouse.accepted = true   // 🔥 allow background click
+			mouse.accepted = true 
 		}
 	}
 	// anchors {
@@ -860,7 +898,7 @@ Scope {
 					var offsetX = col - centerCol
 					var offsetY = row - centerRow
 
-					var newShiftX = (offsetX !== 0) ? -offsetX * 25 : 0
+					var newShiftX = (offsetX !== 0) ? -offsetX * 24 : 0
 					var newShiftY = (offsetY !== 0) ? -offsetY * 15 : 0
 
 					if (Math.abs(newShiftX - globalShiftX) < 0.01 &&
@@ -933,7 +971,7 @@ Scope {
 
 						var totalRows = Math.ceil(filteredWallpapers.length / columns)
 
-						var visualPadding = cellHeight * 0.10
+						var visualPadding = cellHeight * 0.02
 
 						var gridHeight =
 							(totalRows - 1) * rowStep
@@ -1001,16 +1039,21 @@ Scope {
 			// 	z: 9999
 			// 	clip: false
 			// 	layer.smooth: true
-			
+				
 			// 	Shape {
 			// 		id: selectedHexBorder
-
+					
 			// 		width: flick.cellWidth - 10
 			// 		height: flick.cellHeight - 10
-			// 		x: wallpaperController.currentItem ?
-			// 		wallpaperController.currentItem.targetX : 0
-			// 		y: wallpaperController.currentItem ?
-			// 		wallpaperController.currentItem.targetY: 0
+			// 		x: wallpaperController.currentItem
+			// 		? wallpaperController.currentItem.targetX
+			// 		: 0
+
+			// 		y: wallpaperController.currentItem
+			// 		? wallpaperController.currentItem.targetY
+			// 		- flick.contentY
+				
+			// 		: 0
 			
 
 			// 		scale: currentItem.visualWrapperRef.visualScale
@@ -1134,6 +1177,7 @@ Scope {
 						// visible: false
 						visible: WatcherService.thumbsGenerated
 						Repeater {
+							id: hexRepeater
 							model: Math.max(
 								0,
 								Math.min(
@@ -1262,6 +1306,7 @@ Scope {
 								flickRef: flick
 								rippleOff: _rippleOff
 								ripple: _ripple
+							
 								
 								// hexBorder: highlightContainer
 								// scale: _rowScale
@@ -1286,10 +1331,10 @@ Scope {
 								transformOrigin: {
 									if (isSelected) return Item.Center
 									if (flick.scrollDir < 0) {
-										// scroll up → original
+										// scroll up - original
 										return _nearTop ? Item.Top : Item.Bottom
 									} else {
-										// scroll down → flipped
+										// scroll down - flipped
 										return _nearTop ? Item.Bottom : Item.Top
 									}
 								}

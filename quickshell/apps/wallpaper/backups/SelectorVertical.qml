@@ -183,7 +183,7 @@ Scope {
 			if (exitCode === 0) {
 				homeDir = homeCollector.text.trim()
 				// Defaults
-				let defaultWall = homeDir + "/Pictures/Wallpapers"
+				let defaultWall = homeDir + "/Pictures/Wallpaper"
 				let defaultThumb = homeDir + "/.cache/wall-select"
 				// Load saved settings if present
 				wallpaperDir = wallpaperController.savedWallpaperDir && wallpaperController.savedWallpaperDir.length > 0 ? wallpaperController.savedWallpaperDir : defaultWall
@@ -1649,9 +1649,10 @@ Scope {
 									anchors.centerIn: parent
 									asynchronous: true
 									property string thumbName: thumbnailPaths[modelData] || ""
-									source: (thumbs.thumbData && thumbs.thumbData[thumbName])
-											? ("file://" + wallpaperController.thumbnailDir + "/" + thumbName)
-											: ""
+									source: "file://" + wallpaperController.thumbnailDir + "/" + thumbName
+									// source: (thumbs.thumbData && thumbs.thumbData[thumbName])
+									// 		? ("file://" + wallpaperController.thumbnailDir + "/" + thumbName)
+									// 		: ""
 									layer.enabled: true
 								    layer.effect: MultiEffect {
 										blurEnabled: true

@@ -11,7 +11,8 @@ QtObject {
     property var wallpapers: []
     property string currentFullPath: ""
     property string selectedWallpaper: ""
-    property bool thumbsGenerated: WatcherService.current === WatcherService.total
+    // property bool thumbsGenerated: WatcherService.current === WatcherService.total
+    // property bool pathEmpty: WatcherService.total === 0
     property string lastFilePath: lastFolder(Config.options.wallpaperDir)
     
 	// Process for getting wallpaper home directory
@@ -325,18 +326,36 @@ function relevantCount() {
         onTriggered: Qt.quit()
     }
 
-    function killAllAndQuit() {
+    function killAll() {
+
+        WallpaperCacheService.thumbnailProcess.running = false
         // stop future loop
-        WallpaperCacheService.killProcess.exec([
-            "sh", "-c", "touch '" + stopFlag + "'"
-        ])
+        // WallpaperCacheService.killProcess.exec([
+        //     "sh", "-c", "touch '" + stopFlag + "'"
+        // ])
 
-        // kill running ffmpeg
-        WallpaperCacheService.killProcess.exec([
-            "pkill", "-9", "-f", "scale=200:208"
-        ])
-
+        // // kill running ffmpeg
+        // WallpaperCacheService.killProcess.exec([
+        //     "pkill", "-9", "-f", "scale=200:208"
+        // ])
+    }
+    
+    function selectorQuit() {        
+        killAll()
         // safe exit
         quitTimer.start()
     }
+
+    property Connections _pathCon: Connections {
+        target: Config.options
+        function onWallpaperDirChanged() {
+            WatcherService.wallpaperModel.folder = 
+			"file://" + Config.options.wallpaperDir
+            // WallpaperService.killAll()
+            Qt.callLater(() => {
+
+            WallpaperCacheService.updateThumbs()
+            })
+        }
+    }    
 }

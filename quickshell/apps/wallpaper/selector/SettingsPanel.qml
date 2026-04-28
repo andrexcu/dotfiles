@@ -12,7 +12,7 @@ ColumnLayout {
     id: settingsPanel
     Layout.fillWidth: true
     Layout.alignment: Qt.AlignHCenter
-
+    
 
     RowLayout {
         id: textContainer
@@ -197,7 +197,6 @@ ColumnLayout {
             // && wallpaperRepeater.itemAt(wallpaperController.currentIndex).imageReady
             Rectangle {
                 anchors.fill: parent
-                
                 color: "transparent" 
                 border.color: "red"       
                 border.width: 1
@@ -234,6 +233,7 @@ ColumnLayout {
                         background: null
 
                         placeholderText: Config.options.wallpaperDir
+                        text: Config.options.wallpaperDir
                         placeholderTextColor: Colors.backgroundText70
                         font.pixelSize: 16
                         font.family: "JetBrainsMono Nerd Font"
@@ -253,16 +253,22 @@ ColumnLayout {
                         
                         onAccepted: {
                              if (!wallpaperController)
-                                return
-
+                                return       
+                            WallpaperService.killAll()
                             wallpaperController.currentIndex = 0
                             let newPath = InputHandler.normalizePath(text)
 
                             if (newPath && newPath !== Config.options.wallpaperDir) {
                                 Config.options.wallpaperDir = newPath
+                                WatcherService.wallpaperModel.folder = 
+                                "file://" + Config.options.wallpaperDir
                             }
                             
+                            
+                            
                         }
+                            // Qt.callLater(() => {
+                            // })
                     }
                 }
             }

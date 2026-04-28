@@ -9,8 +9,8 @@ QtObject {
     id: watcherService
     property int current: WallpaperService.relevantCount()
     property int total: WatcherService.wallpaperModel.count
-    property bool thumbsGenerated: current === total
     property bool pathEmpty: total === 0
+    property bool thumbsGenerated: current === total && !pathEmpty
     
 
     property FolderListModel thumbModel: FolderListModel {
@@ -63,11 +63,14 @@ QtObject {
 		}
 	}
     
-    property Connections _pathCon: Connections {
-        target: Config.options
-        function onWallpaperDirChanged() {
-            WatcherService.wallpaperModel.folder = 
-			"file://" + Config.options.wallpaperDir
-        }
-    }
+    // property Connections _pathCon: Connections {
+    //     target: Config.options
+    //     function onWallpaperDirChanged() {
+    //         WatcherService.wallpaperModel.folder = 
+	// 		"file://" + Config.options.wallpaperDir
+
+    //         WallpaperService.killAll()
+    //                         WallpaperCacheService.updateThumbs()
+    //     }
+    // }
 }
