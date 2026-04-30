@@ -47,7 +47,7 @@ Item {
     property bool hasEntered: false
     property real rowScale
     property real enterT: inView ? 0 : 1
-    property bool entering: _rowScale < 1 && _inView
+    property bool entering: scale < 1 && inView
     
     function clamp(v) {
         return Math.sign(v) * Math.min(Math.abs(v), 2)
@@ -221,30 +221,38 @@ Item {
     // ANIMATION DRIVER
     // ======================
 
+   NumberAnimation {
+    id: animIn
+    target: selectedHexBorder
+    property: "t"
+    duration: 300
+    easing.type: Easing.BezierSpline
+    easing.bezierCurve: [0.25, 0.1, 0.25, 1.0]
+    }
+
     NumberAnimation {
-        id: anim
+        id: animOut
         target: selectedHexBorder
         property: "t"
-        duration: 350
-        easing.type: Easing.BezierSpline
-        easing.bezierCurve: [0.25, 0.1, 0.25, 1.0]
+        duration: 600 // different
+        easing.type: Easing.InOutQuad
     }
 
-    onActiveChanged: {
-        if (!active) return
-        anim.stop()
-        anim.from = 1
-        anim.to = 1
-        anim.restart()
-    }
+   onActiveChanged: {
+    if (!active) return
+    animOut.stop()
+    animIn.from = 0
+    animIn.to = 1
+    animIn.restart()
+}
 
-    onLeavingChanged: {
-        if (!leaving) return
-        anim.stop()
-        anim.from = 1
-        anim.to = 0
-        anim.restart()
-    }
+onLeavingChanged: {
+    if (!leaving) return
+    animIn.stop()
+    animOut.from = 1
+    animOut.to = 0
+    animOut.restart()
+}
 
     // ======================
     // PATHS (ALL USE SELECTEDHEX)
@@ -597,6 +605,70 @@ Item {
     // }
 
         // anchors.centerIn: parent
+    // Image {
+    //     id: thumbImage
+
+    //     anchors.fill: parent
+    //     fillMode: Image.PreserveAspectCrop
+
+    //     opacity: inView ? 1 : 0
+    //     Behavior on opacity {
+    //         NumberAnimation { duration: 200 }
+    //     }
+
+    //     asynchronous: true
+
+    //     sourceSize.width: width
+    //     sourceSize.height: height
+
+    //     property string thumbName:
+    //         WallpaperCacheService.thumbnailPaths[itemData] || ""
+
+    //     property bool isSelected:
+    //         wallpaperController.currentIndex === itemIndex
+
+    //     source: WatcherService.thumbsGenerated
+    //         ? "file://" + Config.cacheDir + "/" + thumbName
+    //         : ""
+
+    //     // ZOOM EFFECT
+    //     scale: isSelected ? 1.1 : 1.0
+    //     transformOrigin: Item.Center
+
+    //     Behavior on scale {
+    //         NumberAnimation {
+    //             duration: 350
+    //             easing.type: Easing.BezierSpline
+    //             easing.bezierCurve: [0.22, 1.0, 0.36, 1.0]
+        
+    //         }
+    //     }
+
+    //     smooth: !isSelected
+
+    //     layer.enabled: true
+    //     layer.effect: MultiEffect {
+    //         blurEnabled: true
+
+    //         blur: wallpaperController.currentIndex === itemIndex &&
+    //             wallpaperController.blurTransition ? 1 : 0
+
+    //         blurMax: 32
+
+    //         Behavior on blur {
+    //             NumberAnimation {
+    //                 duration: 150
+    //                 easing.type: Easing.InOutQuad
+    //             }
+    //         }
+    //     }
+    // }
+
+
+  Item {
+    anchors.fill: parent
+
+    // thumb image
     Image {
         id: thumbImage
 
@@ -604,9 +676,7 @@ Item {
         fillMode: Image.PreserveAspectCrop
 
         opacity: inView ? 1 : 0
-        Behavior on opacity {
-            NumberAnimation { duration: 200 }
-        }
+        Behavior on opacity { NumberAnimation { duration: 200 } }
 
         asynchronous: true
 
@@ -623,7 +693,6 @@ Item {
             ? "file://" + Config.cacheDir + "/" + thumbName
             : ""
 
-        // ZOOM EFFECT
         scale: isSelected ? 1.1 : 1.0
         transformOrigin: Item.Center
 
@@ -632,7 +701,6 @@ Item {
                 duration: 350
                 easing.type: Easing.BezierSpline
                 easing.bezierCurve: [0.22, 1.0, 0.36, 1.0]
-        
             }
         }
 
@@ -640,95 +708,110 @@ Item {
 
         layer.enabled: true
         layer.effect: MultiEffect {
-        blurEnabled: true
+            blurEnabled: Config.options.effects.blur
+            blur: wallpaperController.currentIndex === itemIndex &&
+                  wallpaperController.blurTransition ? 1 : 0
+            blurMax: 32
 
-        blur: wallpaperController.currentIndex === itemIndex &&
-              wallpaperController.blurTransition ? 1 : 0
-
-        blurMax: 32
-
-        Behavior on blur {
-            NumberAnimation {
-                duration: 150
-                easing.type: Easing.InOutQuad
+            Behavior on blur {
+                NumberAnimation {
+                    duration: 150
+                    easing.type: Easing.InOutQuad
+                }
             }
         }
     }
-}
-        // source: "file://" + Config.cacheDir + "/" + thumbName
-    //    source: {
-    //         WallpaperCacheService.thumbVersion   // MUST be used
 
-    //         let name = WallpaperCacheService.thumbnailPaths[itemData]
-    //         if (!name) return ""
+    // source
+    Image {
+        id: grabImage
+        anchors.fill: parent
+        visible: false
+        fillMode: Image.PreserveAspectCrop
+        source: thumbImage.source
+    }
 
-    //         return "file://" + Config.cacheDir + "/" + name
-    //     }
-        // source: "file://" + Config.cacheDir + "/" + thumbName
-        // source: {
-        //     let v = WallpaperCacheService.thumbVersion   // MUST be used
+    // PIXEL OVERLAY
+    Canvas {
+        id: pixelCanvas
+        anchors.fill: parent
+        z: 10
+        // visible: thumbImage.isSelected && Config.options.effects.pixel && inView
+        visible: Config.options.effects.pixel
+        opacity: visible && thumbImage.isSelected && Config.options.effects.pixel ? 1 : 0
 
-        //     let name = WallpaperCacheService.thumbnailPaths[itemData]
-        //     if (!name) return ""
-
-        //     return "file://" + Config.cacheDir + "/" + name + "?v=" + v
-        // }
-
+        Behavior on opacity { 
+            NumberAnimation { 
+                duration: 250; 
+                easing.type: Easing.InOutQuad 
+            } 
+        }
         
-        // source: {
-        //     WallpaperCacheService.thumbVersion
+        property var grabResult: null
+        property real pixelSize: 1
 
-        //     return "file://" +
-        //         Config.cacheDir + "/" +
-        //         thumbName +
-        //         "?v=" + WallpaperCacheService.thumbVersion
-        // }
+        Behavior on pixelSize {
+            NumberAnimation {
+                duration: 250
+                easing.type: Easing.InOutQuad
+            }
+        }
 
-        // source: ""
-        // source: {
-        //     WallpaperCacheService.thumbVersion
+        onPixelSizeChanged: requestPaint()
 
-        //     return "file://" +
-        //         Config.cacheDir + "/" +
-        //         thumbName +
-        //         "?v=" + WallpaperCacheService.thumbVersion
-        // }
-        // source: {
-        //     let name = thumbName
-        //     if (!name) return ""
+        onOpacityChanged: {
+            if (!visible) {
+                grabResult = null
+                pixelSize = 1
+                return
+            }
 
-        //     // immediate check (already cached)
-        //     if (WatcherService.thumbModel && WatcherService.thumbModel.count > 0) {
+            // NEW: feature OFF → hard stop
+            if (!Config.options.effects.pixel) {
+                grabResult = null
+                pixelSize = 1
+                return
+            }
 
-        //         for (let i = 0; i < WatcherService.thumbModel.count; i++) {
-        //             let n = WatcherService.thumbModel.get(i, "fileName")
-        //             if (n === name) {
-        //                 return "file://" + Config.cacheDir + "/" + name
-        //             }
-        //         }
-        //     }
+            if (grabResult !== null) return
+            if (grabImage.status !== Image.Ready) return
 
-        //     // fallback → wait for generation
-        //     if (WallpaperCacheService.thumbData[name]) {
-        //         return "file://" + Config.cacheDir + "/" + name
-        //     }
+           grabImage.grabToImage(function(res) {
+                grabResult = res
 
-        //     return ""
-        // }
-       
-        // source: (WallpaperCacheService.thumbData && WallpaperCacheService.thumbData[thumbName])
-        // ? "file://" + Config.cacheDir + "/" + thumbName
-        // : ""
+                pixelSize = 1
+                requestPaint()
 
-        // source: (WallpaperCacheService.thumbData && WallpaperCacheService.thumbData[thumbName])
-        //         ? ("file://" + Config.cacheDir + "/" + thumbName)
-        //         : ""
-        //  source: (WallpaperCacheService.thumbData && WallpaperCacheService.thumbData[thumbName])
-        //         ? ("file://" + Config.cacheDir + "/" + thumbName)
-        //         : ""
-        // source: thumbName !== ""
-        // ? ("file://" + Config.cacheDir + "/" + thumbName)
-        // : ""
+                // IMPORTANT: next frame only
+                Qt.callLater(() => {
+                    pixelSize = 10
+                })
+            })
+        }
+
+        onPaint: {
+            if (!grabResult) return
+
+            var ctx = getContext("2d")
+            var w = width
+            var h = height
+            var pixel = Math.max(1, pixelSize)
+
+            ctx.clearRect(0, 0, w, h)
+
+            // downscale
+            ctx.drawImage(grabResult.url, 0, 0, w/pixel, h/pixel)
+
+            // upscale blocky
+            ctx.imageSmoothingEnabled = false
+            ctx.drawImage(pixelCanvas,
+                0, 0, w/pixel, h/pixel,
+                0, 0, w, h)
+        }
+    }
+}
+
+    
 
 
   
@@ -870,40 +953,17 @@ Item {
 	}
     property bool _flipLock: false
     property bool _flipQueued: false
-    // function triggerFlip() {
-
-    //     if (_flipLock) {
-    //         _flipQueued = true
-    //         return
-    //     }
-
-    //     _flipLock = true
-
-    //     Qt.callLater(() => flipHex())
-    // }
-    // NumberAnimation {
-    //     id: anim
-    //     target: selectedHexBorder
-    //     property: "t"
-    //     from: 0
-    //     to: 1
-    //     duration: 350
-    //     // loops: Animation.Infinite
-        // easing.type: Easing.BezierSpline
-        // easing.bezierCurve: [0.22, 1.0, 0.36, 1.0]
-    // }
-    // property string hash: WallpaperCacheService.hashPath(itemData)
-    // property string thumbFile: Config.cacheDir + "/" + hash + ".png"
+   
     property string hash: ""
     property string thumbFile: ""
     Component.onCompleted: {
 
-        Qt.callLater(() => {
-        console.log("hexitem ",  
-        itemIndex + " " + Config.cacheDir + "/"
-        + WallpaperCacheService.thumbnailPaths[itemData]) 
-        })
-        console.log("thumbversion: ", WallpaperCacheService.thumbVersion)
+        // Qt.callLater(() => {
+        // // console.log("hexitem ",  
+        // // itemIndex + " " + Config.cacheDir + "/"
+        // // + WallpaperCacheService.thumbnailPaths[itemData]) 
+        // // })
+        // console.log("thumbversion: ", WallpaperCacheService.thumbVersion)
             // console.log("testhexitem:",  WallpaperCacheService.thumbnailPaths[itemData])
          if (itemIndex === 0) {
             
@@ -911,24 +971,29 @@ Item {
             controller.currentItem = hexItem
         }
 
-        anim.restart()
+        // anim.restart()
     }
-        Timer {
-        interval: 350
-        running: isSelected
-        repeat: true
-        onTriggered: flipColor = !flipColor
-    }
-    property bool flipColor: false
+
+    // Timer {
+    //     interval: 350
+    //     running: isSelected
+    //     repeat: true
+    //     onTriggered: flipColor = !flipColor
+    // }
+
+    // property bool flipColor: false
     onIsSelectedChanged: {
         if (!isSelected) return
-            anim.restart()
+            // anim.restart()
             
             controller.previousItem = controller.currentItem
-            controller.currentItem = hexItem        
-            Qt.callLater(() => {
-                // flipHex()
-            })
+            controller.currentItem = hexItem 
+            if(Config.options.effects.flip) {
+                Qt.callLater(() => {
+                    flipHex()
+                })
+
+            }       
             container.updateGridFocusOffset() 
     }
             // console.log("previous: ", controller.previousItem.itemIndex)

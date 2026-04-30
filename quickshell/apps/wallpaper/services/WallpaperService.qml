@@ -14,7 +14,8 @@ QtObject {
     // property bool thumbsGenerated: WatcherService.current === WatcherService.total
     // property bool pathEmpty: WatcherService.total === 0
     property string lastFilePath: lastFolder(Config.options.wallpaperDir)
-    
+    property int rows: Config.options.layouts.rows
+    property int columns: Config.options.layouts.columns
 	// Process for getting wallpaper home directory
     function lastFolder(path) {
         let clean = path.replace(/\/$/, "")

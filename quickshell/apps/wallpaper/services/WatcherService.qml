@@ -4,6 +4,7 @@ import Quickshell
 import Qt.labs.folderlistmodel
 import qs
 import qs.services
+import Quickshell.Io
 
 QtObject {
     id: watcherService
@@ -63,6 +64,24 @@ QtObject {
 		}
 	}
     
+    property var settingsFile: FileView {
+        path: Quickshell.env("HOME") + "/.config/quickshell/apps/wallpaper/settings.json"
+        preload: true
+        watchChanges: true
+        onFileChanged: this.reload()
+    }
+
+    property var settingsData: {
+        try {
+            return JSON.parse(settingsFile.text())
+        } catch (e) {
+            return {}
+        }
+    }
+
+    property int rows: (settingsData.layouts && settingsData.layouts.rows) || 4
+    property int columns: (settingsData.layouts && settingsData.layouts.columns) || 4
+
     // property Connections _pathCon: Connections {
     //     target: Config.options
     //     function onWallpaperDirChanged() {
