@@ -1,0 +1,5 @@
+Selector 1.0 Selector.qml
+SelectorVertical 1.0 SelectorVertical.qml
+HexItem 1.0 HexItem.qml
+SettingsPanel 1.0 SettingsPanel.qml
+singleton InputHandler 1.0 InputHandler.qml
