@@ -1,0 +1,6 @@
+singleton WallpaperService 1.0 WallpaperService.qml
+singleton WallpaperCacheService 1.0 WallpaperCacheService.qml
+singleton WatcherService 1.0 WatcherService.qml
+singleton WallpaperApplyService 1.0  WallpaperApplyService.qml
+singleton MatugenCacheService 1.0 MatugenCacheService.qml
+singleton NotificationService 1.0 NotificationService.qml

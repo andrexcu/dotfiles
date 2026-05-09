@@ -1,0 +1,5 @@
+Anim 1.0 Anim.qml
+singleton AnimList 1.0 AnimList.qml
+CAnim 1.0 CAnim.qml
+DimOverlay 1.0 DimOverlay.qml
+SkewShape 1.0 SkewShape.qml

@@ -1,0 +1,95 @@
+pragma Singleton
+import QtQuick
+import Quickshell
+import Qt.labs.folderlistmodel
+import qs
+import qs.services
+import Quickshell.Io
+
+QtObject {
+    id: watcherService
+    property int current: WallpaperService.relevantCount()
+    property int total: WatcherService.wallpaperModel.count
+    property bool pathEmpty: total === 0
+    property bool thumbsGenerated: current === total && !pathEmpty
+    
+
+    property FolderListModel thumbModel: FolderListModel {
+        // folder: Config.cacheDir
+        nameFilters: ["*.png"]
+        showDirs: false
+        showHidden: false
+        sortField: FolderListModel.Name
+    }
+
+    property FolderListModel wallpaperModel: FolderListModel {
+        folder: Config.options.wallpaperDir 
+        nameFilters: [ "*.png", "*.jpg" ]
+        showDirs: false
+        showHidden: false
+        sortField: FolderListModel.Name
+    }
+
+
+
+    property Connections _thumbCon: Connections {
+        target: WatcherService.thumbModel       
+
+        function onCountChanged() {
+
+            // let current = WallpaperService.relevantCount()
+            // let total = WatcherService.wallpaperModel.count
+            console.log("thumbs updated:", current, "/", total)
+            
+        }
+    }
+    
+    property Connections _setupCon: Connections { 
+		target: WatcherService.wallpaperModel
+		function onStatusChanged() {
+			const m = target
+
+			if (m.status !== FolderListModel.Ready)
+				return
+
+			console.log("Wallpapers loaded: " + m.count)
+
+			if (m.count > 0) {
+				// lastError = ""
+				WallpaperService.startListingFromModel()
+				// wallpaperController.requestFrame()
+			} else {
+				// lastError = "No wallpapers found in " + Config.options.wallpaperDir
+			}
+		}
+	}
+    
+    property var settingsFile: FileView {
+        path: Quickshell.env("HOME") + "/.config/quickshell/apps/wallpaper/settings.json"
+        preload: true
+        watchChanges: true
+        onFileChanged: this.reload()
+    }
+
+    property var settingsData: {
+        try {
+            return JSON.parse(settingsFile.text())
+        } catch (e) {
+            return {}
+        }
+    }
+
+    property int rows: (settingsData.layouts && settingsData.layouts.rows) || 4
+    property int columns: (settingsData.layouts && settingsData.layouts.columns) || 4
+
+    // property Connections _pathCon: Connections {
+    //     target: Config.options
+    //     function onWallpaperDirChanged() {
+    //         WatcherService.wallpaperModel.folder = 
+	// 		"file://" + Config.options.wallpaperDir
+
+    //         WallpaperService.killAll()
+    //                         WallpaperCacheService.updateThumbs()
+    //     }
+    // }
+}
