@@ -36,6 +36,8 @@ Item {
      property bool isSelected: controller.currentIndex === itemIndex
     property bool isPrevious: controller.previousIndex === itemIndex
     property bool rippleOff
+    property real expand: 0
+    property real shrink: 0.05
     // property real originFixY
     // width: hexRadius * 2
     // height: Math.ceil(hexRadius * 1.73205)
@@ -48,27 +50,27 @@ Item {
     property var ripple
     property bool hasEntered: false
     property real rowScale
-    property real enterT: inView ? 0 : 1
-    property bool entering: scale < 1 && inView
     property real parallaxX: 0
     property real parallaxY: 0
     
-    function clamp(v) {
-        return Math.sign(v) * Math.min(Math.abs(v), 2)
-    }
+    // function clamp(v) {
+    //     return Math.sign(v) * Math.min(Math.abs(v), 2)
+    // }
 
-    property real layoutX: entering ? 0 : clamp(dx) * 30 * enterT
-    property real layoutY: entering ? 0 : clamp(dy) * 30 * enterT
+    // property real enterT: inView ? 0 : 1
+    property bool entering: scale < 1 && inView
+    // property real layoutX: entering ? 0 : clamp(dx) * 30 * enterT
+    // property real layoutY: entering ? 0 : clamp(dy) * 30 * enterT
+
     property real viewY
     property real targetX:
     flickRef.baseX(itemIndex)
-    + layoutX
+    // + layoutX
     + (entering ? 0 : (rippleOff ? 0 : ripple.x))
 
     property real targetY:
     flickRef.baseY(itemIndex)
-    // viewY
-    + layoutY
+    // + layoutY
     + (entering ? 0 : (rippleOff ? 0 : ripple.y))
 
     property real hexRadius: 105
@@ -346,14 +348,14 @@ Item {
             y: height
         }
     }
-
+    // visible: false
     }
 
 
     Shape {
         id: selectedDefaultBorder
         z: 10
-        // visible: 
+        // visible: false
         opacity: _inView ? 1 : 0
         anchors.fill: parent
         // opacity: 
@@ -392,13 +394,56 @@ Item {
             
             fillColor: "transparent"
             strokeColor: "#4d4d4d"
-            PathMove { x: width * 0.25; y: 0 }
-            PathLine { x: width * 0.75; y: 0 }
-            PathLine { x: width;        y: height * 0.5 }
-            PathLine { x: width * 0.75; y: height }
-            PathLine { x: width * 0.25; y: height }
-            PathLine { x: 0;            y: height * 0.5 }
-            PathLine { x: width * 0.25; y: 0 }
+             PathMove {
+                    x: width * (0.25 - hexItem.expand)
+                    y: 0
+                }
+                PathLine {
+                    x: width * (0.75 + hexItem.expand)
+                    y: 0
+                }
+
+                // RIGHT side
+                PathLine {
+                    x: width
+                    y: height * 0.5
+                }
+
+                PathLine {
+                    x: width * 0.75
+                    y: height
+                }
+
+                // BOTTOM (longer)
+                PathLine {
+                    x: width * (0.25 - hexItem.expand)
+                    y: height
+                }
+
+                // LEFT side
+                PathLine {
+                    x: 0
+                    y: height * 0.5
+                }
+
+                // close
+                PathLine {
+                    x: width * (0.25 - hexItem.expand)
+                    y: 0
+                }
+            // PathMove { x: width * 0.25; y: 0 }
+            // PathLine { x: width * 0.75; y: 0 }
+            // PathLine { x: width;        y: height * 0.5 }
+            // PathLine { x: width * 0.75; y: height }
+            // PathLine { x: width * 0.25; y: height }
+            // PathLine { x: 0;            y: height * 0.5 }
+            // PathLine { x: width * 0.25; y: 0 }
+            //  ShapePath {
+            //     fillColor: "white"
+
+            //     // TOP (longer)
+               
+            // }
         }
         // ShapePath {
         //     strokeWidth: 1.125
@@ -909,18 +954,60 @@ Item {
                 anchors.centerIn: parent
                 preferredRendererType: Shape.CurveRenderer
                 antialiasing: true
+            
+            ShapePath {
+                fillColor: "white"
 
-                ShapePath {
-                    fillColor: "white"
-
-                    PathMove { x: width * 0.25; y: 0 }
-                    PathLine { x: width * 0.75; y: 0 }
-                    PathLine { x: width;        y: height * 0.5 }
-                    PathLine { x: width * 0.75; y: height }
-                    PathLine { x: width * 0.25; y: height }
-                    PathLine { x: 0;            y: height * 0.5 }
-                    PathLine { x: width * 0.25; y: 0 }
+                // TOP (longer)
+                PathMove {
+                    x: width * (0.25 - hexItem.expand)
+                    y: 0
                 }
+                PathLine {
+                    x: width * (0.75 + hexItem.expand)
+                    y: 0
+                }
+
+                // RIGHT side
+                PathLine {
+                    x: width
+                    y: height * 0.5
+                }
+
+                PathLine {
+                    x: width * 0.75
+                    y: height
+                }
+
+                // BOTTOM (longer)
+                PathLine {
+                    x: width * (0.25 - hexItem.expand)
+                    y: height
+                }
+
+                // LEFT side
+                PathLine {
+                    x: 0
+                    y: height * 0.5
+                }
+
+                // close
+                PathLine {
+                    x: width * (0.25 - hexItem.expand)
+                    y: 0
+                }
+            }
+                // ShapePath {
+                //     fillColor: "white"
+  
+                //     PathMove { x: width * 0.25; y: 0 }
+                //     PathLine { x: width * 0.75; y: 0 }
+                //     PathLine { x: width;        y: height * 0.5 }
+                //     PathLine { x: width * 0.75; y: height }
+                //     PathLine { x: width * 0.25; y: height }
+                //     PathLine { x: 0;            y: height * 0.5 }
+                //     PathLine { x: width * 0.25; y: 0 }
+                // }
             }
         }
 

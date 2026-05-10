@@ -700,7 +700,7 @@ Scope {
 			maximumFlickVelocity: 3000
 			orientation: ListView.Horizontal
 
-			// Layout.fillHeight: true
+			// Layout.fillHeight: 
 			Layout.fillWidth: true
 			property int _rows: wallpaperController.hexRows
 			property real _r: wallpaperController.hexRadius
@@ -1237,7 +1237,7 @@ Scope {
 						WallpaperService.rows * effectiveCellStepY
 						+ effectiveCellStepY / 2
 
-					height: parent.height
+					height: cardContainer.height
 
 				function baseY(index) {
 
@@ -1325,7 +1325,7 @@ Scope {
 
 					property int cellHeight: hexRadius * 2
 
-					property int cellWidth: Math.round(cellHeight * Math.sqrt(3)/2 * 1.2) 
+					property int cellWidth: Math.round(cellHeight * Math.sqrt(3)/2 * 1.3) 
 
 
 					property int spacingX: 10
@@ -1440,24 +1440,25 @@ property real wheelFactor: 0.25   // fraction of viewport per tick
 
 			propagateComposedEvents: true
 
-onWheel: (wheel) => {
+				onWheel: (wheel) => {
 
-    const maxX = flick.contentWidth - flick.width
+					const maxX = flick.contentWidth - flick.width
 
-    if ((flick.contentX <= 0 && wheel.angleDelta.y > 0) ||
-        (flick.contentX >= maxX - 0.5 && wheel.angleDelta.y < 0)) {
-        return
-    }
+					if ((flick.contentX <= 0 && wheel.angleDelta.y > 0) ||
+						(flick.contentX >= maxX - 0.5 && wheel.angleDelta.y < 0)) {
+						return
+					}
 
-    let scale = Math.round(flick.width / flick.colStep) + 7
+					const scrollBias = 7
+					let scale = Math.round(flick.width / flick.colStep) + scrollBias
 
-    // KEEP RAW SIGN (CRITICAL)
-    let v = wheel.angleDelta.y * scale
+					// KEEP RAW SIGN (CRITICAL)
+					let v = wheel.angleDelta.y * scale
 
-    flick.flick(v, 0)
+					flick.flick(v, 0)
 
-    wheel.accepted = true
-}
+					wheel.accepted = true
+				}
 			// onWheel: (wheel) => {
 
 			// 	const maxX = flick.contentWidth - flick.width
@@ -1630,7 +1631,7 @@ onWheel: (wheel) => {
 										when: _inView
 										PropertyChanges {
 											target: hexItem
-											_rowScale: 1
+											_colScale: 1
 										}
 									},
 									State {
@@ -1638,7 +1639,7 @@ onWheel: (wheel) => {
 										when: !_inView
 										PropertyChanges {
 											target: hexItem
-											_rowScale: 0
+											_colScale: 0
 										}
 									},
 								]
@@ -1649,8 +1650,8 @@ onWheel: (wheel) => {
 								        from: "out"
 								        to: "in"
 										NumberAnimation {
-											properties: "_rowScale"
-											from: 0.5
+											properties: "_colScale"
+											from: 0.25
 											to: 1
 											duration: 250
 											// easing.type: Easing.InExpo
@@ -1668,15 +1669,15 @@ onWheel: (wheel) => {
 								        from: "in"
 								        to: "out"
 								       	NumberAnimation {
-											duration: 350
-											properties: "_rowScale"
+											duration: 250
+											properties: "_colScale"
 											from: 1; 
-											to: 0
-											
+											to: 0.25
+											easing.type: Easing.OutBack
 											// easing.type: Easing.OutExpo
 											// easing.type: Easing.OutQuart
-											easing.type: Easing.OutBack
-											easing.overshoot: 1.4
+											// easing.type: Easing.OutBack
+											// easing.overshoot: 1.4
 										}
 								    },
 								]
@@ -1693,8 +1694,12 @@ onWheel: (wheel) => {
 								// property bool _nearTop: itemCenterY < viewCenterY - deadZone
 								property real deadZone: 20
 								property real itemCenterX: x + width * 0.5
-								property real viewCenterX: flick.contentX + width * 0.5
-								property bool _nearLeft: itemCenterX < viewCenterX - deadZone
+								// property real viewCenterX: flick.contentX + width * 0.5
+								// property bool _nearLeft: itemCenterX < viewCenterX
+								readonly property real _colCenter: (x - flick.contentX) + width * 0.5
+								readonly property bool _nearLeft: _colCenter < flick.width / 2
+								// readonly property bool _insideView: _colCenter > -hexListView._hexW && _colCenter < hexListView.width + hexListView._hexW
+								// readonly property bool _nearEdge: _colCenter < hexListView._fadeZone || _colCenter > (hexListView.width - hexListView._fadeZone)
 								property bool _inView: flatIndex >= flick.startIndex &&
 										flatIndex < flick.endIndex
 								property int rows: WallpaperService.rows
@@ -1730,11 +1735,11 @@ onWheel: (wheel) => {
 								// property var _ripple: flick.ripple(dx, dy, sx, sy) 
 								// originFixY: (transformOrigin === Item.Top) ? height * 0.5 : -height * 0.5
 								 
-								// property real _rowScale: 0
+								// property real _colScale: 0
 								// property real _selectedScale: _isSelected ? 1.125 : 1
-								property real _rowScale: 0
-								// Behavior on _rowScale { NumberAnimation { duration: 350; easing.type: Easing.OutCubic } }
-								scale: _rowScale
+								property real _colScale: 0
+								// Behavior on _colScale { NumberAnimation { duration: 350; easing.type: Easing.OutCubic } }
+								scale: _colScale
 								// Behavior on scale {
 								// 	// enabled: flickRef.firstUpdateDone
 								// 	NumberAnimation {
@@ -1743,19 +1748,21 @@ onWheel: (wheel) => {
 								// 		easing.bezierCurve: [0.25, 0.1, 0.25, 1.0]
 								// 	}
 								// }
-								opacity: _rowScale < 0.01 ? 0 : 1
+								opacity: _colScale < 0.01 ? 0 : 1
 								// opacity: _inView ? 1 : 0
 								Behavior on opacity { 
 									NumberAnimation { 
-										duration: 350; 
+										duration: 250; 
 										easing.type: Easing.InOutQuad 
+										// easing.type: Easing.InOutQuad 
+										// easing.type: Easing.InCubic
 									} 
 								}
 
 								// Component.onCompleted: {
-								// 	_rowScale = 0
+								// 	_colScale = 0
 								// 	opacity = 1   // visible immediately
-								// 	Qt.callLater(() => _rowScale = 1)
+								// 	Qt.callLater(() => _colScale = 1)
 								// }
 								// x: colIndex * flick._stepX / 2
 								viewY:
@@ -1765,7 +1772,7 @@ onWheel: (wheel) => {
 								// y: flick._yOffset + rowIndex * flick._stepY + (colItem.colIndex % 2 !== 0 ? flick._hexH / 2 : 0)
 								shiftX: flick.globalShiftX
 								shiftY: flick.globalShiftY
-								rowScale: _rowScale
+								rowScale: _colScale
 								container: flick
 								flickRef: flick
 								rippleOff: _rippleOff
@@ -1776,6 +1783,7 @@ onWheel: (wheel) => {
 								var normalized = (hexCenterX - viewCenterX) / Math.max(1, viewCenterX)
 								return -normalized * flick._r
 								}
+								
 								parallaxY: {
 								var viewCenterY = flick.height / 2
 								var hexCenterY = y + height / 2
@@ -1784,7 +1792,7 @@ onWheel: (wheel) => {
 								}
 								
 								// hexBorder: highlightContainer
-								// scale: _rowScale
+								// scale: _colScale
 								itemData: filteredWallpapers.get(flatIndex)
 								itemIndex: flatIndex
 								inView: _inView
@@ -1799,8 +1807,9 @@ onWheel: (wheel) => {
 								// 		return _nearTop ? Item.Bottom : Item.Top
 								// 	}
 								// }
-								property bool entering: _inView && _rowScale === 0
-								property bool leaving: !_inView && _rowScale > 0
+								property bool entering: _inView && _colScale === 0
+								property bool leaving: !_inView && _colScale > 0
+								// transformOrigin: colItem._nearLeft ? Item.Left : Item.Right
 								transformOrigin: {
 									if (isSelected) return Item.Center
 
@@ -1821,34 +1830,7 @@ onWheel: (wheel) => {
 								// 		return _nearLeft ? Item.Right : Item.Left
 								// 	}
 								// }
-								// transformOrigin: {
-								// 	if (isSelected) return Item.Center
-								// 	if (flick.scrollDir < 0) {
-								// 		// scroll up - original
-								// 		return _nearTop ? Item.Top : Item.Bottom
-								// 	} else {
-								// 		// scroll down - flipped
-								// 		return _nearTop ? Item.Bottom : Item.Top
-								// 	}
-								// }
-
-								// transformOrigin: {
-								// 	if (isSelected) return Item.Center
-
-								// 	var base
-								// 	if (flick.scrollDir < 0) {
-								// 		base = _nearTop ? Item.Top : Item.Bottom
-								// 	} else {
-								// 		base = _nearTop ? Item.Bottom : Item.Top
-								// 	}
-
-								// 	// ENTER = invert base
-								// 	// if (entering) {
-								// 	// 	return base === Item.Top ? Item.Bottom : Item.Top
-								// 	// }
-
-								// 	return base
-								// }
+								
 							
 							}
 
