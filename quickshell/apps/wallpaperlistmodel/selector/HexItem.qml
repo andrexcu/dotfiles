@@ -39,7 +39,8 @@ Item {
     // property real originFixY
     width: container.cellWidth - 10
     height: container.cellHeight - 10
-  
+    property real parallaxX: 0
+    property real parallaxY: 0
     property bool imageReady: thumbImage.status === Image.Ready && thumbImage.paintedWidth > 0
     property int currentScale
     property bool isHidden: false
@@ -203,9 +204,10 @@ Item {
     //         easing.bezierCurve: [0.25, 0.1, 0.25, 1.0]
     //     }
     // }
-    
-    width: container.cellWidth - 10
-    height: container.cellHeight - 10
+    width: hexItem.width
+    height: hexItem.height
+    // width: container.cellWidth - 10
+    // height: container.cellHeight - 10
     z: 9999
 
     property real t: 0
@@ -335,13 +337,14 @@ onLeavingChanged: {
         id: selectedDefaultBorder
         z: 10
         opacity: _inView ? 1 : 0
+        
         // opacity: 
         // _inView && isSelected ? 1 : 0
         // visible: _inView && isSelected
         // visible: false
 
-        width: container.cellWidth - 10
-        height: container.cellHeight - 10
+        width: container.cellWidth
+        height: container.cellHeight
 
         x: 0
         y: 0
@@ -671,30 +674,36 @@ onLeavingChanged: {
     // thumb image
     Image {
         id: thumbImage
-
-        anchors.fill: parent
+        width: hexItem.width * 1.6
+        height: hexItem.height * 1.9
+        x: (hexItem.width - width) / 2 + hexItem.parallaxX
+        y: (hexItem.height - height) / 2 + hexItem.parallaxY
+        // source: hexItem.itemData && hexItem.itemData.thumb ? ImageService.fileUrl(hexItem.itemData.thumb) : ""
+            property string thumbName: WallpaperCacheService.thumbnailPaths[itemData.filePath] || ""
+            
+            source: WatcherService.thumbsGenerated
+                ? "file://" + Config.cacheDir + "/" + thumbName
+                : ""
         fillMode: Image.PreserveAspectCrop
-
-        opacity: inView ? 1 : 0
-        Behavior on opacity { NumberAnimation { duration: 200 } }
-
+        smooth: true
         asynchronous: true
+        cache: false
+        sourceSize.width: Math.ceil(hexItem.width * 1.6)
+        sourceSize.height: Math.ceil(hexItem.height * 1.9)
+        // sourceSize.width: width
+        // sourceSize.height: height
 
-        sourceSize.width: width
-        sourceSize.height: height
-
-         property string thumbName: WallpaperCacheService.thumbnailPaths[itemData.filePath] || ""
+        //  property string thumbName: WallpaperCacheService.thumbnailPaths[itemData.filePath] || ""
                    
 
-                    source: WatcherService.thumbsGenerated
-                        ? "file://" + Config.cacheDir + "/" + thumbName
-                        : ""
+        //             source: WatcherService.thumbsGenerated
+        //                 ? "file://" + Config.cacheDir + "/" + thumbName
+        //                 : ""
         property bool isSelected:
             wallpaperController.currentIndex === itemIndex
 
 
         scale: isSelected ? 1.1 : 1.0
-        transformOrigin: Item.Center
 
         Behavior on scale {
             NumberAnimation {
@@ -704,7 +713,7 @@ onLeavingChanged: {
             }
         }
 
-        smooth: !isSelected
+        // smooth: !isSelected
 
         layer.enabled: true
         layer.effect: MultiEffect {
@@ -832,8 +841,8 @@ onLeavingChanged: {
         
         layer.effect: OpacityMask {
             maskSource: Shape {
-                width: visualWrapper.width
-                height: visualWrapper.height
+                width: hexItem.width
+                height: hexItem.height
                 anchors.centerIn: parent
                 preferredRendererType: Shape.CurveRenderer
                 antialiasing: true

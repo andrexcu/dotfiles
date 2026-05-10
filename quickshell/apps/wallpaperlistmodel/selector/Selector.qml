@@ -695,7 +695,7 @@ Scope {
 			orientation: ListView.Vertical
 
 			Layout.fillWidth: true
-			
+			property real _r: wallpaperController.hexRadius
 			Rectangle {
 				anchors.fill: parent
 				color: "transparent" 
@@ -1078,6 +1078,8 @@ Scope {
 					property real spacingXFactor: 0.8
     				property real effectiveCellStepX: cellWidth * cellWidthFactor + spacingX * spacingXFactor
 					width: parent.width
+					property real gridWidth:
+					WallpaperService.columns * effectiveCellStepX + effectiveCellStepX / 2
 					function baseX(index) {
 						var cols = WallpaperService.columns
 						var col = index % cols
@@ -1093,8 +1095,7 @@ Scope {
 						return x
 					}
 
-					property real gridWidth:
-					WallpaperService.columns * effectiveCellStepX + effectiveCellStepX / 2
+					
 					// function gridOffsetX() {
 					// 	return (flick.width - gridWidth()) / 2
 					// }
@@ -1111,7 +1112,7 @@ Scope {
 					// x: (flick.width - gridWidth()) + baseBiasX
 
 					
-					y: 0
+					// y: 0
 					function baseY(index) {
 
 						var row = Math.floor(index / WallpaperService.columns)
@@ -1153,8 +1154,6 @@ Scope {
 					property int cellHeight: Math.round(cellWidth * Math.sqrt(3)/2 * 1.2) 
 					property int spacingX: 10
 					property int spacingY: 10
-					// height: flick.cellHeight
-					// 		+ (WallpaperService.rows - 1) * rowStep
 					height:
 					(WallpaperService.rows - 1) * rowStep
 					+ flick.cellHeight
@@ -1163,6 +1162,8 @@ Scope {
 							duration: 180
 							easing.type: Easing.OutCubic
 						}
+					// height: flick.cellHeight
+					// 		+ (WallpaperService.rows - 1) * rowStep
 					}
 					// Connections {
 					// 	target: Config
@@ -1338,6 +1339,7 @@ Scope {
 						property int rowIndex: index
 						// visible: false
 						opacity: WatcherService.thumbsGenerated ? 1 : 0
+						readonly property real _colCenter: (x - flick.contentX) + width * 0.5
 						Repeater {
 							id: hexRepeater
 							model: Math.max(
@@ -1417,7 +1419,6 @@ Scope {
 								
 								property bool _isSelected: wallpaperController.currentIndex === flatIndex
 
-								property int cols: WallpaperService.columns
 									
 								property real deadZone: 20
 								
@@ -1425,9 +1426,10 @@ Scope {
 								property real viewCenterY: flick.contentY + flick.height * 0.5
 								property bool _nearTop: itemCenterY < viewCenterY - deadZone
 								
-								property int selIndex: wallpaperController.currentIndex
 								property bool _inView: flatIndex >= flick.startIndex &&
 										flatIndex < flick.endIndex
+								property int cols: WallpaperService.columns
+								property int selIndex: wallpaperController.currentIndex
 								property int sx: selIndex % cols
 								property int sy: Math.floor(selIndex / cols)
 
@@ -1475,14 +1477,25 @@ Scope {
 								flickRef: flick
 								rippleOff: _rippleOff
 								ripple: _ripple
-							
+								parallaxX: {
+								var viewCenterX = flick.width / 2
+								var hexCenterX = x + width / 2
+								var normalized = (hexCenterX - viewCenterX) / Math.max(1, viewCenterX)
+								return -normalized * flick._r
+								}
+								parallaxY: {
+								var viewCenterY = flick.height / 2
+								var hexCenterY = y + height / 2
+								var normalized = (hexCenterY - viewCenterY) / Math.max(1, viewCenterY)
+								return -normalized * flick._r
+								}
 								
 								// hexBorder: highlightContainer
 								// scale: _rowScale
-								
 								itemData: filteredWallpapers.get(flatIndex)
 								itemIndex: flatIndex
 								inView: _inView
+								
 								// transformOrigin: Item.Center
 								// transformOrigin: {
 								// 	if (isSelected) return Item.Center

@@ -9,41 +9,86 @@ QtObject {
     // function to traverse the hexagon grid
     function navigate(event, ctx) {
 
-    if (!ctx.size) return false
+        if (!ctx.size) return false
 
-    let index = ctx.currentIndex
-    let row = Math.floor(index / ctx.columns)
-    let col = index % ctx.columns
+        let index = ctx.currentIndex
 
-    switch (event.key) {
+        // swap roles
+        let col = Math.floor(index / ctx.rows)
+        let row = index % ctx.rows
 
-    case Qt.Key_Right: col++; break
-    case Qt.Key_Left:  col--; break
-    case Qt.Key_Down:  row++; break
-    case Qt.Key_Up:    row--; break
+        switch (event.key) {
 
-    case Qt.Key_Return:
-    case Qt.Key_Enter:
-        ctx.onApply(index)
+        // horizontal movement = columns
+        case Qt.Key_Right: col++; break
+        case Qt.Key_Left:  col--; break
+
+        // vertical movement = rows
+        case Qt.Key_Down:  row++; break
+        case Qt.Key_Up:    row--; break
+
+        case Qt.Key_Return:
+        case Qt.Key_Enter:
+            ctx.onApply(index)
+            return true
+
+        default:
+            return false
+        }
+
+        if (col < 0 || row < 0) return true
+
+        let target = col * ctx.rows + row
+
+        if (target < 0 || target >= ctx.size)
+            return true
+
+        if (ctx.onMove)
+            ctx.onMove(target)
+
         return true
-
-    default:
-        return false
     }
 
-    if (col < 0 || col >= ctx.columns)
-        return true
 
-    let target = row * ctx.columns + col
 
-    if (target < 0 || target >= ctx.size)
-        return true
 
-    if (ctx.onMove)
-        ctx.onMove(target)
+    //     function navigate(event, ctx) {
 
-    return true
-}
+    //     if (!ctx.size) return false
+
+    //     let index = ctx.currentIndex
+    //     let row = Math.floor(index / ctx.columns)
+    //     let col = index % ctx.columns
+
+    //     switch (event.key) {
+
+    //     case Qt.Key_Right: col++; break
+    //     case Qt.Key_Left:  col--; break
+    //     case Qt.Key_Down:  row++; break
+    //     case Qt.Key_Up:    row--; break
+
+    //     case Qt.Key_Return:
+    //     case Qt.Key_Enter:
+    //         ctx.onApply(index)
+    //         return true
+
+    //     default:
+    //         return false
+    //     }
+
+    //     if (col < 0 || col >= ctx.columns)
+    //         return true
+
+    //     let target = row * ctx.columns + col
+
+    //     if (target < 0 || target >= ctx.size)
+    //         return true
+
+    //     if (ctx.onMove)
+    //         ctx.onMove(target)
+
+    //     return true
+    // }
 
     // handles ~ expansion / relative paths / duplicate slashes / .. 
     function normalizePath(p) {
