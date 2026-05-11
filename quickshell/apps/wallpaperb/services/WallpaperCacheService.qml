@@ -83,10 +83,10 @@ property string setupCmd:
     "thumb=\"" + Config.cacheDir + "/${id}.png\"; " +
 
     "[ -f \"$thumb\" ] || ffmpeg -y -i \"$file\" " +
-    "-vf \"scale=200:208:force_original_aspect_ratio=increase,crop=200:208:(in_w-200)/2:(in_h-208)/2\" " +
+    "-vf \"scale=224:224:force_original_aspect_ratio=increase,crop=224:224:(in_w-224)/2:(in_h-224)/2\" " +
     "-frames:v 1 \"$thumb\" >/dev/null' "
 
-
+// 200:208
 // function hashPath(file) {
 //     return Qt.md5(file)
 // }
@@ -217,6 +217,28 @@ property string setupCmd:
 			}
 		}
 	}
+
+     property QtObject thumbnailProcess: Io.Process {
+        command: []
+        onStarted: {
+            WatcherService.thumbModel.folder =
+                "file://" + Config.cacheDir
+            thumbsGenerating = true
+        }    
+
+        onExited: function(exitCode) {
+            if (exitCode !== 0)
+                return
+
+            Qt.callLater(() => {
+                
+                updateThumbs()
+                thumbsGenerating = false
+                
+                 
+            })
+        }
+    }
     //     for (let i = 0; i < files.length; i++) {
     //         if (files[i].length > 0) data[files[i]] = true
     //     }
@@ -253,27 +275,7 @@ property string setupCmd:
     //     })
     // }
 
-    property QtObject thumbnailProcess: Io.Process {
-        command: []
-        onStarted: {
-            WatcherService.thumbModel.folder =
-                "file://" + Config.cacheDir
-            thumbsGenerating = true
-        }    
-
-        onExited: function(exitCode) {
-            if (exitCode !== 0)
-                return
-
-            Qt.callLater(() => {
-                
-                updateThumbs()
-                thumbsGenerating = false
-                
-                 
-            })
-        }
-    }
+   
                 // thumbsGenerating = false
                 // let m = WatcherService.thumbModel
                 // let p = m.folder

@@ -29,13 +29,18 @@ Item {
     property var hexBorder
     property real shiftX
     property real shiftY
+    property int clampDir
+    property real arcOffset
     // property real targetX
     // property real targetY
    
     property bool inView
-     property bool isSelected: controller.currentIndex === itemIndex
+    property bool isHovered: controller.hoveredIndex === itemIndex
+    property bool isHoveredPrevious: controller.previousHoveredIndex === itemIndex
+    property bool isSelected: controller.currentIndex === itemIndex
     property bool isPrevious: controller.previousIndex === itemIndex
-    property bool rippleOff
+
+   
     property real expand: 0
     property real shrink: 0.05
     // property real originFixY
@@ -48,32 +53,74 @@ Item {
     property int currentScale
     property bool isHidden: false
     property var ripple
+    property bool rippleOff
+
+    property var hoverRipple
+    property bool hoverRippleOff
+
     property bool hasEntered: false
-    property real rowScale
+    // property real rowScale
     property real parallaxX: 0
     property real parallaxY: 0
     
-    // function clamp(v) {
-    //     return Math.sign(v) * Math.min(Math.abs(v), 2)
-    // }
+    function clamp(v) {
+        return Math.sign(v) * Math.min(Math.abs(v), 2)
+    }
 
-    // property real enterT: inView ? 0 : 1
+ property real enterT: inView ? 0 : 1
+    // property bool entering: inView
     property bool entering: scale < 1 && inView
-    // property real layoutX: entering ? 0 : clamp(dx) * 30 * enterT
+    property real dirX: clampDir
+
+    property real phaseDir:
+        entering ? dirX : -dirX
+
+    property real sideDir:
+        _nearLeft ? -1 : 1
+
+    property real layoutX:
+        clamp(dx) * 36 * enterT * phaseDir * sideDir
+
+    // property real c: inView ? enterT : (1 - enterT)
+
     // property real layoutY: entering ? 0 : clamp(dy) * 30 * enterT
 
+    property real layoutY: 0
+
     property real viewY
-    property real targetX:
-    flickRef.baseX(itemIndex)
-    // + layoutX
-    + (entering ? 0 : (rippleOff ? 0 : ripple.x))
+    property real viewX
+
+
+    property bool hoverBlocked:
+    controller.hoveredIndex === controller.currentIndex
+
+    property real rx:
+    (rippleOff ? 0 : ripple.x) +
+    (hoverRippleOff || hoverBlocked ? 0 : hoverRipple.x)
+
+    property real ry:
+        (rippleOff ? 0 : ripple.y) +
+        (hoverRippleOff || hoverBlocked ? 0 : hoverRipple.y)
+
+        property real targetX:
+       viewX
+        + layoutX
+        + (entering ? 0 : rx)
 
     property real targetY:
-    flickRef.baseY(itemIndex)
-    // + layoutY
-    + (entering ? 0 : (rippleOff ? 0 : ripple.y))
+       viewY
+        + layoutY
+        + (entering ? 0 : ry)
+        
+    // property real targetX:
+    // flickRef.baseX(itemIndex)
+    // + (entering ? 0 : (hoverRippleOff ? 0 : hoverRipple.x))
 
-    property real hexRadius: 105
+    // property real targetY:
+    // flickRef.baseY(itemIndex)
+    // + (entering ? 0 : (hoverRippleOff ? 0 : hoverRipple.y))
+
+    property real hexRadius: 90
 
 
     readonly property real _r: hexRadius
@@ -82,7 +129,7 @@ Item {
     readonly property real _cos30: 0.866025
     readonly property real _sin30: 0.5
     x: targetX + shiftX
-    y: targetY + shiftY
+    y: targetY + arcOffset + shiftY
     // x: targetX + (entering ? 0 : shiftX)
     // y: targetY + (entering ? 0 : shiftY)
     
@@ -195,10 +242,14 @@ Item {
     Shape {
         id: selectedHexBorder
         
-        opacity: _inView && (isSelected || isPrevious)
-            ? Math.min(1, selectedHexBorder.t * 1.2)
-            : 0
+        // opacity: _inView && (isPrevious || isSelected || isHovered)
+        //     ? Math.min(1, selectedHexBorder.t * 1.2)
+        //     : 0
+        property bool showBorder:
+        _inView && (isSelected || isHovered || isPrevious || isHoveredPrevious)
 
+        opacity: showBorder ? Math.min(1, tt * 1.2) : 0
+        
         scale: visualWrapperRef.visualScale
 
         Behavior on scale {
@@ -208,24 +259,16 @@ Item {
                 easing.bezierCurve: [0.25, 0.1, 0.25, 1.0]
             }
         }
-        //  Behavior on opacity {
-        //     NumberAnimation {
-        //         duration: 350
-        //         easing.type: Easing.BezierSpline
-        //         easing.bezierCurve: [0.25, 0.1, 0.25, 1.0]
-        //     }
-        // }
         width: hexItem.width
         height: hexItem.height
-        // width: container.cellWidth - 10
-        // height: container.cellHeight - 10
+
         z: 9999
 
         property real t: 0
         property real tt: Math.min(1, selectedHexBorder.t * 1.2)
 
-        property bool active: isSelected
-        property bool leaving: isPrevious && !isSelected
+        property bool active: isSelected || isHovered
+        property bool leaving: (isPrevious || previousHoveredIndex) && !isSelected && !isHovered
 
         preferredRendererType: Shape.CurveRenderer
         antialiasing: true
@@ -272,7 +315,7 @@ Item {
         // ======================
 
     ShapePath {
-        strokeWidth: isSelected ? 2 : 1.125
+        strokeWidth: (isSelected || isHovered) ? 2 : 1.125
         strokeColor: Colors.primary
         fillColor: "transparent"
 
@@ -285,7 +328,7 @@ Item {
     }
 
     ShapePath {
-        strokeWidth: isSelected ? 2 : 1.125
+        strokeWidth: (isSelected || isHovered) ? 2 : 1.125
         strokeColor: Colors.primary
         fillColor: "transparent"
 
@@ -298,7 +341,7 @@ Item {
     }
 
     ShapePath {
-        strokeWidth: isSelected ? 2 : 1.125
+        strokeWidth:  (isSelected || isHovered) ? 2 : 1.125
         strokeColor: Colors.primary
         fillColor: "transparent"
 
@@ -311,7 +354,7 @@ Item {
     }
 
     ShapePath {
-        strokeWidth: isSelected ? 2 : 1.125
+        strokeWidth:  (isSelected || isHovered) ? 2 : 1.125
         strokeColor: Colors.primary
         fillColor: "transparent"
 
@@ -324,7 +367,7 @@ Item {
     }
 
     ShapePath {
-        strokeWidth: isSelected ? 2 : 1.125
+        strokeWidth:  (isSelected || isHovered) ? 2 : 1.125
         strokeColor: Colors.primary
         fillColor: "transparent"
 
@@ -337,7 +380,7 @@ Item {
     }
 
     ShapePath {
-        strokeWidth: isSelected ? 2 : 1.125
+        strokeWidth:  (isSelected || isHovered) ? 2 : 1.125
         strokeColor: Colors.primary
         fillColor: "transparent"
 
@@ -359,7 +402,7 @@ Item {
         opacity: _inView ? 1 : 0
         anchors.fill: parent
         // opacity: 
-        // _inView && isSelected ? 1 : 0
+        // _inView && (isHovered || isSelected)? 1 : 0
         // visible: _inView && isSelected
         // visible: false
 
@@ -390,10 +433,12 @@ Item {
         preferredRendererType: Shape.CurveRenderer
         antialiasing: true
         ShapePath {
+            // strokeWidth: 4
             strokeWidth: 1.125
             
             fillColor: "transparent"
             strokeColor: "#4d4d4d"
+            //  strokeColor: "#AEEFFF"
              PathMove {
                     x: width * (0.25 - hexItem.expand)
                     y: 0
@@ -605,8 +650,9 @@ Item {
      
         property bool hovered: mouseArea.containsMouse
 
-        property real visualScale: isSelected ? 1.125 : 
-        (hovered ? 1.05: 1)
+        property real visualScale:
+        isSelected ? 1.12 :
+        (hovered ? 1.06 : 1)
 
         scale: visualScale
 
@@ -747,38 +793,37 @@ Item {
     // }
 
 
+    // thumb image
+    // thumb image
+        // source: hexItem.itemData && hexItem.itemData.thumb ? ImageService.fileUrl(hexItem.itemData.thumb) : ""
+        // anchors.centerIn: parent
+
+      
   Item {
     anchors.fill: parent
 
-    // thumb image
-    // thumb image
     Image {
         id: thumbImage
-        width: hexItem.width * 2
-        height: hexItem.height * 2
-        x: (hexItem.width - width) / 2 + hexItem.parallaxX
-        y: (hexItem.height - height) / 2 + hexItem.parallaxY
-        // source: hexItem.itemData && hexItem.itemData.thumb ? ImageService.fileUrl(hexItem.itemData.thumb) : ""
-            property string thumbName: WallpaperCacheService.thumbnailPaths[itemData.filePath] || ""
-            
-            source: WatcherService.thumbsGenerated
-                ? "file://" + Config.cacheDir + "/" + thumbName
-                : ""
+        width: hexItem.width * 1.7
+        height: hexItem.height * 1.7
+        sourceSize.width: Math.ceil(hexItem.width * 1.7)
+        sourceSize.height: Math.ceil(hexItem.height * 1.7)
+        x: hexItem.width / 2 - width / 2 + parallaxX
+        y: hexItem.height / 2 - height / 2 + parallaxY
+           property string thumbName: WallpaperCacheService.thumbnailPaths[itemData.filePath] || ""
+        
+        source: WatcherService.thumbsGenerated
+            ? "file://" + Config.cacheDir + "/" + thumbName
+            : ""
         fillMode: Image.PreserveAspectCrop
         smooth: true
         asynchronous: true
         cache: false
-        sourceSize.width: Math.ceil(hexItem.width * 2)
-        sourceSize.height: Math.ceil(hexItem.height * 2)
-        // sourceSize.width: width
-        // sourceSize.height: height
-
-        //  property string thumbName: WallpaperCacheService.thumbnailPaths[itemData.filePath] || ""
-                   
-
-        //             source: WatcherService.thumbsGenerated
-        //                 ? "file://" + Config.cacheDir + "/" + thumbName
-        //                 : ""
+        // x: (hexItem.width - width) / 2 + (hexItem.parallaxX)
+        // y: (hexItem.height - height) / 2 + hexItem.parallaxY
+     
+       
+        
         property bool isSelected:
             wallpaperController.currentIndex === itemIndex
 
@@ -914,7 +959,15 @@ Item {
             ? 0.6: 0
             Behavior on opacity { NumberAnimation { duration: 350; easing.type: Easing.InOutQuad } }
         }
-
+        // Rectangle {
+        //     anchors.fill: parent
+        //     visible: hexItem.controller.cardVisible
+        //     color: "#4D5CA5C8"
+        //     opacity: !isSelected
+        //     ? 1: 0
+          
+        //     Behavior on opacity { NumberAnimation { duration: 350; easing.type: Easing.InOutQuad } }
+        // }
         
 
         layer.enabled: true
@@ -1255,6 +1308,15 @@ Item {
         onDoubleClicked: {
             if(!inView) return
             WallpaperApplyService.applyWallpaper(itemData)
+        }
+        onEntered: {
+            if(!inView) return
+            controller.previousHoveredIndex = controller.hoveredIndex
+            controller.hoveredIndex = itemIndex
+        }
+        onExited: {
+            if (controller.hoveredIndex === itemIndex)
+                controller.hoveredIndex = -1
         }
     }
 }

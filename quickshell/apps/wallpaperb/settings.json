@@ -6,6 +6,10 @@
         "parallax": true,
         "pixel": false
     },
+    "hexArc": {
+        "enabled": false,
+        "intensity": 1
+    },
     "layouts": {
         "columns": 5,
         "rows": 3

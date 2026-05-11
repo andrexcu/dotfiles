@@ -85,6 +85,12 @@ Singleton {
                 property bool blur: true
                 property bool flip: false
                 property bool parallax: true
+
+            } 
+            property JsonObject hexArc: JsonObject {
+                property bool enabled: false
+                property real intensity: 0.7
+                
             } 
             property JsonObject layouts: JsonObject {
                 property int columns: 4
