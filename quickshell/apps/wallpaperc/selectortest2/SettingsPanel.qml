@@ -6,65 +6,34 @@ import QtQuick.Layouts
 import QtQuick.Shapes
 import qs.services
 import qs.components
-import qs.colors
 
 ColumnLayout {
     id: settingsPanel
-    anchors.top: cardContainer.bottom
-    anchors.left: cardContainer.left
-    anchors.right: cardContainer.right
-    
+    Layout.fillWidth: true
+    Layout.alignment: Qt.AlignHCenter
+
 
     RowLayout {
-        // id: textContainer
+        id: textContainer
         Layout.fillWidth: true
         Layout.alignment: Qt.AlignHCenter
         visible: wallpaperController.cardVisible
         
         z: 9999
         
-       
+
         // visible: wallpaperController.cardVisible
         // && wallpaperRepeater.count > 0
         // && wallpaperRepeater.itemAt(wallpaperController.currentIndex).imageReady
-        // Rectangle {
-        //     anchors.fill: parent
+        Rectangle {
+            anchors.fill: parent
             
-        //     color: "transparent" 
-        //     border.color: "red"       
-        //     border.width: 1
-        // }
-        
-        Item {
-            id: orientationSkew
-            Layout.alignment: Qt.AlignHCenter
-            layer.enabled: true
-            layer.smooth: true
-              
-            width: 260
-            height: 36
-            
-            SkewShape {
-                width: 260
-                height: 36
-                fill: Colors.background
-            }
-                    
-            Item {
-                anchors.fill: parent
-                clip: false
-
-                MouseArea {
-                    anchors.fill: parent
-                    onPressed: {
-                        Config.options.orientation.isHorizontal =
-                        !Config.options.orientation.isHorizontal
-
-                    // console.log("change orientation")
-                    }
-                }
-            }
+            color: "transparent" 
+            border.color: "red"       
+            border.width: 1
         }
+
+  
         Item {
             id: skewField
             Layout.alignment: Qt.AlignHCenter
@@ -73,11 +42,11 @@ ColumnLayout {
               
             width: 260
             height: 36
-            
+
             SkewShape {
                 width: 260
                 height: 36
-                fill: Colors.background
+                fill: colorsPalette.background
             }
                     
             Item {
@@ -94,12 +63,12 @@ ColumnLayout {
                     background: null
                     
                     placeholderText: "Filter Images..."
-                    placeholderTextColor: Colors.backgroundText70
+                    placeholderTextColor: colorsPalette.backgroundText70
 
                     font.pixelSize: 16
                     font.family: "JetBrainsMono Nerd Font"
-                    color: "green"
-                    // color: Colors.backgroundText70
+                    color: colorsPalette.backgroundText70
+
                     focus: true
                     cursorVisible: false
                     selectionColor: "transparent"
@@ -112,43 +81,35 @@ ColumnLayout {
                         onPressed: Qt.callLater(() => searchBox.forceActiveFocus())
                     }
 
-                   onTextChanged: {
-                    if (!WallpaperService || !WallpaperService.wallpapers)
-                        return
+                    onTextChanged: {
+                        if (!WallpaperService || !WallpaperService.wallpapers)
+                            return
 
-                    let list = WallpaperService.wallpapers
+                        let list = WallpaperService.wallpapers
 
-                    if (!text || text.length === 0) {
-                        filteredWallpapers = list
-                    } else {
+                        if (!text || text.length === 0) {
+                            filteredWallpapers = list
+                        } else {
+                            let query = text.toLowerCase()
+                            filteredWallpapers = list.filter(function(w) {
+                                return w.toLowerCase().indexOf(query) !== -1
+                            })
+                        }
+                        
+                        if (!wallpaperController)
+                            return
 
-                        let query = text.toLowerCase()
+                        wallpaperController.currentIndex = 0
 
-                        filteredWallpapers = list.filter(function(filePath) {
+                        if (filteredWallpapers.length > 0)
+                            selectedWallpaper = filteredWallpapers[0]
 
-                            let fileName = filePath.split("/").pop()
-
-                            // remove extension
-                            fileName = fileName.replace(/\.[^/.]+$/, "")
-
-                            return fileName.toLowerCase().indexOf(query) !== -1
-                        })
+                        wallpaperController.requestFrame()
                     }
-
-                    if (!wallpaperController)
-                        return
-
-                    wallpaperController.currentIndex = 0
-
-                    if (filteredWallpapers.length > 0)
-                        selectedWallpaper = filteredWallpapers[0]
-
-                    wallpaperController.requestFrame()
-                }
                 }
             }
         }
-        
+
        
 
         // Button {
@@ -160,7 +121,7 @@ ColumnLayout {
         // 	}
         // 	background: Rectangle {
         // 		radius: 8
-        // 		color: rescanBtn.down ? Qt.darker(ColorsurfaceContainer, 1.3) : (rescanBtn.hovered ? Qt.lighter(ColorsurfaceContainer, 1.2) : ColorsurfaceContainer)
+        // 		color: rescanBtn.down ? Qt.darker(colorSurfaceContainer, 1.3) : (rescanBtn.hovered ? Qt.lighter(colorSurfaceContainer, 1.2) : colorSurfaceContainer)
         // 		border.color: colorOutline
         // 		border.width: 1
         // 	}
@@ -179,7 +140,7 @@ ColumnLayout {
         // 	onClicked: utils.randomWallpaperFisherYates(filteredWallpapers, filteredWallpapers[wallpaperController.currentIndex]);
         // 	background: Rectangle {
         // 		radius: 8
-        // 		color: randomBtn.down ? Qt.darker(ColorsurfaceContainer, 1.3) : (randomBtn.hovered ? Qt.lighter(ColorsurfaceContainer, 1.2) : ColorsurfaceContainer)
+        // 		color: randomBtn.down ? Qt.darker(colorSurfaceContainer, 1.3) : (randomBtn.hovered ? Qt.lighter(colorSurfaceContainer, 1.2) : colorSurfaceContainer)
         // 		border.color: colorOutline
         // 		border.width: 1
         // 	}
@@ -198,7 +159,7 @@ ColumnLayout {
         // 	onClicked: settingsOpen = true
         // 	background: Rectangle {
         // 		radius: 8
-        // 		color: settingsBtn.down ? Qt.darker(ColorsurfaceContainer, 1.3) : (settingsBtn.hovered ? Qt.lighter(ColorsurfaceContainer, 1.2) : ColorsurfaceContainer)
+        // 		color: settingsBtn.down ? Qt.darker(colorSurfaceContainer, 1.3) : (settingsBtn.hovered ? Qt.lighter(colorSurfaceContainer, 1.2) : colorSurfaceContainer)
         // 		border.color: colorOutline
         // 		border.width: 1
         // 	}
@@ -225,12 +186,13 @@ ColumnLayout {
             // visible: wallpaperController.cardVisible
             // && wallpaperRepeater.count > 0
             // && wallpaperRepeater.itemAt(wallpaperController.currentIndex).imageReady
-            // Rectangle {
-            //     anchors.fill: parent
-            //     color: "transparent" 
-            //     border.color: "red"       
-            //     border.width: 1
-            // }
+            Rectangle {
+                anchors.fill: parent
+                
+                color: "transparent" 
+                border.color: "red"       
+                border.width: 1
+            }
 
           
             Item {
@@ -246,7 +208,7 @@ ColumnLayout {
                 SkewShape {
                     width: 350
                     height: 36
-                    fill: Colors.background
+                    fill: colorsPalette.background
                 }
                   
             
@@ -263,12 +225,10 @@ ColumnLayout {
                         background: null
 
                         placeholderText: Config.options.wallpaperDir
-                        text: Config.options.wallpaperDir
-                        placeholderTextColor: "green"
-                        // placeholderTextColor: Colors.backgroundText70
+                        placeholderTextColor: colorsPalette.backgroundText70
                         font.pixelSize: 16
                         font.family: "JetBrainsMono Nerd Font"
-                        color: "green"
+                        color: colorsPalette.backgroundText70
                         
                         focus: true
                         cursorVisible: false
@@ -283,23 +243,12 @@ ColumnLayout {
                         }
                         
                         onAccepted: {
-                             if (!wallpaperController)
-                                return       
-                            WallpaperService.killAll()
-                            wallpaperController.currentIndex = 0
                             let newPath = InputHandler.normalizePath(text)
 
                             if (newPath && newPath !== Config.options.wallpaperDir) {
                                 Config.options.wallpaperDir = newPath
-                                WatcherService.wallpaperModel.folder = 
-                                "file://" + Config.options.wallpaperDir
                             }
-                            
-                            
-                            
                         }
-                            // Qt.callLater(() => {
-                            // })
                     }
                 }
             }

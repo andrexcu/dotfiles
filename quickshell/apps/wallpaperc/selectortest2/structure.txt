@@ -1,0 +1,42 @@
+currently I have:
+
+Flickable {
+    id: flick
+    Item {
+	       id: wallpaperContainerWrapper
+           Item {
+					id: wallpaperContainer
+
+                    Item {
+						id: highlightContainer
+                    Repeater {
+						id: wallpaperRepeater
+						model: filteredWallpapers
+                        delegate: HexItem {
+
+
+ListView
+ ├ highlightContainer   (overlay, external)
+ ├ input layer (mouse/keys)
+ └ RowDelegate (index = row)
+      └ Repeater (columns)
+           └ HexItem
+
+filteredWallpapers (flat)
+        ↓
+ListView (row index)
+        ↓
+Repeater (col index)
+        ↓
+flatIndex = row * cols + col
+        ↓
+HexItem(itemData)
+
+
+ListView (vertical)
+ ├ highlightContainer (overlay)
+ ├ input layer (mouse/keys)
+ └ RowDelegate (index=row)
+      └ Item (row container)
+           └ Repeater (col loop)
+                └ HexItem

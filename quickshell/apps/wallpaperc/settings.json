@@ -12,10 +12,7 @@
     },
     "layouts": {
         "columns": 5,
-        "rows": 4
-    },
-    "orientation": {
-        "isHorizontal": false
+        "rows": 3
     },
     "wallpaperDir": "/home/reisouniri/Pictures/Wallpapers"
 }

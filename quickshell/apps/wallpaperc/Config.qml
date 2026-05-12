@@ -92,10 +92,6 @@ Singleton {
                 property real intensity: 0.7
                 
             } 
-            property JsonObject orientation: JsonObject {
-                property bool isHorizontal: true
-            }
-
             property JsonObject layouts: JsonObject {
                 property int columns: 4
                 property int rows: 4

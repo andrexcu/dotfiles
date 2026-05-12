@@ -319,7 +319,7 @@ Item {
     
     Shape {
         id: selectedHexBorder
-        // visible: false
+        visible: false
         // opacity: _inView && (isPrevious || isSelected || isHovered)
         //     ? Math.min(1, selectedHexBorder.t * 1.2)
         //     : 0
@@ -391,156 +391,84 @@ Item {
         // ======================
         // PATHS (ALL USE SELECTEDHEX)
         // ======================
-    ShapePath {
-        strokeWidth: (isSelected || isHovered) ? 2 : 1.125
-        strokeColor: Colors.primary
-        fillColor: "transparent"
-
-        PathMove {
-            x: isHorizontal ? 0 : width * 0.5
-            y: isHorizontal ? height * 0.5 : 0
-        }
-
-        PathLine {
-            x: isHorizontal
-                ? width * (0.25 * selectedHexBorder.tt)
-                : width * 0.5 - (width * 0.5) * selectedHexBorder.t
-
-            y: isHorizontal
-                ? height * (0.5 - 0.5 * selectedHexBorder.tt)
-                : height * (0.25 * selectedHexBorder.t)
-        }
-    }
 
     ShapePath {
         strokeWidth: (isSelected || isHovered) ? 2 : 1.125
         strokeColor: Colors.primary
         fillColor: "transparent"
 
-        PathMove {
-            x: isHorizontal ? width : width * 0.5
-            y: isHorizontal ? height * 0.5 : height
-        }
-
-        PathLine {
-            x: isHorizontal
-                ? width - width * (0.25 * selectedHexBorder.tt)
-                : width * 0.5 + (width * 0.5) * selectedHexBorder.t
-
-            y: isHorizontal
-                ? height * (0.5 - 0.5 * selectedHexBorder.tt)
-                : height - (height * 0.25 * selectedHexBorder.t)
-        }
-    }
-
-    ShapePath {
-        strokeWidth: (isSelected || isHovered) ? 2 : 1.125
-        strokeColor: Colors.primary
-        fillColor: "transparent"
-
-        PathMove {
-            x: isHorizontal ? width * 0.25 : 0
-            y: isHorizontal ? 0 : height * 0.25
-        }
-
-        PathLine {
-            x: isHorizontal
-                ? width * (0.25 + 0.5 * selectedHexBorder.t)
-                : 0
-
-            y: isHorizontal
-                ? 0
-                : height * (0.25 + 0.5 * selectedHexBorder.tt)
-        }
-    }
-
-    ShapePath {
-        strokeWidth: (isSelected || isHovered) ? 2 : 1.125
-        strokeColor: Colors.primary
-        fillColor: "transparent"
-
-        PathMove {
-            x: isHorizontal ? width * 0.25 : width
-            y: isHorizontal ? height : height * 0.75
-        }
-
-        PathLine {
-            x: isHorizontal
-                ? width * (0.25 + 0.5 * selectedHexBorder.t)
-                : width
-
-            y: isHorizontal
-                ? height
-                : height * (0.75 - 0.5 * selectedHexBorder.tt)
-        }
-    }
-
-    ShapePath {
-    
-        strokeWidth: (isSelected || isHovered) ? 2 : 1.125
-        strokeColor: isHorizontal ? Colors.primary : "transparent"
-        fillColor: "transparent"
-
-        PathMove {
-            x: 0
-            y: height * 0.5
-        }
+        PathMove { x: 0; y: height * 0.5 }
 
         PathLine {
             x: width * (0.25 * selectedHexBorder.tt)
-            y: height * (0.5 + 0.5 * selectedHexBorder.tt)
+            y: height * 0.5 - (height * 0.5 * selectedHexBorder.tt)
         }
     }
+
     ShapePath {
-        
         strokeWidth: (isSelected || isHovered) ? 2 : 1.125
-        strokeColor: isHorizontal ? Colors.primary : "transparent"
+        strokeColor: Colors.primary
         fillColor: "transparent"
 
-        PathMove {
-            x: width
-            y: height * 0.5
-        }
+        PathMove { x: width; y: height * 0.5 }
 
         PathLine {
             x: width - width * (0.25 * selectedHexBorder.tt)
-            y: height * (0.5 + 0.5 * selectedHexBorder.tt)
+            y: height * 0.5 - (height * 0.5 * selectedHexBorder.tt)
         }
     }
 
-
     ShapePath {
-        strokeWidth: (isSelected || isHovered) ? 2 : 1.125
-        strokeColor: !isHorizontal ? Colors.primary : "transparent"
+        strokeWidth:  (isSelected || isHovered) ? 2 : 1.125
+        strokeColor: Colors.primary
         fillColor: "transparent"
 
-        PathMove {
-            x: width * 0.5
+        PathMove { x: 0; y: height * 0.5 }
+
+        PathLine {
+            x: width * (0.25 * selectedHexBorder.tt)
+            y: height * 0.5 + (height * 0.5 * selectedHexBorder.tt)
+        }
+    }
+
+    ShapePath {
+        strokeWidth:  (isSelected || isHovered) ? 2 : 1.125
+        strokeColor: Colors.primary
+        fillColor: "transparent"
+
+        PathMove { x: width; y: height * 0.5 }
+
+        PathLine {
+            x: width - width * (0.25 * selectedHexBorder.tt)
+            y: height * 0.5 + (height * 0.5 * selectedHexBorder.tt)
+        }
+    }
+
+    ShapePath {
+        strokeWidth:  (isSelected || isHovered) ? 2 : 1.125
+        strokeColor: Colors.primary
+        fillColor: "transparent"
+
+        PathMove { x: width * 0.25; y: 0 }
+
+        PathLine {
+            x: width * (0.25 + 0.5 * selectedHexBorder.t)
             y: 0
         }
-
-        PathLine {
-            x: width * 0.5 + (width * 0.5) * selectedHexBorder.t
-            y: height * (0.25 * selectedHexBorder.t)
-        }
     }
 
     ShapePath {
-        strokeWidth: (isSelected || isHovered) ? 2 : 1.125
-        strokeColor: !isHorizontal ? Colors.primary : "transparent"
+        strokeWidth:  (isSelected || isHovered) ? 2 : 1.125
+        strokeColor: Colors.primary
         fillColor: "transparent"
 
-        PathMove {
-            x: width * 0.5
-            y: height
-        }
+        PathMove { x: width * 0.25; y: height }
 
         PathLine {
-            x: width * 0.5 - (width * 0.5) * selectedHexBorder.t
-            y: height - height * (0.25 * selectedHexBorder.t)
+            x: width * (0.25 + 0.5 * selectedHexBorder.t)
+            y: height
         }
     }
-    
     // visible: false
     }
 

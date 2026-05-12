@@ -8,7 +8,7 @@ import Quickshell.Io as Io
 
 QtObject {
     id: wallpaperService
-    property var wallpapers: []
+    // property var wallpapers: []
     property string currentFullPath: ""
     property string selectedWallpaper: ""
     // property bool thumbsGenerated: WatcherService.current === WatcherService.total
@@ -242,47 +242,45 @@ function makeKey(fileName, fileSize) {
     return base + "_" + fileSize + ".png"
 }
 
-// property ListModel wallpapers: ListModel {}
-// function startListingFromModel() {
+property ListModel wallpapers: ListModel {}
+function startListingFromModel() {
 
-//     const m = WatcherService.wallpaperModel
-//     const count = m.count
-//     if (!count) return
+    const m = WatcherService.wallpaperModel
+    const count = m.count
+    if (!count) return
 
-//     let tmp = new Array(count)
-//     let paths = {}
+    let tmp = new Array(count)
+    let paths = {}
 
-//     // faster loop (no dynamic push)
-//     for (let i = 0; i < count; i++) {
+    // faster loop (no dynamic push)
+    for (let i = 0; i < count; i++) {
 
-//         const filePath = m.get(i, "filePath")
-//         const fileName = m.get(i, "fileName")
-//         const fileSize = m.get(i, "fileSize")
+        const filePath = m.get(i, "filePath")
+        const fileName = m.get(i, "fileName")
+        const fileSize = m.get(i, "fileSize")
 
-//         if (!filePath || !fileName || fileSize === undefined)
-//             continue
+        if (!filePath || !fileName || fileSize === undefined)
+            continue
 
-//         tmp[i] = {
-//             filePath,
-//             fileName,
-//             fileSize
-//         }
+        tmp[i] = {
+            filePath,
+            fileName,
+            fileSize
+        }
 
-//         paths[filePath] = makeKey(fileName, fileSize)
-//     }
+        paths[filePath] = makeKey(fileName, fileSize)
+    }
 
-//     tmp = tmp.filter(x => x) // remove holes
-//     tmp = shuffleArray(tmp)
+    tmp = tmp.filter(x => x) // remove holes
+    tmp = shuffleArray(tmp)
 
-//     // 🔥 FAST RESET (key improvement)
-//     wallpapers.clear()
-//     wallpapers.append(tmp)   // batch insert (IMPORTANT)
+    // 🔥 FAST RESET (key improvement)
+    wallpapers.clear()
+    wallpapers.append(tmp)   // batch insert (IMPORTANT)
 
-//     WallpaperCacheService.thumbnailPaths = paths
-//     WallpaperCacheService.updateThumbs()
-// }
-
-// array
+    WallpaperCacheService.thumbnailPaths = paths
+    WallpaperCacheService.updateThumbs()
+}
 // function startListingFromModel() {
 
 //     if (!WatcherService.wallpaperModel.count) return
@@ -308,41 +306,6 @@ function makeKey(fileName, fileSize) {
 //     WallpaperCacheService.thumbnailPaths = paths
 //     WallpaperCacheService.updateThumbs()
 // }
-
-function startListingFromModel() {
-
-    const m = WatcherService.wallpaperModel
-    const count = m.count
-    if (!count) return
-
-    let processed = new Array(count)
-    let paths = {}
-
-    let j = 0
-
-    for (let i = 0; i < count; i++) {
-
-        const filePath = m.get(i, "filePath")
-        const fileName = m.get(i, "fileName")
-        const fileSize = m.get(i, "fileSize")
-
-        if (!filePath || !fileName || fileSize === undefined)
-            continue
-
-        processed[j++] = filePath
-
-        paths[filePath] = makeKey(fileName, fileSize)
-    }
-
-    // trim holes (fast)
-    processed.length = j
-
-    wallpapers = shuffleArray(processed)
-
-    WallpaperCacheService.thumbnailPaths = paths
-    WallpaperCacheService.updateThumbs()
-}
-
 
 function key(file) {
     let base = file.split("/").pop()

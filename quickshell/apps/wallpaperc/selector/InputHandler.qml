@@ -7,7 +7,7 @@ import qs
 QtObject {
 
     // function to traverse the hexagon grid
-    function hNavigate(event, ctx) {
+    function navigate(event, ctx) {
 
         if (!ctx.size) return false
 
@@ -50,43 +50,9 @@ QtObject {
     }
 
 
-    function vNavigate(event, ctx) {
 
-        if (!ctx.size) return false
 
-        let index = ctx.currentIndex
-
-        let row = Math.floor(index / ctx.columns)
-        let col = index % ctx.columns
-
-        switch (event.key) {
-
-        case Qt.Key_Right: col++; break
-        case Qt.Key_Left:  col--; break
-        case Qt.Key_Down:  row++; break
-        case Qt.Key_Up:    row--; break
-
-        case Qt.Key_Return:
-        case Qt.Key_Enter:
-            ctx.onApply(index)
-            return true
-
-        default:
-            return false
-        }
-
-        if (col < 0 || col >= ctx.columns) return true
-        if (row < 0 || row >= Math.ceil(ctx.size / ctx.columns)) return true
-
-        let target = row * ctx.columns + col
-
-        if (ctx.onMove)
-            ctx.onMove(target)
-
-        return true
-    }
-
-    //     function vNavigate(event, ctx) {
+    //     function navigate(event, ctx) {
 
     //     if (!ctx.size) return false
 

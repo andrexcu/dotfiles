@@ -242,107 +242,31 @@ function makeKey(fileName, fileSize) {
     return base + "_" + fileSize + ".png"
 }
 
-// property ListModel wallpapers: ListModel {}
-// function startListingFromModel() {
-
-//     const m = WatcherService.wallpaperModel
-//     const count = m.count
-//     if (!count) return
-
-//     let tmp = new Array(count)
-//     let paths = {}
-
-//     // faster loop (no dynamic push)
-//     for (let i = 0; i < count; i++) {
-
-//         const filePath = m.get(i, "filePath")
-//         const fileName = m.get(i, "fileName")
-//         const fileSize = m.get(i, "fileSize")
-
-//         if (!filePath || !fileName || fileSize === undefined)
-//             continue
-
-//         tmp[i] = {
-//             filePath,
-//             fileName,
-//             fileSize
-//         }
-
-//         paths[filePath] = makeKey(fileName, fileSize)
-//     }
-
-//     tmp = tmp.filter(x => x) // remove holes
-//     tmp = shuffleArray(tmp)
-
-//     // 🔥 FAST RESET (key improvement)
-//     wallpapers.clear()
-//     wallpapers.append(tmp)   // batch insert (IMPORTANT)
-
-//     WallpaperCacheService.thumbnailPaths = paths
-//     WallpaperCacheService.updateThumbs()
-// }
-
-// array
-// function startListingFromModel() {
-
-//     if (!WatcherService.wallpaperModel.count) return
-
-//     let processed = []
-//     let paths = {}
-
-//     for (let i = 0; i < WatcherService.wallpaperModel.count; i++) {
-
-//         let filePath = WatcherService.wallpaperModel.get(i, "filePath")
-//         let fileName = WatcherService.wallpaperModel.get(i, "fileName")
-//         let fileSize = WatcherService.wallpaperModel.get(i, "fileSize")
-
-//         if (!filePath || !fileName || fileSize === undefined) continue
-
-//         processed.push(filePath)
-
-//         paths[filePath] = makeKey(fileName, fileSize)   // 🔥 FIX
-//     }
-
-//     wallpapers = shuffleArray(processed)
-
-//     WallpaperCacheService.thumbnailPaths = paths
-//     WallpaperCacheService.updateThumbs()
-// }
-
 function startListingFromModel() {
 
-    const m = WatcherService.wallpaperModel
-    const count = m.count
-    if (!count) return
+    if (!WatcherService.wallpaperModel.count) return
 
-    let processed = new Array(count)
+    let processed = []
     let paths = {}
 
-    let j = 0
+    for (let i = 0; i < WatcherService.wallpaperModel.count; i++) {
 
-    for (let i = 0; i < count; i++) {
+        let filePath = WatcherService.wallpaperModel.get(i, "filePath")
+        let fileName = WatcherService.wallpaperModel.get(i, "fileName")
+        let fileSize = WatcherService.wallpaperModel.get(i, "fileSize")
 
-        const filePath = m.get(i, "filePath")
-        const fileName = m.get(i, "fileName")
-        const fileSize = m.get(i, "fileSize")
+        if (!filePath || !fileName || fileSize === undefined) continue
 
-        if (!filePath || !fileName || fileSize === undefined)
-            continue
+        processed.push(filePath)
 
-        processed[j++] = filePath
-
-        paths[filePath] = makeKey(fileName, fileSize)
+        paths[filePath] = makeKey(fileName, fileSize)   // 🔥 FIX
     }
-
-    // trim holes (fast)
-    processed.length = j
 
     wallpapers = shuffleArray(processed)
 
     WallpaperCacheService.thumbnailPaths = paths
     WallpaperCacheService.updateThumbs()
 }
-
 
 function key(file) {
     let base = file.split("/").pop()
