@@ -233,7 +233,9 @@ Item {
     // }
     // property bool hexAnimating: false
     property bool allowAnim: false
+
     property bool snapHex: flick.opacity === 1
+
     Behavior on targetX {
         enabled: snapHex && allowAnim
         NumberAnimation {
@@ -574,8 +576,7 @@ Item {
 
         width: hexItem.width
         height: hexItem.height
-        // width: container.hCellWidth
-        // height: container.hCellHeight
+      
         x: 0
         y: 0
 
@@ -599,8 +600,9 @@ Item {
         preferredRendererType: Shape.CurveRenderer
         antialiasing: true
         ShapePath {
-            // strokeWidth: 4
-            strokeWidth: 1.125
+           
+            strokeWidth: 1.5
+            // strokeWidth: 1.125
             
             fillColor: "transparent"
             strokeColor: "#4d4d4d"
@@ -644,6 +646,7 @@ Item {
                 x: width * (0.5 - 0.25 * hexItem.hexDir)
                 y: 0
             }
+        }
             // PathMove { x: width * 0.25; y: 0 }
             // PathLine { x: width * 0.75; y: 0 }
             // PathLine { x: width;        y: height * 0.5 }
@@ -657,7 +660,6 @@ Item {
             //     // TOP (longer)
                
             // }
-        }
         // ShapePath {
         //     strokeWidth: 1.125
             
@@ -812,6 +814,13 @@ Item {
   
         width: hexItem.width
         height: hexItem.height
+
+        // rotation: isSelected ? 90:0
+        // Behavior on rotation {
+        //     NumberAnimation {
+        //         duration: 200
+        //     }
+        // }
         
         // Behavior on width { NumberAnimation { duration: 150; } }
         // Behavior on height { NumberAnimation { duration: 150; } }
@@ -972,13 +981,14 @@ Item {
       
   Item {
     anchors.fill: parent
-
+    
     Image {
         id: thumbImage
         width: hexItem.width * 1.7
         height: hexItem.height * 1.7
         sourceSize.width: Math.ceil(Math.max(container.hCellWidth, container.vCellWidth) * 1.7)
         sourceSize.height: Math.ceil(Math.max(container.hCellHeight, container.vCellHeight) * 1.7)
+       
         // sourceSize.width: inView ? Math.ceil(thumbImage.width) : 0
         // sourceSize.height: inView ? Math.ceil(thumbImage.height) : 0
         // sourceSize.width: inView ? Math.ceil(hexItem.width * 1.7) : 0
@@ -1216,6 +1226,7 @@ Item {
             maskSource: Shape {
                 width: hexItem.width
                 height: hexItem.height
+                // rotation: -visualWrapperRef.rotation
                 // anchors.centerIn: parent
                 preferredRendererType: Shape.CurveRenderer
                 antialiasing: true

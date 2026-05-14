@@ -57,8 +57,12 @@ ColumnLayout {
                 MouseArea {
                     anchors.fill: parent
                     onPressed: {
+
+                        if(!flick.listViewShown) return
+
                         Config.options.orientation.isHorizontal =
                         !Config.options.orientation.isHorizontal
+                        
 
                     // console.log("change orientation")
                     }
@@ -295,7 +299,11 @@ ColumnLayout {
                                 "file://" + Config.options.wallpaperDir
                             }
                             
-                            
+                            // flick.opacity = 0
+
+                            // Qt.callLater(()=> {
+                            //     flick.opacity = 1
+                            // })
                             
                         }
                             // Qt.callLater(() => {
