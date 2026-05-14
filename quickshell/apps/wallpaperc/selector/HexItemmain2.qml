@@ -30,8 +30,7 @@ Item {
     property real shiftX
     property real shiftY
     property int clampDir
-    property real hArcOffset
-    property real vArcOffset
+    property real arcOffset
     // property real targetX
     // property real targetY
    
@@ -43,11 +42,11 @@ Item {
     property real hexDir: controller.isHorizontal ? 1 : 0
     Behavior on hexDir { 
             NumberAnimation { duration: 150
-            easing.type: Easing.OutCubic
+            // easing.type: Easing.OutBack
 			// 								easing.overshoot: 1.4
-            // easing.type: Easing.BezierSpline
+            easing.type: Easing.BezierSpline
             // easing.bezierCurve: [0.2, 0.8, 0.2, 1.0]
-            // easing.bezierCurve: [0.22, 1.0, 0.36, 1.0]
+            easing.bezierCurve: [0.22, 1.0, 0.36, 1.0]
 
             }
         }
@@ -81,10 +80,10 @@ Item {
     //     }
     // width: hexRadius * 2
     // height: Math.ceil(hexRadius * 1.73205)
-    // property real visualWidth: controller.controller.isHorizontal
+    // property real visualWidth: controller.isHorizontal
     // ? container.hCellWidth - 10 : container.vCellWidth - 10
     
-    // property real visualHeight: controller.controller.isHorizontal
+    // property real visualHeight: controller.isHorizontal
     // ? container.hCellHeight - 10 : container.vCellHeight - 10
 
    
@@ -118,7 +117,6 @@ Item {
     property real enterT: inView ? 0 : 1
     // property bool entering: inView
     property bool entering: scale < 1 && inView
-    
     property real dirX: clampDir
 
     property bool nearLeft: false
@@ -129,7 +127,7 @@ Item {
     property real hDir: nearLeft ? -1 : 1
     property real vDir: nearTop ? -1 : 1
 
-    property real layoutX: controller.isHorizontal ? 
+    property real layoutX: isHorizontal ? 
     clamp(dx) * 36 * enterT * phaseDir * hDir : 0
        
 
@@ -152,36 +150,32 @@ Item {
     property real verticalRippleX:((rippleOffV ? 0 : rippleV.x)
          + (hoverRippleOffV || hoverBlocked ? 0 : hoverRippleV.x))
 
-    property real horizontalRippleY:((rippleOffH ? 0 : rippleH.y)
+    property real horizontalRipplY:((rippleOffH ? 0 : rippleH.y)
          + (hoverRippleOffH || hoverBlocked ? 0 : hoverRippleH.y))
 
     property real verticalRippleY: ((rippleOffV ? 0 : rippleV.y)
          + (hoverRippleOffV || hoverBlocked ? 0 : hoverRippleV.y))
 
-    property real t: controller.isHorizontal ? 1 : 0
+    property real rx:
+    isHorizontal
+        ? horizontalRippleX
+        : verticalRippleX
 
-    property real rx: horizontalRippleX * t + verticalRippleX * (1 - t)
-    property real ry: horizontalRippleY * t + verticalRippleY * (1 - t)
-    // property real rx:
-    // controller.isHorizontal
-    //     ? horizontalRippleX
-    //     : verticalRippleX
-
-    // property real ry:
-    // controller.isHorizontal
-    //     ? horizontalRippleY
-    //     : verticalRippleY
+    property real ry:
+    isHorizontal
+        ? horizontalRipplY
+        : verticalRippleY
 
 
-    property real targetX:
-        viewX + layoutX + (entering ? 0 : rx)
+       property real targetX:
+            viewX + layoutX + (entering ? 0 : rx)
 
-    property real targetY:
-        viewY + layoutY + (entering ? 0 : ry)
+        property real targetY:
+            viewY + layoutY + (entering ? 0 : ry)
 
 
-    x: targetX + vArcOffset + shiftX
-    y: targetY + hArcOffset + shiftY
+    x: targetX + shiftX
+    y: targetY + arcOffset + shiftY
 
 
         // + (entering ? 0 : ry)
@@ -255,24 +249,14 @@ Item {
             
         }
     }
-    opacity: allowAnim && _hexScale < 0.01 ? 0 : 1
-        // opacity: _inView ? 1 : 0
-        Behavior on opacity { 
-            NumberAnimation { 
-                duration: 250; 
-                easing.type: Easing.InOutQuad 
-                // easing.type: Easing.InOutQuad 
-                // easing.type: Easing.InCubic
-            } 
-        }
 
-    // property bool hexAnimating: animX.running || animY.running
+    property bool hexAnimating: animX.running || animY.running
     // Connections {
 	// 	target: Config.options.orientation
-	// 	function oncontroller.isHorizontalChanged() {
+	// 	function onIsHorizontalChanged() {
 	// 		wallpaperController.currentIndex = 0
 			
-	// 		// if(controller.isHorizontal) {
+	// 		// if(isHorizontal) {
 	// 		// 	flick.vOuterParallax()
 	// 		// } else {
 	// 		// 	flick.hOuterParallax()
@@ -335,7 +319,7 @@ Item {
     
     Shape {
         id: selectedHexBorder
-        // visible: false
+        visible: false
         // opacity: _inView && (isPrevious || isSelected || isHovered)
         //     ? Math.min(1, selectedHexBorder.t * 1.2)
         //     : 0
@@ -407,156 +391,84 @@ Item {
         // ======================
         // PATHS (ALL USE SELECTEDHEX)
         // ======================
-    ShapePath {
-        strokeWidth: (isSelected || isHovered) ? 2 : 1.125
-        strokeColor: Colors.primary
-        fillColor: "transparent"
-
-        PathMove {
-            x: controller.isHorizontal ? 0 : width * 0.5
-            y: controller.isHorizontal ? height * 0.5 : 0
-        }
-
-        PathLine {
-            x: controller.isHorizontal
-                ? width * (0.25 * selectedHexBorder.tt)
-                : width * 0.5 - (width * 0.5) * selectedHexBorder.t
-
-            y: controller.isHorizontal
-                ? height * (0.5 - 0.5 * selectedHexBorder.tt)
-                : height * (0.25 * selectedHexBorder.t)
-        }
-    }
 
     ShapePath {
         strokeWidth: (isSelected || isHovered) ? 2 : 1.125
         strokeColor: Colors.primary
         fillColor: "transparent"
 
-        PathMove {
-            x: controller.isHorizontal ? width : width * 0.5
-            y: controller.isHorizontal ? height * 0.5 : height
-        }
-
-        PathLine {
-            x: controller.isHorizontal
-                ? width - width * (0.25 * selectedHexBorder.tt)
-                : width * 0.5 + (width * 0.5) * selectedHexBorder.t
-
-            y: controller.isHorizontal
-                ? height * (0.5 - 0.5 * selectedHexBorder.tt)
-                : height - (height * 0.25 * selectedHexBorder.t)
-        }
-    }
-
-    ShapePath {
-        strokeWidth: (isSelected || isHovered) ? 2 : 1.125
-        strokeColor: Colors.primary
-        fillColor: "transparent"
-
-        PathMove {
-            x: controller.isHorizontal ? width * 0.25 : 0
-            y: controller.isHorizontal ? 0 : height * 0.25
-        }
-
-        PathLine {
-            x: controller.isHorizontal
-                ? width * (0.25 + 0.5 * selectedHexBorder.t)
-                : 0
-
-            y: controller.isHorizontal
-                ? 0
-                : height * (0.25 + 0.5 * selectedHexBorder.tt)
-        }
-    }
-
-    ShapePath {
-        strokeWidth: (isSelected || isHovered) ? 2 : 1.125
-        strokeColor: Colors.primary
-        fillColor: "transparent"
-
-        PathMove {
-            x: controller.isHorizontal ? width * 0.25 : width
-            y: controller.isHorizontal ? height : height * 0.75
-        }
-
-        PathLine {
-            x: controller.isHorizontal
-                ? width * (0.25 + 0.5 * selectedHexBorder.t)
-                : width
-
-            y: controller.isHorizontal
-                ? height
-                : height * (0.75 - 0.5 * selectedHexBorder.tt)
-        }
-    }
-
-    ShapePath {
-    
-        strokeWidth: (isSelected || isHovered) ? 2 : 1.125
-        strokeColor: controller.isHorizontal ? Colors.primary : "transparent"
-        fillColor: "transparent"
-
-        PathMove {
-            x: 0
-            y: height * 0.5
-        }
+        PathMove { x: 0; y: height * 0.5 }
 
         PathLine {
             x: width * (0.25 * selectedHexBorder.tt)
-            y: height * (0.5 + 0.5 * selectedHexBorder.tt)
+            y: height * 0.5 - (height * 0.5 * selectedHexBorder.tt)
         }
     }
+
     ShapePath {
-        
         strokeWidth: (isSelected || isHovered) ? 2 : 1.125
-        strokeColor: controller.isHorizontal ? Colors.primary : "transparent"
+        strokeColor: Colors.primary
         fillColor: "transparent"
 
-        PathMove {
-            x: width
-            y: height * 0.5
-        }
+        PathMove { x: width; y: height * 0.5 }
 
         PathLine {
             x: width - width * (0.25 * selectedHexBorder.tt)
-            y: height * (0.5 + 0.5 * selectedHexBorder.tt)
+            y: height * 0.5 - (height * 0.5 * selectedHexBorder.tt)
         }
     }
 
-
     ShapePath {
-        strokeWidth: (isSelected || isHovered) ? 2 : 1.125
-        strokeColor: !controller.isHorizontal ? Colors.primary : "transparent"
+        strokeWidth:  (isSelected || isHovered) ? 2 : 1.125
+        strokeColor: Colors.primary
         fillColor: "transparent"
 
-        PathMove {
-            x: width * 0.5
+        PathMove { x: 0; y: height * 0.5 }
+
+        PathLine {
+            x: width * (0.25 * selectedHexBorder.tt)
+            y: height * 0.5 + (height * 0.5 * selectedHexBorder.tt)
+        }
+    }
+
+    ShapePath {
+        strokeWidth:  (isSelected || isHovered) ? 2 : 1.125
+        strokeColor: Colors.primary
+        fillColor: "transparent"
+
+        PathMove { x: width; y: height * 0.5 }
+
+        PathLine {
+            x: width - width * (0.25 * selectedHexBorder.tt)
+            y: height * 0.5 + (height * 0.5 * selectedHexBorder.tt)
+        }
+    }
+
+    ShapePath {
+        strokeWidth:  (isSelected || isHovered) ? 2 : 1.125
+        strokeColor: Colors.primary
+        fillColor: "transparent"
+
+        PathMove { x: width * 0.25; y: 0 }
+
+        PathLine {
+            x: width * (0.25 + 0.5 * selectedHexBorder.t)
             y: 0
         }
-
-        PathLine {
-            x: width * 0.5 + (width * 0.5) * selectedHexBorder.t
-            y: height * (0.25 * selectedHexBorder.t)
-        }
     }
 
     ShapePath {
-        strokeWidth: (isSelected || isHovered) ? 2 : 1.125
-        strokeColor: !controller.isHorizontal ? Colors.primary : "transparent"
+        strokeWidth:  (isSelected || isHovered) ? 2 : 1.125
+        strokeColor: Colors.primary
         fillColor: "transparent"
 
-        PathMove {
-            x: width * 0.5
-            y: height
-        }
+        PathMove { x: width * 0.25; y: height }
 
         PathLine {
-            x: width * 0.5 - (width * 0.5) * selectedHexBorder.t
-            y: height - height * (0.25 * selectedHexBorder.t)
+            x: width * (0.25 + 0.5 * selectedHexBorder.t)
+            y: height
         }
     }
-    
     // visible: false
     }
 
@@ -993,24 +905,24 @@ Item {
         y: inView ? visualY + parallaxY : 0
 
         
-        // Behavior on visualX {
-        //     NumberAnimation {
-        //            duration: 150
+        Behavior on visualX {
+            NumberAnimation {
+                   duration: 150
                     
                 
-        //         }
-        // }
+                }
+        }
 
-        // Behavior on visualY {
-        //     NumberAnimation {
-        //        duration: 150
+        Behavior on visualY {
+            NumberAnimation {
+               duration: 150
         
-        //     }
-        // }
+            }
+        }
         
         property string thumbName: WallpaperCacheService.thumbnailPaths[itemData] || ""
         
-        source: thumbName && WatcherService.thumbsGenerated
+        source: WatcherService.thumbsGenerated
             ? "file://" + Config.cacheDir + "/" + thumbName
             : ""
         fillMode: Image.PreserveAspectCrop
@@ -1039,8 +951,8 @@ Item {
         layer.enabled: true
         layer.effect: MultiEffect {
             blurEnabled: Config.options.effects.blur
-            blur: (wallpaperController.currentIndex === itemIndex &&
-             wallpaperController.blurTransition) ? 1 : 0
+            blur: wallpaperController.currentIndex === itemIndex &&
+                  wallpaperController.blurTransition ? 1 : 0
             blurMax: 32
 
             Behavior on blur {
@@ -1413,24 +1325,33 @@ Item {
     property string thumbFile: ""
         // property string thumbName:
         // WallpaperCacheService.thumbnailPaths[itemData] || ""
-
-     Timer {
-        id: animTimer
-        interval: 0
-        repeat: false
-        running: false
-        onTriggered: allowAnim = true
-    }
-
     Component.onCompleted: {
-        animTimer.start()
+        allowAnim = false
+        
+        // animX.running = false
+        // animY.running = false
+        // console.log("itemData =", itemData)
+        // console.log("thumbName =", thumbName)
+        // Qt.callLater(() => {
+        // // console.log("hexitem ",  
+        // // itemIndex + " " + Config.cacheDir + "/"
+        // // + WallpaperCacheService.thumbnailPaths[itemData]) 
+        // // })
+        // console.log("thumbversion: ", WallpaperCacheService.thumbVersion)
+            // console.log("testhexitem:",  WallpaperCacheService.thumbnailPaths[itemData])
+         if (itemIndex === 0) {
+            
+            controller.previousItem = hexItem
+            controller.currentItem = hexItem
+        }
+
+        Qt.callLater(() => {
+            allowAnim = true
+        })
+
+        // anim.restart()
     }
 
-        //  if (itemIndex === 0) {
-            
-        //     controller.previousItem = hexItem
-        //     controller.currentItem = hexItem
-        // }
     // Timer {
     //     interval: 350
     //     running: isSelected
@@ -1446,9 +1367,9 @@ Item {
             controller.previousItem = controller.currentItem
             controller.currentItem = hexItem 
             if(Config.options.effects.flip) {
-                // Qt.callLater(() => {
-                    hexItem.flipHex()
-                // })
+                Qt.callLater(() => {
+                    flipHex()
+                })
 
             }     
             if(controller.isHorizontal) {

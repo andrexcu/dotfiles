@@ -7,12 +7,15 @@
         "pixel": false
     },
     "hexArc": {
-        "enabled": false,
-        "intensity": 1
+        "enabled": true,
+        "intensity": 0
     },
     "layouts": {
-        "columns": 5,
+        "columns": 6,
         "rows": 3
     },
-    "wallpaperDir": "/home/reisouniri/Pictures/Wallpapers"
+    "orientation": {
+        "isHorizontal": false
+    },
+    "wallpaperDir": "/home/reisouniri/Pictures/Wallpaper"
 }

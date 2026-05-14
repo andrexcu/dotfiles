@@ -10,31 +10,61 @@ import qs.colors
 
 ColumnLayout {
     id: settingsPanel
-    Layout.fillWidth: true
-    Layout.alignment: Qt.AlignHCenter
+    anchors.top: cardContainer.bottom
+    anchors.left: cardContainer.left
+    anchors.right: cardContainer.right
     
 
     RowLayout {
-        id: textContainer
+        // id: textContainer
         Layout.fillWidth: true
         Layout.alignment: Qt.AlignHCenter
         visible: wallpaperController.cardVisible
         
         z: 9999
         
-
+       
         // visible: wallpaperController.cardVisible
         // && wallpaperRepeater.count > 0
         // && wallpaperRepeater.itemAt(wallpaperController.currentIndex).imageReady
-        Rectangle {
-            anchors.fill: parent
+        // Rectangle {
+        //     anchors.fill: parent
             
-            color: "transparent" 
-            border.color: "red"       
-            border.width: 1
-        }
+        //     color: "transparent" 
+        //     border.color: "red"       
+        //     border.width: 1
+        // }
+        
+        Item {
+            id: orientationSkew
+            Layout.alignment: Qt.AlignHCenter
+            layer.enabled: true
+            layer.smooth: true
+              
+            width: 260
+            height: 36
+            
+            SkewShape {
+                width: 260
+                height: 36
+                fill: Colors.background
+            }
+                    
+            Item {
+                anchors.fill: parent
+                clip: false
 
-  
+                MouseArea {
+                    anchors.fill: parent
+                    onPressed: {
+                        Config.options.orientation.isHorizontal =
+                        !Config.options.orientation.isHorizontal
+
+                    // console.log("change orientation")
+                    }
+                }
+            }
+        }
         Item {
             id: skewField
             Layout.alignment: Qt.AlignHCenter
@@ -43,7 +73,7 @@ ColumnLayout {
               
             width: 260
             height: 36
-
+            
             SkewShape {
                 width: 260
                 height: 36
@@ -68,8 +98,8 @@ ColumnLayout {
 
                     font.pixelSize: 16
                     font.family: "JetBrainsMono Nerd Font"
-                    color: Colors.backgroundText70
-
+                    color: "green"
+                    // color: Colors.backgroundText70
                     focus: true
                     cursorVisible: false
                     selectionColor: "transparent"
@@ -118,7 +148,7 @@ ColumnLayout {
                 }
             }
         }
-
+        
        
 
         // Button {
@@ -195,12 +225,12 @@ ColumnLayout {
             // visible: wallpaperController.cardVisible
             // && wallpaperRepeater.count > 0
             // && wallpaperRepeater.itemAt(wallpaperController.currentIndex).imageReady
-            Rectangle {
-                anchors.fill: parent
-                color: "transparent" 
-                border.color: "red"       
-                border.width: 1
-            }
+            // Rectangle {
+            //     anchors.fill: parent
+            //     color: "transparent" 
+            //     border.color: "red"       
+            //     border.width: 1
+            // }
 
           
             Item {
@@ -234,10 +264,11 @@ ColumnLayout {
 
                         placeholderText: Config.options.wallpaperDir
                         text: Config.options.wallpaperDir
-                        placeholderTextColor: Colors.backgroundText70
+                        placeholderTextColor: "green"
+                        // placeholderTextColor: Colors.backgroundText70
                         font.pixelSize: 16
                         font.family: "JetBrainsMono Nerd Font"
-                        color: Colors.backgroundText70
+                        color: "green"
                         
                         focus: true
                         cursorVisible: false
