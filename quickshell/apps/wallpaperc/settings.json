@@ -7,7 +7,7 @@
         "pixel": false
     },
     "hexArc": {
-        "enabled": true,
+        "enabled": false,
         "intensity": 0
     },
     "layouts": {
@@ -15,7 +15,7 @@
         "rows": 3
     },
     "orientation": {
-        "isHorizontal": true
+        "isHorizontal": false
     },
-    "wallpaperDir": "/home/reisouniri/Pictures/Wallpaper"
+    "wallpaperDir": "/home/reisouniri/Pictures/Wallpapers"
 }

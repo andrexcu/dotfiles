@@ -285,27 +285,59 @@ ColumnLayout {
                             anchors.fill: parent
                             onPressed: Qt.callLater(() => pathTextBox.forceActiveFocus())
                         }
-                        
-                        onAccepted: {
-                             if (!wallpaperController)
-                                return       
-                            WallpaperService.killAll()
-                            wallpaperController.currentIndex = 0
-                            let newPath = InputHandler.normalizePath(text)
 
-                            if (newPath && newPath !== Config.options.wallpaperDir) {
-                                Config.options.wallpaperDir = newPath
-                                WatcherService.wallpaperModel.folder = 
-                                "file://" + Config.options.wallpaperDir
+                        function applyFilter() {
+                            if (!WallpaperService || !WallpaperService.wallpapers)
+                                return
+
+                            let list = WallpaperService.wallpapers
+                            let q = searchBox.text.toLowerCase()
+
+                            if (!q || q.length === 0) {
+                                filteredWallpapers = list
+                            } else {
+                                filteredWallpapers = list.filter(p => {
+                                    let name = p.split("/").pop().replace(/\.[^/.]+$/, "")
+                                    return name.toLowerCase().includes(q)
+                                })
                             }
-                            
-                            // flick.opacity = 0
+
+                            wallpaperController.currentIndex = 0
+                        }
+
+                        onAccepted: {
+                            if (!wallpaperController)
+                                return
+
+                            let newPath = InputHandler.normalizePath(text)
+                            if (!newPath || newPath === Config.options.wallpaperDir)
+                                return
+
+                            WallpaperService.killAll()
+
+                            Config.options.wallpaperDir = newPath
+                            WatcherService.wallpaperModel.folder = "file://" + newPath
+
+                            wallpaperController.currentIndex = 0
+                        }
+
+                        Connections {
+                            target: WallpaperService
+
+                            function onWallpapersChanged() {
+
+                                if (!WallpaperService.wallpapers || WallpaperService.wallpapers.length === 0)
+                                    return
+                                    
+                                pathTextBox.applyFilter()
+                            }
+                        }
+                        // flick.opacity = 0
 
                             // Qt.callLater(()=> {
                             //     flick.opacity = 1
                             // })
                             
-                        }
                             // Qt.callLater(() => {
                             // })
                     }

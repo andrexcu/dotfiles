@@ -107,8 +107,8 @@ Item {
 
     property bool hasEntered: false
     // property real rowScale
-    property real parallaxX: 0
-    property real parallaxY: 0
+    property real innerParallaxX: 0
+    property real innerParallaxY: 0
     
     function clamp(v) {
         return Math.sign(v) * Math.min(Math.abs(v), 2)
@@ -135,11 +135,7 @@ Item {
 
     property real layoutY: 0
 
-    // property real c: inView ? enterT : (1 - enterT)
 
-    // property real layoutY: entering ? 0 : clamp(dy) * 30 * enterT
-
-    // property real layoutY: 0
 
     property bool hoverBlocked:
     controller.hoveredIndex === controller.currentIndex
@@ -162,6 +158,21 @@ Item {
 
     property real rx: horizontalRippleX * t + verticalRippleX * (1 - t)
     property real ry: horizontalRippleY * t + verticalRippleY * (1 - t)
+    property real targetX:
+        viewX + layoutX + (entering ? 0 : rx)
+
+    property real targetY:
+        viewY + layoutY + (entering ? 0 : ry)
+
+
+    x: targetX + vArcOffset + shiftX
+    y: targetY + hArcOffset + shiftY
+
+        // property real c: inView ? enterT : (1 - enterT)
+
+    // property real layoutY: entering ? 0 : clamp(dy) * 30 * enterT
+
+    // property real layoutY: 0
     // property real rx:
     // controller.isHorizontal
     //     ? horizontalRippleX
@@ -173,15 +184,6 @@ Item {
     //     : verticalRippleY
 
 
-    property real targetX:
-        viewX + layoutX + (entering ? 0 : rx)
-
-    property real targetY:
-        viewY + layoutY + (entering ? 0 : ry)
-
-
-    x: targetX + vArcOffset + shiftX
-    y: targetY + hArcOffset + shiftY
 
 
         // + (entering ? 0 : ry)
@@ -232,9 +234,9 @@ Item {
     //     }
     // }
     // property bool hexAnimating: false
-    property bool allowAnim: false
-
-    property bool snapHex: flick.opacity === 1
+    property bool allowAnim: true
+    property bool snapHex: WatcherService.thumbsGenerated
+    
 
     Behavior on targetX {
         enabled: snapHex && allowAnim
@@ -247,6 +249,7 @@ Item {
             }
     }
 
+   
     Behavior on targetY {
         enabled: snapHex && allowAnim
         NumberAnimation {
@@ -257,16 +260,17 @@ Item {
             
         }
     }
-    opacity: allowAnim && _hexScale < 0.01 ? 0 : 1
+
+    opacity: _hexScale < 0.01 ? 0 : 1
         // opacity: _inView ? 1 : 0
-        Behavior on opacity { 
-            NumberAnimation { 
-                duration: 250; 
-                easing.type: Easing.InOutQuad 
-                // easing.type: Easing.InOutQuad 
-                // easing.type: Easing.InCubic
-            } 
-        }
+    Behavior on opacity { 
+        NumberAnimation { 
+            duration: 250; 
+            easing.type: Easing.InOutQuad 
+            // easing.type: Easing.InOutQuad 
+            // easing.type: Easing.InCubic
+        } 
+    }
 
     // property bool hexAnimating: animX.running || animY.running
     // Connections {
@@ -342,7 +346,7 @@ Item {
         //     ? Math.min(1, selectedHexBorder.t * 1.2)
         //     : 0
         property bool showBorder:
-        _inView && (isSelected || isHovered || isPrevious || isHoveredPrevious)
+        borderShown && _inView && (isSelected || isHovered || isPrevious || isHoveredPrevious)
 
         opacity: showBorder ? Math.min(1, tt * 1.2) : 0
         
@@ -562,13 +566,16 @@ Item {
     // visible: false
     }
 
+    property bool borderShown: 
+    controller.filteredWallpapers && snapHex && allowAnim
 
     Shape {
         id: selectedDefaultBorder
         z: 10
-        // visible: false
-        opacity: inView ? 1 : 0
-        anchors.fill: parent
+        visible: borderShown && inView ? 1 : 0
+     
+        // opacity: borderShown && inView ? 1 : 0
+        // anchors.fill: parent
         // opacity: 
         // _inView && (isHovered || isSelected)? 1 : 0
         // visible: _inView && isSelected
@@ -592,8 +599,8 @@ Item {
 
         Behavior on opacity { 
             NumberAnimation { 
-                duration: 350; 
-                easing.type: Easing.InOutQuad 
+                duration: 250; 
+                easing.type: Easing.OutQuad 
             } 
         }
         
@@ -984,11 +991,12 @@ Item {
     
     Image {
         id: thumbImage
+        // visible: false
         width: hexItem.width * 1.7
         height: hexItem.height * 1.7
         sourceSize.width: Math.ceil(Math.max(container.hCellWidth, container.vCellWidth) * 1.7)
         sourceSize.height: Math.ceil(Math.max(container.hCellHeight, container.vCellHeight) * 1.7)
-       
+
         // sourceSize.width: inView ? Math.ceil(thumbImage.width) : 0
         // sourceSize.height: inView ? Math.ceil(thumbImage.height) : 0
         // sourceSize.width: inView ? Math.ceil(hexItem.width * 1.7) : 0
@@ -999,8 +1007,8 @@ Item {
         property real visualX: hexItem.width / 2 - width / 2
         property real visualY: hexItem.height / 2 - height / 2
         
-        x: inView ? visualX + parallaxX : 0
-        y: inView ? visualY + parallaxY : 0
+        x: inView ? visualX + innerParallaxX : 0
+        y: inView ? visualY + innerParallaxY : 0
 
         
         // Behavior on visualX {
@@ -1023,6 +1031,7 @@ Item {
         source: thumbName && WatcherService.thumbsGenerated
             ? "file://" + Config.cacheDir + "/" + thumbName
             : ""
+
         fillMode: Image.PreserveAspectCrop
         smooth: true
         asynchronous: false
@@ -1161,11 +1170,11 @@ Item {
         
         Rectangle {
             anchors.fill: parent
-            visible: hexItem.controller.cardVisible
+            // visible: hexItem.controller.cardVisible
             color: "#000000"
-            opacity: isSelected
-            ? 0.6: 0
-            Behavior on opacity { NumberAnimation { duration: 350; easing.type: Easing.InOutQuad } }
+            opacity: 0.6
+            visible: false
+            // Behavior on opacity { NumberAnimation { duration: 50; easing.type: Easing.OutQuad } }
         }
         // Rectangle {
         //     anchors.fill: parent
@@ -1425,16 +1434,20 @@ Item {
         // property string thumbName:
         // WallpaperCacheService.thumbnailPaths[itemData] || ""
 
-     Timer {
-        id: animTimer
-        interval: 0
-        repeat: false
-        running: false
-        onTriggered: allowAnim = true
-    }
+    //  Timer {
+    //     id: animTimer
+    //     interval: 50
+    //     repeat: false
+    //     running: false
+    //     onTriggered: allowAnim = true
+    // }
 
     Component.onCompleted: {
-        animTimer.start()
+        allowAnim = false
+        Qt.callLater(() => {
+            allowAnim = true
+        })
+        // animTimer.start()
     }
 
         //  if (itemIndex === 0) {
