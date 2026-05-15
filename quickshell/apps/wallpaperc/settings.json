@@ -15,7 +15,7 @@
         "rows": 3
     },
     "orientation": {
-        "isHorizontal": false
+        "isHorizontal": true
     },
-    "wallpaperDir": "/home/reisouniri/Pictures/Wallpapers"
+    "wallpaperDir": "/home/reisouniri/Pictures/Wallpaper"
 }

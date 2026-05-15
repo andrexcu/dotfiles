@@ -57,6 +57,8 @@ Item {
     width: container.cellWidth - 10 
 								
     height: container.cellHeight - 10
+
+ 
     // property real originFixY
 
     //  Behavior on width { 
@@ -158,6 +160,7 @@ Item {
 
     property real rx: horizontalRippleX * t + verticalRippleX * (1 - t)
     property real ry: horizontalRippleY * t + verticalRippleY * (1 - t)
+    
     property real targetX:
         viewX + layoutX + (entering ? 0 : rx)
 
@@ -235,7 +238,7 @@ Item {
     // }
     // property bool hexAnimating: false
     property bool allowAnim: true
-    property bool snapHex: WatcherService.thumbsGenerated
+    property bool snapHex: flick.listViewShown
     
 
     Behavior on targetX {
@@ -1434,20 +1437,20 @@ Item {
         // property string thumbName:
         // WallpaperCacheService.thumbnailPaths[itemData] || ""
 
-    //  Timer {
-    //     id: animTimer
-    //     interval: 50
-    //     repeat: false
-    //     running: false
-    //     onTriggered: allowAnim = true
-    // }
+     Timer {
+        id: animTimer
+        interval: 50
+        repeat: false
+        running: false
+        onTriggered: allowAnim = true
+    }
 
     Component.onCompleted: {
-        allowAnim = false
-        Qt.callLater(() => {
-            allowAnim = true
-        })
-        // animTimer.start()
+        // allowAnim = false
+        // Qt.callLater(() => {
+        //     allowAnim = true
+        // })
+        animTimer.start()
     }
 
         //  if (itemIndex === 0) {
@@ -1475,11 +1478,11 @@ Item {
                 // })
 
             }     
-            if(controller.isHorizontal) {
+            if(flick.listViewShown && controller.isHorizontal) {
 
-                container.hOuterParallax() 
+                container.vOuterParallax() 
             } else {
-                 container.vOuterParallax() 
+                 container.hOuterParallax() 
             }
     }
             // console.log("previous: ", controller.previousItem.itemIndex)

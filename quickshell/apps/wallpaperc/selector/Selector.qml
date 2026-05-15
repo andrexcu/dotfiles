@@ -87,7 +87,7 @@ Scope {
 	// property var colors: Colors {}
 	
 	property var filteredWallpapers: WallpaperService.wallpapers   // initially same as full list
-	
+	property int filteredModel: filteredWallpapers ? filteredWallpapers.length : 0
 
 	Component.onCompleted: {
 		cardShowTimer.start()
@@ -418,8 +418,8 @@ Scope {
 	// 	console.log("hovered: ", hoveredIndex)
 	// }
 	}
-
-		property int hexRadius: 85
+	
+	property int hexRadius: 85
 	Behavior on hexRadius { NumberAnimation { duration: Style.animExpand; easing.type: Easing.OutCubic } }
 	property int hexRows: WallpaperService.rows
 	property int hexCols: WallpaperService.columns
@@ -823,33 +823,7 @@ Scope {
 			}
 			property bool _layoutLock: false
 
-			onOrientationChanged: {		
-
-				wallpaperController.currentIndex = 0
-
-				_contentWidth = Math.ceil(safeLen / _cols) * colStep
-				_contentHeight = Math.ceil(safeLen / _rows) * rowStep
-
-				listViewFade.from = 0
-				listViewFade.to = 1
-				listViewFade.restart()
-
-				
-				Qt.callLater(() => {
-
-			
-					if(isHorizontal) {
-						flick.vOuterParallax()
-					} else {
-						flick.hOuterParallax()
-					}
-
-					flick.forceActiveFocus()
-				})
-
-				
-			}
-		
+	
 
 			// anchors.centerIn: parent
 			// Layout.alignment:
@@ -879,7 +853,7 @@ Scope {
 			// : Flickable.VerticalFlick
 
 			
-			// Layout.fillHeight: 
+			Layout.fillHeight: true
 			Layout.fillWidth: true
 	
 			property real _r: wallpaperController.hexRadius
@@ -920,16 +894,16 @@ Scope {
 			// property real viewportBottom: contentY + height - (rowStep * bottomFactor)
 			// property bool layoutLock: false
 			// contentWidth:
-    		// Math.ceil((filteredWallpapers ? filteredWallpapers.length : 0) / WallpaperService.rows) * colStep
+    		// Math.ceil((filteredWallpapers ? filteredModel : 0) / WallpaperService.rows) * colStep
 			// contentHeight: 
-			// Math.ceil((filteredWallpapers ? filteredWallpapers.length : 0) / WallpaperService.columns) * rowStep
+			// Math.ceil((filteredWallpapers ? filteredModel : 0) / WallpaperService.columns) * rowStep
 			
 			// contentWidth:
-    		// Math.ceil(safelen / WallpaperService.rows) * colStep
+    		// Math.ceil(filteredModel / WallpaperService.rows) * colStep
 			// contentHeight: 
-			// Math.ceil(safelen / WallpaperService.columns) * rowStep
+			// Math.ceil(filteredModel / WallpaperService.columns) * rowStep
 
-			// contentHeight: Math.ceil(filteredWallpapers.length / WallpaperService.columns) * rowStep
+			// contentHeight: Math.ceil(filteredModel / WallpaperService.columns) * rowStep
 			
 			
 			// function applyVisual(item, scale, opacity) {
@@ -937,33 +911,72 @@ Scope {
 			// 	item.visualWrapperRef.fadeOpacity = opacity
 			// }
 
-			// property int cols: isHorizontal
-			// 	? WallpaperService.rows
-			// 	: WallpaperService.columns
-
-			// property int rows: isHorizontal
-			// 	? WallpaperService.columns
-			// 	: WallpaperService.rows
+		
 
 			
 		
+				// if(isHorizontal) {
+				// 		flick.vOuterParallax()
+				// 	} else {
+				// 		flick.hOuterParallax()
+				// 	}
 
-			property int visibleCols:
-			Math.floor((flick.width ? flick.width : 0) / flick._stepX)
-			property int visibleRows:
-			Math.ceil((flick.height ? flick.height : 0) / flick._stepY)
+
+			// property int _rows: isHorizontal ?
+			// wallpaperController.hexCols : wallpaperController.hexRows 
+			// property int _cols: isHorizontal ?
+			// wallpaperController.hexRows : wallpaperController.hexCols
+			// property int contentCols: isHorizontal
+			// 	? WallpaperService.rows
+			// 	: WallpaperService.columns
+
+			// property int contentRows: isHorizontal
+			// 	? WallpaperService.columns
+			// 	: WallpaperService.rows
 			
-			property int _rows: wallpaperController.hexRows
-			property int _cols: wallpaperController.hexCols
+			onOrientationChanged: {		
 
-			property real _contentWidth: 0
-			property real _contentHeight: 0
+				wallpaperController.currentIndex = 0
 
-			contentWidth: _contentWidth
-			contentHeight: _contentHeight
+				listViewFade.from = 0
+				listViewFade.to = 1
+				listViewFade.restart()
+				globalShiftX = 0
+				globalShiftY = 0
+				if(isHorizontal) {
+                    flick.vOuterParallax()
+                } else {
+                    flick.hOuterParallax()
+                }  
+				// _contentWidth = Math.ceil(filteredModel / _cols) * colStep
+				// _contentHeight = Math.ceil(filteredModel / _rows) * rowStep
+				
+				Qt.callLater(() => {
+				
+					flick.forceActiveFocus()
+				})
+
+				
+			}
+		
+
+			// property int visibleCols:
+			// Math.floor((flick.width ? flick.width : 0) / flick._stepX)
+			// property int visibleRows:
+			// Math.ceil((flick.height ? flick.height : 0) / flick._stepY)
+			
+			property int _rows: WallpaperService.rows
+			property int _cols: WallpaperService.columns
 
 			
 
+			property real _contentWidth: Math.ceil(filteredModel / _cols) * colStep
+		    property real _contentHeight: Math.ceil(filteredModel / _rows) * rowStep
+
+			contentWidth: listViewShown ? _contentWidth : 0
+			contentHeight: listViewShown ? _contentHeight : 0
+
+			
 	
 		
 			property real rowStep: flick.vCellHeight * 0.75
@@ -974,11 +987,11 @@ Scope {
 
 			property int hStartIndex:
 				hStartCol * _rows
+				
 			property int hEndIndex: Math.min(
-				safeLen,
-				hStartIndex + _rows * visibleCols
+				filteredModel,
+				hStartIndex + _rows * _cols
 			)
-			
 			
 			property int vStartRow:
 				Math.floor((contentY + rowStep * 0.5) / rowStep)
@@ -988,12 +1001,12 @@ Scope {
 
 			property int vEndIndex:
 				Math.min(
-					safeLen,
-					vStartIndex + _cols * visibleRows
+					filteredModel,
+					vStartIndex + _cols * _rows
 				)
 
 			onMovementEnded: {
-
+				if(!flick.listViewShown) return
 				Qt.callLater(() => {
 					if (isHorizontal) {
 
@@ -1009,15 +1022,16 @@ Scope {
 
 			
 			Behavior on contentX {
-				enabled: isHorizontal
+				enabled: flick.listViewShown && isHorizontal
 				NumberAnimation {
 					duration: 150
 					easing.type: Easing.BezierSpline
 					easing.bezierCurve: [0.25, 0.1, 0.25, 1.0]
 				}
 			}
+
 			Behavior on contentY {
-				enabled: !isHorizontal
+				enabled: flick.listViewShown && !isHorizontal
 				NumberAnimation {
 					duration: 150
 					easing.type: Easing.BezierSpline
@@ -1042,6 +1056,8 @@ Scope {
 					
 
 					function onContentXChanged() {
+
+						if (!flick.listViewShown) return
 						var dx = flick.contentX - flick.lastContentX
 
 						if (Math.abs(dx) > flick.dirThreshold) {
@@ -1061,7 +1077,7 @@ Scope {
 					}
 
 					function onContentYChanged() {
-
+							if (!flick.listViewShown) return
 						var dy = flick.contentY - flick.lastContentY
 
 						if (Math.abs(dy) > flick.dirThreshold) {
@@ -1143,6 +1159,8 @@ Scope {
 				property bool parallaxAnimating: false
 				
 				function hOuterParallax() {
+
+					if(!isHorizontal) return
 					if (!Config.options.effects.parallax) {
 						globalShiftX = 0
 						globalShiftY = 0
@@ -1186,6 +1204,9 @@ Scope {
 				}
 				
 				function vOuterParallax() {
+
+					if(!isHorizontal) return
+					
 					if (!Config.options.effects.parallax) {
 						globalShiftX = 0
 						globalShiftY = 0
@@ -1281,7 +1302,7 @@ Scope {
 					
 				
 					
-					property int totalCols: Math.ceil(filteredWallpapers.length / WallpaperService.rows)
+					property int totalCols: Math.ceil(filteredModel / WallpaperService.rows)
 					
 					// horizontal grid layout
 					property real hGridWidth: (totalCols - 1) * colStep + hCellWidth
@@ -1299,7 +1320,7 @@ Scope {
 				
 
 					property int totalRows:
-					Math.ceil(filteredWallpapers.length / WallpaperService.columns)
+					Math.ceil(filteredModel / WallpaperService.columns)
 				
 					property real hOffset: Math.max((
 						((WallpaperService.columns - 1) * colStep + flick.hCellWidth) - hGridWidth) / 2, 0)
@@ -1367,9 +1388,9 @@ Scope {
 				
 
 			property real stepX: flick.colStep
-			function visibleCols() {
-				return Math.ceil(flick.width / flick.colStep)
-			}
+			// function visibleCols() {
+			// 	return Math.ceil(flick.width / flick.colStep)
+			// }
 
 
 		MouseArea {
@@ -1378,7 +1399,7 @@ Scope {
 
 			propagateComposedEvents: true
 			onWheel: (wheel) => {
-
+				// if(!flick.listViewShown) return
 				const isH = isHorizontal
 
 				const max = isH
@@ -1455,7 +1476,7 @@ Scope {
 			let oldIndex = wallpaperController.currentIndex
 
 			let ctx = {
-				size: filteredWallpapers.length,
+				size: filteredModel,
 				currentIndex: oldIndex,
 
 				rows: WallpaperService.rows,
@@ -1495,7 +1516,7 @@ Scope {
 				let viewLeft = flick.contentX
 				let viewRight = flick.contentX + flick.width
 
-				let maxCol = Math.ceil(filteredWallpapers.length / rows) - 1
+				let maxCol = Math.ceil(filteredModel / rows) - 1
 
 				if (colLeft < viewLeft) {
 					flick.contentX = Math.max(0, colLeft)
@@ -1525,7 +1546,7 @@ Scope {
 				let viewTop = flick.contentY
 				let viewBottom = flick.contentY + flick.height
 
-				let maxRow = Math.floor((filteredWallpapers.length - 1) / cols)
+				let maxRow = Math.floor((filteredModel - 1) / cols)
 
 				if (rowTop < viewTop) {
 					flick.contentY = Math.max(0, rowTop)
@@ -1553,13 +1574,13 @@ Scope {
 		// }
 
 					
-					// model: Math.ceil(filteredWallpapers.length / WallpaperService.rows)
+					// model: Math.ceil(filteredModel / WallpaperService.rows)
 					// model: Math.ceil(
-					// 	filteredWallpapers.length /
+					// 	filteredModel /
 					// 	WallpaperService.rows
 					// )
 					// model: Math.ceil(
-					// 	filteredWallpapers.length /
+					// 	filteredModel /
 					// 	Math.min(
 					// 		WallpaperService.rows,
 					// 		WallpaperService.columns
@@ -1593,19 +1614,18 @@ Scope {
 					// }
 					
 					// model: isHorizontal ?
-					// Math.ceil(filteredWallpapers.length / WallpaperService.rows):
-					// Math.ceil(filteredWallpapers.length / WallpaperService.columns)
+					// Math.ceil(filteredModel / WallpaperService.rows):
+					// Math.ceil(filteredModel / WallpaperService.columns)
 
-					model: isHorizontal 
-					? Math.ceil((filteredWallpapers ? filteredWallpapers.length : 0) / Math.max(1, _rows))
-					: Math.ceil((filteredWallpapers ? filteredWallpapers.length : 0) / Math.max(1, _cols))
+					model: flick.listViewShown && isHorizontal 
+					? Math.ceil((filteredWallpapers ? filteredModel : 0) / Math.max(1, _rows))
+					: Math.ceil((filteredWallpapers ? filteredModel : 0) / Math.max(1, _cols))
 				
 
 
-					property int safeLen: filteredWallpapers ? filteredWallpapers.length : 0
 					// model: isHorizontal
-					// ? Math.ceil(safeLen / Math.max(1, WallpaperService.rows))
-					// : Math.ceil(safeLen / Math.max(1, WallpaperService.columns))
+					// ? Math.ceil(filteredModel / Math.max(1, WallpaperService.rows))
+					// : Math.ceil(filteredModel / Math.max(1, WallpaperService.columns))
 					// add: Transition {
 					// 	NumberAnimation { property: "opacity"; from: 0; to: 1; duration: Style.animEnter; easing.type: Easing.OutCubic }
 					// 	NumberAnimation { property: "scale"; from: 0.9; to: 1; duration: Style.animEnter; easing.type: Easing.OutCubic }
@@ -1634,7 +1654,7 @@ Scope {
 						// }
 						// }
 						// property bool ready: 
-						// cardVisible && filteredWallpapers.length > 0 && WatcherService.thumbsGenerated 
+						// cardVisible && filteredModel > 0 && WatcherService.thumbsGenerated 
 						// Component.onCompleted: {
 						// 	ready = true
 						// }
@@ -1699,29 +1719,36 @@ Scope {
 							0,
 							Math.min(
 									WallpaperService.rows,
-									filteredWallpapers.length - hColIndex * WallpaperService.rows
+									filteredModel - hColIndex * WallpaperService.rows
 								)
 							) : Math.max(
 								0,
 								Math.min(
 									WallpaperService.columns,
-									filteredWallpapers.length - vRowIndex * WallpaperService.columns
+									filteredModel - vRowIndex * WallpaperService.columns
 								)
 							)
 						
 							
 							delegate: HexItem {
 								id: hexItem
+								// visible: flick.listViewShown
 								controller: wallpaperController
 								property int hRowIndex: index
 								property int vColIndex: index
 
 								
 				
-								
-								property int flatIndex: isHorizontal
-								? hColIndex * WallpaperService.rows + index:	
-								vRowIndex * WallpaperService.columns + index
+								// property int flatIndex:
+								// Math.floor(hColIndex * WallpaperService.rows,
+								// vRowIndex * WallpaperService.columns) + index
+								// property int flatIdx: hexCol.colIdx * hexListView._rows + rowIdx
+								property int flatIndex: isHorizontal 
+								? hexDelegate.hColIndex * flick._rows + hRowIndex
+								: hexDelegate.vRowIndex * flick._cols + vColIndex
+								// property int flatIndex: isHorizontal
+								// ? hColIndex * WallpaperService.rows + index:	
+								// vRowIndex * WallpaperService.columns + index
 
 								property bool _isSelected: wallpaperController.currentIndex === flatIndex
 
@@ -1827,14 +1854,14 @@ Scope {
 
 								property real baseX: isHorizontal
 									? flick.hOffset
-									: ((flick.width - flick.vGridWidth) / 2)
+									: (((flick.width ? flick.width : 0) - flick.vGridWidth) / 2)
 										+ vColIndex * flick.effectiveCellStepX
 										+ (hexDelegate.vRowIndex % 2
 											? flick.effectiveCellStepX / 2
 											: 0)
 
 								property real baseY: isHorizontal
-									? ((flick.height - flick.hGridHeight) / 2)
+									? (((flick.height ? flick.height : 0) - flick.hGridHeight) / 2)
 										+ hRowIndex * flick.effectiveCellStepY
 										+ (hexDelegate.hColIndex % 2
 											? flick.effectiveCellStepY / 2
@@ -1849,8 +1876,8 @@ Scope {
 								hArcOffset: isHorizontal ? _hArcOffset : 0
 								vArcOffset: isHorizontal ? 0: _vArcOffset
 
-								shiftX: filteredWallpapers && filteredWallpapers.length > 0 ? flick.globalShiftX : 0
-								shiftY: filteredWallpapers && filteredWallpapers.length > 0 ? flick.globalShiftY : 0
+								shiftX: filteredModel > 0 ? flick.globalShiftX : 0
+								shiftY: filteredModel > 0 ? flick.globalShiftY : 0
 
 								// Behavior on shiftX {
 							
