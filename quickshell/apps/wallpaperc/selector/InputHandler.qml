@@ -19,13 +19,23 @@ QtObject {
 
         switch (event.key) {
 
-        // horizontal movement = columns
-        case Qt.Key_Right: col++; break
-        case Qt.Key_Left:  col--; break
+            case Qt.Key_Right:
+            col++
+            break
 
-        // vertical movement = rows
-        case Qt.Key_Down:  row++; break
-        case Qt.Key_Up:    row--; break
+        case Qt.Key_Left:
+            col--
+            break
+
+        case Qt.Key_Down:
+            if (row + 1 >= ctx.rows) return true
+            row++
+            break
+
+        case Qt.Key_Up:
+            if (row - 1 < 0) return true
+            row--
+            break
 
         case Qt.Key_Return:
         case Qt.Key_Enter:
@@ -86,43 +96,43 @@ QtObject {
         return true
     }
     
-    function navigate(event, ctx) {
+    // function navigate(event, ctx) {
 
-        if (!ctx.size) return false
+    //     if (!ctx.size) return false
 
-        let index = ctx.currentIndex
-        let row = Math.floor(index / ctx.columns)
-        let col = index % ctx.columns
+    //     let index = ctx.currentIndex
+    //     let row = Math.floor(index / ctx.columns)
+    //     let col = index % ctx.columns
 
-        switch (event.key) {
+    //     switch (event.key) {
 
-        case Qt.Key_Right: col++; break
-        case Qt.Key_Left:  col--; break
-        case Qt.Key_Down:  row++; break
-        case Qt.Key_Up:    row--; break
+    //     case Qt.Key_Right: col++; break
+    //     case Qt.Key_Left:  col--; break
+    //     case Qt.Key_Down:  row++; break
+    //     case Qt.Key_Up:    row--; break
 
-        case Qt.Key_Return:
-        case Qt.Key_Enter:
-            ctx.onApply(index)
-            return true
+    //     case Qt.Key_Return:
+    //     case Qt.Key_Enter:
+    //         ctx.onApply(index)
+    //         return true
 
-        default:
-            return false
-        }
+    //     default:
+    //         return false
+    //     }
 
-        if (col < 0 || col >= ctx.columns)
-            return true
+    //     if (col < 0 || col >= ctx.columns)
+    //         return true
 
-        let target = row * ctx.columns + col
+    //     let target = row * ctx.columns + col
 
-        if (target < 0 || target >= ctx.size)
-            return true
+    //     if (target < 0 || target >= ctx.size)
+    //         return true
 
-        if (ctx.onMove)
-            ctx.onMove(target)
+    //     if (ctx.onMove)
+    //         ctx.onMove(target)
 
-        return true
-    }
+    //     return true
+    // }
     //     function vNavigate(event, ctx) {
 
     //     if (!ctx.size) return false

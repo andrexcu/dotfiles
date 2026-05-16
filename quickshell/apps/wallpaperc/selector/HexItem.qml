@@ -161,12 +161,10 @@ Item {
     property real rx: horizontalRippleX * t + verticalRippleX * (1 - t)
     property real ry: horizontalRippleY * t + verticalRippleY * (1 - t)
     
-    property real targetX:
-        viewX + layoutX + (entering ? 0 : rx)
-
-    property real targetY:
-        viewY + layoutY + (entering ? 0 : ry)
-
+    property real targetX: viewX + layoutX + (entering ? 0 : rx)
+      
+    property real targetY: viewY + layoutY + (entering ? 0 : ry)
+       
 
     x: targetX + vArcOffset + shiftX
     y: targetY + hArcOffset + shiftY
@@ -237,26 +235,14 @@ Item {
     //     }
     // }
     // property bool hexAnimating: false
+
     property bool allowAnim: true
     property bool snapHex: flick.listViewShown
-    
 
     Behavior on targetX {
         enabled: snapHex && allowAnim
         NumberAnimation {
-                id: animX
-                duration: 350
-                easing.type: Easing.BezierSpline
-                easing.bezierCurve: [0.25, 0.1, 0.25, 1.0]
-               
-            }
-    }
-
-   
-    Behavior on targetY {
-        enabled: snapHex && allowAnim
-        NumberAnimation {
-            id: animY
+            id: animX
             duration: 350
             easing.type: Easing.BezierSpline
             easing.bezierCurve: [0.25, 0.1, 0.25, 1.0]
@@ -264,11 +250,21 @@ Item {
         }
     }
 
+    Behavior on targetY {
+        enabled: snapHex && allowAnim
+        NumberAnimation {
+            id: animY
+            duration: 350
+            easing.type: Easing.BezierSpline
+            easing.bezierCurve: [0.25, 0.1, 0.25, 1.0]
+        }
+    }
+
     opacity: _hexScale < 0.01 ? 0 : 1
         // opacity: _inView ? 1 : 0
     Behavior on opacity { 
         NumberAnimation { 
-            duration: 250; 
+            duration: 350; 
             easing.type: Easing.InOutQuad 
             // easing.type: Easing.InOutQuad 
             // easing.type: Easing.InCubic
@@ -349,7 +345,7 @@ Item {
         //     ? Math.min(1, selectedHexBorder.t * 1.2)
         //     : 0
         property bool showBorder:
-        borderShown && _inView && (isSelected || isHovered || isPrevious || isHoveredPrevious)
+        _inView && (isSelected || isPrevious)
 
         opacity: showBorder ? Math.min(1, tt * 1.2) : 0
         
@@ -370,8 +366,8 @@ Item {
         property real t: 0
         property real tt: Math.min(1, selectedHexBorder.t * 1.2)
 
-        property bool active: isSelected || isHovered
-        property bool leaving: (isPrevious || previousHoveredIndex) && !isSelected && !isHovered
+        property bool active:showBorder
+        property bool leaving: (isPrevious) && !isSelected
 
         preferredRendererType: Shape.CurveRenderer
         antialiasing: true
@@ -417,7 +413,7 @@ Item {
         // PATHS (ALL USE SELECTEDHEX)
         // ======================
     ShapePath {
-        strokeWidth: (isSelected || isHovered) ? 2 : 1.125
+        strokeWidth: isSelected ? 2 : 1.125
         strokeColor: Colors.primary
         fillColor: "transparent"
 
@@ -438,7 +434,7 @@ Item {
     }
 
     ShapePath {
-        strokeWidth: (isSelected || isHovered) ? 2 : 1.125
+        strokeWidth: (isSelected) ? 2 : 1.125
         strokeColor: Colors.primary
         fillColor: "transparent"
 
@@ -569,13 +565,12 @@ Item {
     // visible: false
     }
 
-    property bool borderShown: 
-    controller.filteredWallpapers && snapHex && allowAnim
+
 
     Shape {
         id: selectedDefaultBorder
         z: 10
-        visible: borderShown && inView ? 1 : 0
+        visible: inView ? 1 : 0
      
         // opacity: borderShown && inView ? 1 : 0
         // anchors.fill: parent
@@ -1429,6 +1424,7 @@ Item {
             }
 		})
 	}
+    
     property bool _flipLock: false
     property bool _flipQueued: false
    
@@ -1450,6 +1446,7 @@ Item {
         // Qt.callLater(() => {
         //     allowAnim = true
         // })
+        
         animTimer.start()
     }
 
@@ -1468,22 +1465,23 @@ Item {
     // property bool flipColor: false
     onIsSelectedChanged: {
         if (!isSelected) return
-            // anim.restart()
-            
-            controller.previousItem = controller.currentItem
-            controller.currentItem = hexItem 
-            if(Config.options.effects.flip) {
-                // Qt.callLater(() => {
-                    hexItem.flipHex()
-                // })
 
-            }     
-            if(flick.listViewShown && controller.isHorizontal) {
+        // anim.restart()
+        controller.previousItem = controller.currentItem
+        controller.currentItem = hexItem 
+        if(Config.options.effects.flip) {
+            // Qt.callLater(() => {
+                hexItem.flipHex()
+            // })
 
-                container.vOuterParallax() 
-            } else {
-                 container.hOuterParallax() 
-            }
+        }   
+        
+        controller.requestFrame()
+        // if(controller.isHorizontal) {
+        //     container.hOuterParallax() 
+        // } else {
+        //     container.vOuterParallax() 
+        // }
     }
             // console.log("previous: ", controller.previousItem.itemIndex)
             // console.log("item: ", controller.currentItem.itemIndex)
@@ -1508,7 +1506,7 @@ Item {
     MouseArea {
         id: mouseArea
         anchors.fill: parent
-        hoverEnabled: true
+        hoverEnabled: flickRef.listViewShown ? true : false
         // DEBUGGING VERSIONS
         // onWheel: (wheel) => {
 
@@ -1544,7 +1542,7 @@ Item {
         // }
         
         onClicked: {
-            if(!inView) {
+            if(!inView || !flickRef.listViewShown) {
                 flickRef.forceActiveFocus() 
                 return
             }
@@ -1555,7 +1553,7 @@ Item {
         }
 
         onDoubleClicked: {
-            if(!inView) return
+            if(!!inView || !flickRef.listViewShown) return
             WallpaperApplyService.applyWallpaper(itemData)
         }
         onEntered: {

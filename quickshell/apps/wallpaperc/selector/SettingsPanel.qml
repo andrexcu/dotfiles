@@ -318,7 +318,9 @@ ColumnLayout {
                             Config.options.wallpaperDir = newPath
                             WatcherService.wallpaperModel.folder = "file://" + newPath
 
-                            wallpaperController.currentIndex = 0
+                            wallpaperController.currentIndex = 0  
+
+                           
                         }
 
                         Connections {
@@ -327,19 +329,11 @@ ColumnLayout {
                             function onWallpapersChanged() {
 
                                 if (!WallpaperService.wallpapers || WallpaperService.wallpapers.length === 0)
-                                    return
-                                    
+                                    return     
                                 pathTextBox.applyFilter()
                             }
                         }
-                        // flick.opacity = 0
-
-                            // Qt.callLater(()=> {
-                            //     flick.opacity = 1
-                            // })
-                            
-                            // Qt.callLater(() => {
-                            // })
+                       
                     }
                 }
             }

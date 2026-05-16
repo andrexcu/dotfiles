@@ -586,6 +586,8 @@ Scope {
 		}
 
 		onIsLoadingChanged: {
+			flick.globalShiftX = 0
+			flick.globalShiftY = 0
 			stateAnim.from = 0
 			stateAnim.to = 1
 			stateAnim.restart()
@@ -593,14 +595,20 @@ Scope {
 		}
 
 		onIsEmptyChanged: {
+			flick.globalShiftX = 0
+			flick.globalShiftY = 0
 			stateAnim.from = 0
 			stateAnim.to = 1
 			stateAnim.restart()
 			
 		}
-		
-		
 
+		onIsDoneChanged: {
+			flick.globalShiftX = 0
+			flick.globalShiftY = 0
+		}
+		
+		
 		Behavior on opacity {
 			NumberAnimation {
 				duration: 150
@@ -783,9 +791,6 @@ Scope {
     //     focus: true
 	// 	clip: false
     	
-
-	
-		
 		ListView {
 			id: flick
 			visible: wallpaperController.cardVisible
@@ -807,20 +812,35 @@ Scope {
 			// 	hexRows = WallpaperService.rows
 			// 	hexCols = WallpaperService.columns
 			// }
+
+			// Component.onCompleted: {
+			// 	flick._firstLoad = false
+			// 	Qt.callLater(() => {
+			// 		flick._firstLoad = true
+			// 	})
+			// }
 			property bool listViewShown: true
+			property bool _firstLoad: true
+
+	
 			NumberAnimation {
 				id: listViewFade
 				target: flick
 				property: "opacity"
 				duration: 350
 				easing.type: Easing.InQuad
-				onStarted: {
-					flick.listViewShown = false
+
+				onStarted: {	
+					flick.listViewShown = false	
+					flick.globalShiftX = 0
+					flick.globalShiftY = 0
 				}
+
     			onStopped: {
-					flick.listViewShown = true
+					flick.listViewShown = true 
 				}
 			}
+
 			property bool _layoutLock: false
 
 	
@@ -838,15 +858,32 @@ Scope {
 			Connections {
 				target: wallpaperController
 				function onFilteredWallpapersChanged() {
+					if (flick.filteredModel <= 0) return
+					if (flick._contentWidth <= 0) return
+					if (flick._contentHeight <= 0) return
+					
 					listViewFade.from = 0
 					listViewFade.to = 1
 					listViewFade.restart()
-					// flick.forceActiveFocus()
+
+				
 				}
 			}
 
-			orientation: isHorizontal 
-			? ListView.Horizontal : ListView.Vertical
+			// Connections {
+			// 	target: WallpaperService
+			// 	function onWallpapersChanged() {
+			// 		flick.globalShiftX = 0
+			// 		flick.globalShiftY = 0
+			// 	}
+			// }
+			orientation: {
+				if(isHorizontal) {
+					return ListView.Horizontal
+				} else {
+					return ListView.Vertical
+				}
+			}
 
 			// flickableDirection: isHorizontal
 			// ? Flickable.HorizontalFlick
@@ -935,27 +972,20 @@ Scope {
 			// 	: WallpaperService.rows
 			
 			onOrientationChanged: {		
-
+				// if (filteredModel <= 0) return
+				// if (_contentWidth <= 0) return
+				// if (_contentHeight <= 0) return
+			
 				wallpaperController.currentIndex = 0
-
+				// flick.globalShiftX = 0
+				// flick.globalShiftY = 0
+				
+				
 				listViewFade.from = 0
 				listViewFade.to = 1
 				listViewFade.restart()
-				globalShiftX = 0
-				globalShiftY = 0
-				if(isHorizontal) {
-                    flick.vOuterParallax()
-                } else {
-                    flick.hOuterParallax()
-                }  
-				// _contentWidth = Math.ceil(filteredModel / _cols) * colStep
-				// _contentHeight = Math.ceil(filteredModel / _rows) * rowStep
-				
-				Qt.callLater(() => {
-				
-					flick.forceActiveFocus()
-				})
-
+			
+		
 				
 			}
 		
@@ -973,8 +1003,8 @@ Scope {
 			property real _contentWidth: Math.ceil(filteredModel / _cols) * colStep
 		    property real _contentHeight: Math.ceil(filteredModel / _rows) * rowStep
 
-			contentWidth: listViewShown ? _contentWidth : 0
-			contentHeight: listViewShown ? _contentHeight : 0
+			contentWidth:  _contentWidth
+			contentHeight: _contentHeight
 
 			
 	
@@ -1006,7 +1036,10 @@ Scope {
 				)
 
 			onMovementEnded: {
-				if(!flick.listViewShown) return
+				if (filteredModel <= 0) return
+				if (_contentWidth <= 0) return
+				if (_contentHeight <= 0) return
+
 				Qt.callLater(() => {
 					if (isHorizontal) {
 
@@ -1057,7 +1090,9 @@ Scope {
 
 					function onContentXChanged() {
 
-						if (!flick.listViewShown) return
+						if (flick.filteredModel <= 0) return
+						if (flick._contentWidth <= 0) return
+						if (flick._contentHeight <= 0) return
 						var dx = flick.contentX - flick.lastContentX
 
 						if (Math.abs(dx) > flick.dirThreshold) {
@@ -1077,7 +1112,9 @@ Scope {
 					}
 
 					function onContentYChanged() {
-							if (!flick.listViewShown) return
+						if (flick.filteredModel <= 0) return
+						if (flick._contentWidth <= 0) return
+						if (flick._contentHeight <= 0) return
 						var dy = flick.contentY - flick.lastContentY
 
 						if (Math.abs(dy) > flick.dirThreshold) {
@@ -1101,7 +1138,7 @@ Scope {
 
 				// horizontal ripple
 				function hRipple(dx, dy, sx, sy, strength) {
-
+					
 					var selParity = sx % 2   // FIX: axis swap
 
 					var shiftX = 0
@@ -1124,12 +1161,14 @@ Scope {
 					if (dx < 0) shiftX = -10 * strength
 					else if (dx > 0) shiftX = 10 * strength
 
+
+					
 					return Qt.point(shiftX, shiftY)
 				}
 
 				//vertical ripple
 				function vRipple(dx, dy, sx, sy, strength) {
-
+					
 					var selParity = sy % 2
 
 					var shiftX = 0
@@ -1144,7 +1183,7 @@ Scope {
 						dx > 0 ||
 						(dy < 0 && sx + dx >= sx + (selParity === 0 ? 0 : 1)) ||
 						(dy > 0 && sx + dx >= sx + (selParity === 0 ? 0 : 1))
-
+					
 					if (leftSide) shiftX = -15 * strength
 					else if (rightSide) shiftX = 15 * strength
 
@@ -1159,8 +1198,9 @@ Scope {
 				property bool parallaxAnimating: false
 				
 				function hOuterParallax() {
-
-					if(!isHorizontal) return
+					if (flick.filteredModel <= 0) return
+					if (flick._contentWidth <= 0) return
+					if (flick._contentHeight <= 0) return
 					if (!Config.options.effects.parallax) {
 						globalShiftX = 0
 						globalShiftY = 0
@@ -1180,8 +1220,8 @@ Scope {
 
 					var localIndex = selIndex - hStartIndex
 
-					var col = localIndex % _cols
-					var row = Math.floor(localIndex / _cols)
+					var row = localIndex % _rows
+					var col = Math.floor(localIndex / _rows)
 
 				
 
@@ -1205,7 +1245,9 @@ Scope {
 				
 				function vOuterParallax() {
 
-					if(!isHorizontal) return
+					if (flick.filteredModel <= 0) return
+					if (flick._contentWidth <= 0) return
+					if (flick._contentHeight <= 0) return
 					
 					if (!Config.options.effects.parallax) {
 						globalShiftX = 0
@@ -1249,6 +1291,7 @@ Scope {
 				
 
 					Behavior on globalShiftX {
+					
 						NumberAnimation {
 							duration: 500
 							easing.type: Easing.BezierSpline
@@ -1257,6 +1300,7 @@ Scope {
 					}
 					
 					Behavior on globalShiftY {
+						
 						NumberAnimation {
 							duration: 500
 							easing.type: Easing.BezierSpline
@@ -1398,8 +1442,9 @@ Scope {
 			focus: true
 
 			propagateComposedEvents: true
+	
 			onWheel: (wheel) => {
-				// if(!flick.listViewShown) return
+				if(!flick.listViewShown) return
 				const isH = isHorizontal
 
 				const max = isH
@@ -1421,10 +1466,11 @@ Scope {
 				const v = wheel.angleDelta.y * scale
 
 				if (isH) flick.flick(v, 0)
-				else      flick.flick(0, v)
+				else flick.flick(0, v)
 
 				wheel.accepted = true
 			}
+
 				// onWheel: (wheel) => {
 
 				// 	const maxX = flick.contentWidth - flick.width
@@ -1471,8 +1517,9 @@ Scope {
 				flick.contentY = row * flick.rowStep
 			}
 		}
-		Keys.onPressed: function(event) {
 
+		Keys.onPressed: function(event) {
+			// if(!flick.listViewShown) return
 			let oldIndex = wallpaperController.currentIndex
 
 			let ctx = {
@@ -1617,7 +1664,7 @@ Scope {
 					// Math.ceil(filteredModel / WallpaperService.rows):
 					// Math.ceil(filteredModel / WallpaperService.columns)
 
-					model: flick.listViewShown && isHorizontal 
+					model: isHorizontal 
 					? Math.ceil((filteredWallpapers ? filteredModel : 0) / Math.max(1, _rows))
 					: Math.ceil((filteredWallpapers ? filteredModel : 0) / Math.max(1, _cols))
 				
@@ -1805,8 +1852,12 @@ Scope {
 
 								property int hdx: xIdx - hx
 								property int hdy: yIdx - hy
-								property var _hoverRippleH: flick.hRipple(hdx, hdy, hx, hy, 0.5)
-								property var _rippleH: flick.hRipple(dx, dy, sx, sy, 1.0)
+
+								property real hoverStr: 0.6
+								property real rippleStr: 1.0
+
+								property var _hoverRippleH: flick.hRipple(hdx, hdy, hx, hy, hoverStr)
+								property var _rippleH: flick.hRipple(dx, dy, sx, sy, rippleStr)
 
 
 								property int columns: WallpaperService.columns
@@ -1839,10 +1890,10 @@ Scope {
 
 
 								property var _hoverRippleV:
-									flick.vRipple(vhdx, vhdy, vhx, vhy, 0.5)
+									flick.vRipple(vhdx, vhdy, vhx, vhy, hoverStr)
 
 								property var _rippleV:
-									flick.vRipple(vdx, vdy, vs, vt, 1.0)
+									flick.vRipple(vdx, vdy, vs, vt, rippleStr)
 									
 								property int cols: WallpaperService.columns
 
@@ -1942,6 +1993,7 @@ Scope {
 								}
 				
 								transformOrigin: {
+									if (!flick.listViewShown) return Item.Center
 									if (isHorizontal) return Item.Center
 									if (isSelected) return Item.Center
 									if (flick.scrollDirY < 0) {
