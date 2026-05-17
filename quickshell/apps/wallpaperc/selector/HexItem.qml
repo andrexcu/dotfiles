@@ -29,7 +29,8 @@ Item {
     property var hexBorder
     property real shiftX
     property real shiftY
-    property int clampDir
+    property int clampDirX
+    property int clampDirY
     property real hArcOffset
     property real vArcOffset
     // property real targetX
@@ -42,7 +43,7 @@ Item {
     property bool isPrevious: controller.previousIndex === itemIndex
     property real hexDir: controller.isHorizontal ? 1 : 0
     Behavior on hexDir { 
-            NumberAnimation { duration: 150
+            NumberAnimation { duration: Style.animFast
             easing.type: Easing.OutCubic
 			// 								easing.overshoot: 1.4
             // easing.type: Easing.BezierSpline
@@ -51,48 +52,55 @@ Item {
 
             }
         }
+
+          // function n(i) {
+    //     var x = Math.sin(i * 12.9898 + seed) * 43758.5453
+    //     return x - Math.floor(x)
+    // }
     property real expand: 0
     property real shrink: 0.05
 
     width: container.cellWidth - 10 
 								
     height: container.cellHeight - 10
-
- 
-    // property real originFixY
-
-    //  Behavior on width { 
-    //         NumberAnimation { duration: 0
-    //         // easing.type: Easing.OutBack
-	// 		// 								easing.overshoot: 1.4
-    //         easing.type: Easing.BezierSpline
-    //         // easing.bezierCurve: [0.2, 0.8, 0.2, 1.0]
-    //         easing.bezierCurve: [0.22, 1.0, 0.36, 1.0]
-
-    //         }
-    //     }
-    //      Behavior on height { 
-    //         NumberAnimation { duration: 0
-    //         // easing.type: Easing.OutBack
-	// 		// 								easing.overshoot: 1.4
-    //         easing.type: Easing.BezierSpline
-    //         // easing.bezierCurve: [0.2, 0.8, 0.2, 1.0]
-    //         easing.bezierCurve: [0.22, 1.0, 0.36, 1.0]
-
-    //         }
-    //     }
-    // width: hexRadius * 2
-    // height: Math.ceil(hexRadius * 1.73205)
-    // property real visualWidth: controller.controller.isHorizontal
-    // ? container.hCellWidth - 10 : container.vCellWidth - 10
     
-    // property real visualHeight: controller.controller.isHorizontal
-    // ? container.hCellHeight - 10 : container.vCellHeight - 10
+    property real breakT: 1 - _hexScale
 
-   
-    // Behavior on width { NumberAnimation { duration: 150 } }
-    // Behavior on height { NumberAnimation { duration: 150 } }
-    // property bool imageReady: thumbImage.status === Image.Ready && thumbImage.paintedWidth > 0
+Behavior on breakT {
+    NumberAnimation {
+        duration: Style.animExpand
+        easing.type: Easing.OutCubic
+    }
+}
+
+property real seed: index * 91.17
+
+property real cx: width * 0.5
+property real cy: height * 0.5
+
+function n(i) {
+    var s = seed + i * 13.13
+    var x = Math.sin(s) * 43758.5453
+    return x - Math.floor(x)
+}
+
+function px(i) {
+    switch(i) {
+    case 0: return [0.5, 0.0]
+    case 1: return [1.0, 0.25]
+    case 2: return [1.0, 0.75]
+    case 3: return [0.5, 1.0]
+    case 4: return [0.0, 0.75]
+    case 5: return [0.0, 0.25]
+    }
+}
+
+function toWorld(p) {
+    return hexItem.hexDir
+        ? [p[1] * width, p[0] * height]
+        : [p[0] * width, p[1] * height]
+}
+
     property int currentScale
     property bool isHidden: false
 
@@ -118,25 +126,32 @@ Item {
    
 
     property real enterT: inView ? 0 : 1
-    // property bool entering: inView
     property bool entering: scale < 1 && inView
     
-    property real dirX: clampDir
+    
+    
+    property real dirX: clampDirX
+    property real dirY: clampDirY
 
     property bool nearLeft: false
     property bool nearTop: false
-    property real phaseDir:
+
+    property real phaseDirX:
         entering ? dirX : -dirX
+
+    property real phaseDirY:
+        entering ? dirY : -dirY
 
     property real hDir: nearLeft ? -1 : 1
     property real vDir: nearTop ? -1 : 1
 
-    property real layoutX: controller.isHorizontal ? 
-    clamp(dx) * 36 * enterT * phaseDir * hDir : 0
-       
+    property real layoutX: controller.isHorizontal
+        ? clamp(dx) * 36 * enterT * phaseDirX * hDir
+        : 0
 
-    property real layoutY: 0
-
+    property real layoutY: !controller.isHorizontal
+        ? clamp(dy) * 36 * enterT * phaseDirY * vDir
+        : 0
 
 
     property bool hoverBlocked:
@@ -157,18 +172,48 @@ Item {
          + (hoverRippleOffV || hoverBlocked ? 0 : hoverRippleV.y))
 
     property real t: controller.isHorizontal ? 1 : 0
+    property real rx: mix(verticalRippleX, horizontalRippleX, t)
+    property real ry: mix(verticalRippleY, horizontalRippleY, t)
 
-    property real rx: horizontalRippleX * t + verticalRippleX * (1 - t)
-    property real ry: horizontalRippleY * t + verticalRippleY * (1 - t)
+    function mix(a,b,t) {
+        return a*(1-t) + b*t
+    }
     
     property real targetX: viewX + layoutX + (entering ? 0 : rx)
       
     property real targetY: viewY + layoutY + (entering ? 0 : ry)
        
+    
+    property real animX: targetX
+    property real animY: targetY
 
-    x: targetX + vArcOffset + shiftX
-    y: targetY + hArcOffset + shiftY
+    x: animX + vArcOffset + shiftX
+    y: animY + hArcOffset + shiftY
 
+    property bool allowAnim: true
+    property bool snapHex: flick.listViewShown
+    
+    Behavior on animX {
+        enabled: snapHex && allowAnim
+        NumberAnimation {
+            duration: Style.animExpand
+            easing.type: Easing.BezierSpline
+            easing.bezierCurve: [0.25, 0.1, 0.25, 1.0]
+            
+        }
+    }
+
+    Behavior on animY {
+        enabled: snapHex && allowAnim
+        NumberAnimation {
+            duration: Style.animExpand
+            easing.type: Easing.BezierSpline
+            easing.bezierCurve: [0.25, 0.1, 0.25, 1.0]
+        }
+    }
+
+    // property real rx: horizontalRippleX * t + verticalRippleX * (1 - t)
+    // property real ry: horizontalRippleY * t + verticalRippleY * (1 - t)
         // property real c: inView ? enterT : (1 - enterT)
 
     // property real layoutY: entering ? 0 : clamp(dy) * 30 * enterT
@@ -236,40 +281,8 @@ Item {
     // }
     // property bool hexAnimating: false
 
-    property bool allowAnim: true
-    property bool snapHex: flick.listViewShown
 
-    Behavior on targetX {
-        enabled: snapHex && allowAnim
-        NumberAnimation {
-            id: animX
-            duration: 350
-            easing.type: Easing.BezierSpline
-            easing.bezierCurve: [0.25, 0.1, 0.25, 1.0]
-            
-        }
-    }
-
-    Behavior on targetY {
-        enabled: snapHex && allowAnim
-        NumberAnimation {
-            id: animY
-            duration: 350
-            easing.type: Easing.BezierSpline
-            easing.bezierCurve: [0.25, 0.1, 0.25, 1.0]
-        }
-    }
-
-    opacity: _hexScale < 0.01 ? 0 : 1
-        // opacity: _inView ? 1 : 0
-    Behavior on opacity { 
-        NumberAnimation { 
-            duration: 350; 
-            easing.type: Easing.InOutQuad 
-            // easing.type: Easing.InOutQuad 
-            // easing.type: Easing.InCubic
-        } 
-    }
+  
 
     // property bool hexAnimating: animX.running || animY.running
     // Connections {
@@ -345,7 +358,7 @@ Item {
         //     ? Math.min(1, selectedHexBorder.t * 1.2)
         //     : 0
         property bool showBorder:
-        _inView && (isSelected || isPrevious)
+        inView && (isSelected || isPrevious)
 
         opacity: showBorder ? Math.min(1, tt * 1.2) : 0
         
@@ -353,7 +366,7 @@ Item {
 
         Behavior on scale {
             NumberAnimation {
-                duration: 350
+                duration: Style.animExpand
                 easing.type: Easing.BezierSpline
                 easing.bezierCurve: [0.25, 0.1, 0.25, 1.0]
             }
@@ -567,21 +580,22 @@ Item {
 
 
 
-    Shape {
-        id: selectedDefaultBorder
-        z: 10
-        visible: inView ? 1 : 0
-     
         // opacity: borderShown && inView ? 1 : 0
         // anchors.fill: parent
         // opacity: 
         // _inView && (isHovered || isSelected)? 1 : 0
         // visible: _inView && isSelected
         // visible: false
+    Shape {
+        id: selectedDefaultBorder
+        z: 10
+        visible: inView ? 1 : 0
+        // visible: false
+     
 
         width: hexItem.width
         height: hexItem.height
-      
+
         x: 0
         y: 0
 
@@ -589,7 +603,7 @@ Item {
 
         Behavior on scale {
             NumberAnimation {
-                duration: 350
+                duration: Style.animExpand
                 easing.type: Easing.BezierSpline
                 easing.bezierCurve: [0.25, 0.1, 0.25, 1.0]
             }
@@ -597,13 +611,67 @@ Item {
 
         Behavior on opacity { 
             NumberAnimation { 
-                duration: 250; 
-                easing.type: Easing.OutQuad 
+                duration: Style.animNormal; 
+                easing.type: Easing.OutCubic 
             } 
         }
         
         preferredRendererType: Shape.CurveRenderer
         antialiasing: true
+
+        //  ShapePath {
+
+        //     fillColor: "transparent"
+        //     strokeColor: "#4d4d4d"
+        //     strokeWidth: 1.5
+
+        //     PathMove {
+        //         x: width * (0.5 - 0.25 * hexItem.hexDir)
+        //            + (hexItem.n0 - 0.5) * hexItem.breakT * hexItem.crackStrength
+        //         y: 0
+        //            + (hexItem.n1 - 0.5) * hexItem.breakT * hexItem.crackStrength
+        //     }
+
+        //     PathLine {
+        //         x: width * (1 - 0.25 * hexItem.hexDir)
+        //            + (hexItem.n2 - 0.5) * hexItem.breakT * hexItem.crackStrength
+        //         y: height * (0.25 - 0.25 * hexItem.hexDir)
+        //            + (hexItem.n3 - 0.5) * hexItem.breakT * hexItem.crackStrength
+        //     }
+
+        //     PathLine {
+        //         x: width
+        //            + (hexItem.n4 - 0.5) * hexItem.breakT * hexItem.crackStrength
+        //         y: height * (0.75 - 0.25 * hexItem.hexDir)
+        //            + (hexItem.n5 - 0.5) * hexItem.breakT * hexItem.crackStrength
+        //     }
+
+        //     PathLine {
+        //         x: width * (0.5 + 0.25 * hexItem.hexDir)
+        //            + (hexItem.n6 - 0.5) * hexItem.breakT * hexItem.crackStrength
+        //         y: height
+        //            + (hexItem.n7 - 0.5) * hexItem.breakT * hexItem.crackStrength
+        //     }
+
+        //     PathLine {
+        //         x: width * (0.25 * hexItem.hexDir)
+        //            + (hexItem.n8 - 0.5) * hexItem.breakT * hexItem.crackStrength
+        //         y: height * (0.75 + 0.25 * hexItem.hexDir)
+        //            + (hexItem.n9 - 0.5) * hexItem.breakT * hexItem.crackStrength
+        //     }
+
+        //     PathLine {
+        //         x: 0
+        //            + (hexItem.n10 - 0.5) * hexItem.breakT * hexItem.crackStrength
+        //         y: height * (0.25 + 0.25 * hexItem.hexDir)
+        //            + (hexItem.n11 - 0.5) * hexItem.breakT * hexItem.crackStrength
+        //     }
+
+        //   PathLine {
+        //         x: width * (0.5 - 0.25 * hexItem.hexDir)
+        //         y: 0
+        //     }
+        // }
         ShapePath {
            
             strokeWidth: 1.5
@@ -652,6 +720,7 @@ Item {
                 y: 0
             }
         }
+
             // PathMove { x: width * 0.25; y: 0 }
             // PathLine { x: width * 0.75; y: 0 }
             // PathLine { x: width;        y: height * 0.5 }
@@ -819,7 +888,7 @@ Item {
   
         width: hexItem.width
         height: hexItem.height
-
+        clip: true
         // rotation: isSelected ? 90:0
         // Behavior on rotation {
         //     NumberAnimation {
@@ -843,7 +912,7 @@ Item {
 
         Behavior on scale {
             NumberAnimation {
-                duration: 200
+                duration: Style.animNormal
                 easing.type: Easing.BezierSpline
                 easing.bezierCurve: [0.25, 0.1, 0.25, 1.0]
             }
@@ -884,7 +953,7 @@ Item {
             id: flipAnim
             target: visualWrapper
             property: "flipAngle"
-            duration: 350
+            duration: Style.animExpand
             easing.type: Easing.InOutQuad
         }
 
@@ -1046,7 +1115,7 @@ Item {
 
         Behavior on scale {
             NumberAnimation {
-                duration: 350
+                duration: Style.animExpand
                 easing.type: Easing.BezierSpline
                 easing.bezierCurve: [0.22, 1.0, 0.36, 1.0]
             }
@@ -1062,7 +1131,7 @@ Item {
 
             Behavior on blur {
                 NumberAnimation {
-                    duration: 150
+                    duration: Style.animFast
                     easing.type: Easing.InOutQuad
                 }
             }
@@ -1091,8 +1160,8 @@ Item {
 
         Behavior on opacity { 
             NumberAnimation { 
-                duration: 250; 
-                easing.type: Easing.InOutQuad 
+                duration: Style.animNormal; 
+                easing.type: Easing.OutCubic 
             } 
         }
         
@@ -1101,7 +1170,7 @@ Item {
 
         Behavior on pixelSize {
             NumberAnimation {
-                duration: 250
+                duration: Style.animEnter
                 easing.type: Easing.InOutQuad
             }
         }
@@ -1168,11 +1237,11 @@ Item {
         
         Rectangle {
             anchors.fill: parent
-            // visible: hexItem.controller.cardVisible
+            visible: controller.cardVisible
             color: "#000000"
-            opacity: 0.6
-            visible: false
-            // Behavior on opacity { NumberAnimation { duration: 50; easing.type: Easing.OutQuad } }
+            opacity: isSelected ? 0.6 : 0
+            // visible: false
+            Behavior on opacity { NumberAnimation { duration: Style.animNormal; easing.type: Easing.OutCubic  } }
         }
         // Rectangle {
         //     anchors.fill: parent
@@ -1229,65 +1298,116 @@ Item {
 
         //     }
         // }
-        layer.effect: OpacityMask {
-            maskSource: Shape {
-                width: hexItem.width
-                height: hexItem.height
-                // rotation: -visualWrapperRef.rotation
-                // anchors.centerIn: parent
-                preferredRendererType: Shape.CurveRenderer
-                antialiasing: true
-               
-                
+        // rotation: -visualWrapperRef.rotation
+        // anchors.centerIn: parent
+       
+       layer.effect: OpacityMask {
+        maskSource: Shape {
+        id: hexShape
+        
+        width: hexItem.width
+        height: hexItem.height
+        preferredRendererType: Shape.CurveRenderer
+        antialiasing: true
+        
+        ShapePath {
+
+    fillColor: "white"
+    strokeWidth: 0
+
+    PathMove {
+        property var p: hexItem.toWorld(hexItem.px(0))
+        x: p[0]
+        y: p[1]
+    }
+
+    PathLine {
+        property var p: hexItem.toWorld(hexItem.px(1))
+        x: p[0]
+        y: p[1]
+    }
+
+    PathLine {
+        property var p: hexItem.toWorld(hexItem.px(2))
+        x: p[0]
+        y: p[1]
+    }
+
+    PathLine {
+        property var p: hexItem.toWorld(hexItem.px(3))
+        x: p[0]
+        y: p[1]
+    }
+
+    PathLine {
+        property var p: hexItem.toWorld(hexItem.px(4))
+        x: p[0]
+        y: p[1]
+    }
+
+    PathLine {
+        property var p: hexItem.toWorld(hexItem.px(5))
+        x: p[0]
+        y: p[1]
+    }
+
+    PathLine {
+        property var p: hexItem.toWorld(hexItem.px(0))
+        x: p[0]
+        y: p[1]
+    }
+}
+    }
+}
+// ShapePath {
+//                     fillColor: "white"
+//                     strokeWidth: 0
+
+//                     // P1
+//                     PathMove {
+//                         x: width * (0.5 - 0.25 * hexItem.hexDir)
+//                         y: 0
+//                     }
+
+//                     // P2
+//                     PathLine {
+//                         x: width * (1 - 0.25 * hexItem.hexDir)
+//                         y: height * (0.25 - 0.25 * hexItem.hexDir)
+//                     }
+
+//                     // P3
+//                     PathLine {
+//                         x: width
+//                         y: height * (0.75 - 0.25 *hexItem.hexDir)
+//                     }
+
+//                     // P4
+//                     PathLine {
+//                         x: width * (0.5 + 0.25 * hexItem.hexDir)
+//                         y: height
+//                     }
+
+//                     // P5
+//                     PathLine {
+//                         x: width * (0.25 * hexItem.hexDir)
+//                         y: height * (0.75 + 0.25 * hexItem.hexDir)
+//                     }
+
+//                     // P6
+//                     PathLine {
+//                         x: 0
+//                         y: height * (0.25 + 0.25 * hexItem.hexDir)
+//                     }
+
+//                     PathLine {
+//                         x: width * (0.5 - 0.25 * hexItem.hexDir)
+//                         y: 0
+//                     }
+//                 }
 
 
-                ShapePath {
-                    fillColor: "white"
-                    strokeWidth: 0
 
-                    // P1
-                    PathMove {
-                        x: width * (0.5 - 0.25 * hexItem.hexDir)
-                        y: 0
-                    }
 
-                    // P2
-                    PathLine {
-                        x: width * (1 - 0.25 * hexItem.hexDir)
-                        y: height * (0.25 - 0.25 * hexItem.hexDir)
-                    }
-
-                    // P3
-                    PathLine {
-                        x: width
-                        y: height * (0.75 - 0.25 *hexItem.hexDir)
-                    }
-
-                    // P4
-                    PathLine {
-                        x: width * (0.5 + 0.25 * hexItem.hexDir)
-                        y: height
-                    }
-
-                    // P5
-                    PathLine {
-                        x: width * (0.25 * hexItem.hexDir)
-                        y: height * (0.75 + 0.25 * hexItem.hexDir)
-                    }
-
-                    // P6
-                    PathLine {
-                        x: 0
-                        y: height * (0.25 + 0.25 * hexItem.hexDir)
-                    }
-
-                    PathLine {
-                        x: width * (0.5 - 0.25 * hexItem.hexDir)
-                        y: 0
-                    }
-                }
-            }
-        }
                 // ShapePath {
                 //     fillColor: "white"
   
@@ -1446,7 +1566,7 @@ Item {
         // Qt.callLater(() => {
         //     allowAnim = true
         // })
-        
+        // console.log(itemIndex)
         animTimer.start()
     }
 
@@ -1546,6 +1666,7 @@ Item {
                 flickRef.forceActiveFocus() 
                 return
             }
+            
             controller.previousIndex = controller.currentIndex
             controller.currentIndex = itemIndex
             flickRef.forceActiveFocus() 
