@@ -72,7 +72,7 @@ Scope {
 	// 		thumbnailPaths = paths
 
 	// 		if (wallpapers.length > 0) {
-	// 			wallpaperController.currentIndex = 0
+	// 			flick.currentIndex = 0
 	// 			selectedWallpaper = wallpapers[0]
 	// 		}
 
@@ -145,7 +145,7 @@ Scope {
 	
 	// tracking items
 	property Item currentSelected: null
-	// property Item selectedItem: wallpaperRepeater.itemAt(wallpaperController.currentIndex)
+	// property Item selectedItem: wallpaperRepeater.itemAt(flick.currentIndex)
 	// property Item previousItem: (wallpaperController.previousIndex >= 0 &&
 	// 					wallpaperController.previousIndex < wallpaperRepeater.length)
 	// 					? wallpaperRepeater.itemAt(wallpaperController.previousIndex)
@@ -160,8 +160,8 @@ Scope {
 	
 
 	// Computed property for convenience
-	// property Item currentItem: (wallpaperController.currentIndex >= 0 && wallpaperController.currentIndex < wallpaperRepeater.length)
-	// 	? wallpaperRepeater.itemAt(wallpaperController.currentIndex)
+	// property Item currentItem: (flick.currentIndex >= 0 && flick.currentIndex < wallpaperRepeater.length)
+	// 	? wallpaperRepeater.itemAt(flick.currentIndex)
 	// 	: null
 
 	property var selectedVisual: wallpaperController.currentSelected
@@ -225,7 +225,7 @@ Scope {
 	// Connections {
 	// 	target: Config.options.orientation
 	// 	function onIsHorizontalChanged() {
-	// 		wallpaperController.currentIndex = 0
+	// 		flick.currentIndex = 0
 
 	// 		if(isHorizontal) {
 	// 			flick.vOuterParallax()
@@ -289,7 +289,7 @@ Scope {
 	// 	// flick.applyVisual(selectedItem, 1, 1)
 		// wallpaperController.currentSelected = selectedItem
 	
-		// wallpaperController.previousIndex = wallpaperController.currentIndex
+		// wallpaperController.previousIndex = flick.currentIndex
 
 	// }
 
@@ -316,7 +316,7 @@ Scope {
 		if (sel && sel.updateShift)
 			sel.updateShift()
 	}
-			// var row = Math.floor(wallpaperController.currentIndex / flick.cols)
+			// var row = Math.floor(flick.currentIndex / flick.cols)
 
 			// if (row < flick.startRow || row >= flick.startRow + flick.visibleRows) {
 			// 	flick.contentY = row * flick._rowStep
@@ -345,8 +345,8 @@ Scope {
 
 	// function setIndex(i) {
 
-	// 	wallpaperController.previousIndex = wallpaperController.currentIndex
-	// 	wallpaperController.currentIndex = i
+	// 	wallpaperController.previousIndex = flick.currentIndex
+	// 	flick.currentIndex = i
 
 	// 	wallpaperController.previousItem = wallpaperController.currentItem
 	// }
@@ -421,7 +421,7 @@ Scope {
 	// }
 	}
 	
-	property int hexRadius: 85
+	property int hexRadius: 95
 	Behavior on hexRadius { NumberAnimation { duration: Style.animExpand; easing.type: Easing.OutCubic } }
 	property int hexRows: WallpaperService.rows
 	property int hexCols: WallpaperService.columns
@@ -708,43 +708,7 @@ Scope {
 			}
 		}
 	}
-	// MouseArea {
-	// 	anchors.fill: parent
-	// 	propagateComposedEvents: true
 
-	// 	onWheel: function(wheel) {
-
-	// 		var step = flick._stepX
-
-	// 		const maxX = flick.contentWidth - flick.width
-
-	// 		const dir =
-	// 			(wheel.angleDelta.y > 0 || wheel.angleDelta.x > 0)
-	// 			? -1
-	// 			: 1
-
-	// 		flick.contentX = Math.max(
-	// 			0,
-	// 			Math.min(maxX, flick.contentX + dir * step)
-	// 		)
-
-	// 		wheel.accepted = true
-	// 	}
-
-	// 	onPressed: function(mouse) { mouse.accepted = false }
-	// 	onReleased: function(mouse) { mouse.accepted = false }
-	// 	onClicked: function(mouse) { mouse.accepted = false }
-	// }
-
-
-
-	// anchors {
-	// 	top: parent.top
-	// 	bottom: parent.bottom
-	// 	horizontalCenter: parent.horizontalCenter
-	// }
-	// visible: wallpaperController.isContentVisible
-	// visible: wallpaperController.cardVisible
 	
  	opacity: 0
 	
@@ -792,17 +756,29 @@ Scope {
     //     anchors.fill: parent
     //     focus: true
 	// 	clip: false
-    	
 		ListView {
 			id: flick
 			visible: wallpaperController.cardVisible
 
 			anchors.horizontalCenter: cardContainer.horizontalCenter
 			anchors.verticalCenter: cardContainer.verticalCenter
-
+			// anchors.topMargin: 20
+			// anchors.bottomMargin: 20
+		 	// anchors.top: cardContainer.top
+			// anchors.bottom: cardContainer.bottom
+			// anchors.topMargin: 20
+			// anchors.bottomMargin: 20
+			// anchors.left: cardContainer.left
+			// anchors.right: cardContainer.right
 			property bool listViewShown: true
 			property bool _firstLoad: true
-
+			
+		Rectangle {
+			anchors.fill: parent
+			color: "transparent" 
+			border.color: "green"       
+			border.width: 1
+		}
 	
 			NumberAnimation {
 				id: listViewFade
@@ -847,24 +823,14 @@ Scope {
 				}
 			}
 
-			// Connections {
-			// 	target: WallpaperService
-			// 	function onWallpapersChanged() {
-			// 		flick.globalShiftX = 0
-			// 		flick.globalShiftY = 0
-			// 	}
-			// }
-			orientation: {
-				if(isHorizontal) {
-					return ListView.Horizontal
-				} else {
-					return ListView.Vertical
-				}
-			}
 
-			// flickableDirection: isHorizontal
-			// ? Flickable.HorizontalFlick
-			// : Flickable.VerticalFlick
+			orientation: isHorizontal 
+			? ListView.Horizontal : ListView.Vertical
+		
+
+			flickableDirection: isHorizontal
+			? Flickable.HorizontalFlick
+			: Flickable.VerticalFlick
 
 			
 			Layout.fillHeight: true
@@ -878,17 +844,12 @@ Scope {
 			property real _stepY: _hexH + _gridSpacing
 			property real _gridContentH: (_rows - 1) * _stepY + _hexH + _hexH / 2
 			property real _yOffset: Math.max(0, (height - _gridContentH) / 2)
-			property real _visibleBand: hexCols * _stepX
+			property real _visibleBand: (wallpaperController.hexCols - 1) * _stepX + _hexW
 			property real _fadeZone: (width - _visibleBand) / 2
 
 			
 			
-			// Rectangle {
-			// 	anchors.fill: parent
-			// 	color: "transparent" 
-			// 	border.color: "green"       
-			// 	border.width: 1
-			// }
+		
 			
 			focus: true
 
@@ -901,58 +862,12 @@ Scope {
 	
 			property bool selectedHexSettled: false
 
-			// property real topFactor: (5 * verticalMargin) / _rowStep
-			// property real bottomFactor: (1.2 * verticalMargin) / _rowStep
-
-			// property real viewportTop: contentY - (_rowStep * topFactor)
-			// property real viewportBottom: contentY + height - (_rowStep * bottomFactor)
-			// property bool layoutLock: false
-			// contentWidth:
-    		// Math.ceil((filteredWallpapers ? filteredModel : 0) / WallpaperService.rows) * _colStep
-			// contentHeight: 
-			// Math.ceil((filteredWallpapers ? filteredModel : 0) / WallpaperService.columns) * _rowStep
 			
-			// contentWidth:
-    		// Math.ceil(filteredModel / WallpaperService.rows) * _colStep
-			// contentHeight: 
-			// Math.ceil(filteredModel / WallpaperService.columns) * _rowStep
-
-			// contentHeight: Math.ceil(filteredModel / WallpaperService.columns) * _rowStep
-			
-			
-			// function applyVisual(item, scale, opacity) {
-			// 	item.visualWrapperRef.visualScale = scale
-			// 	item.visualWrapperRef.fadeOpacity = opacity
-			// }
-
-		
-
-			
-		
-				// if(isHorizontal) {
-				// 		flick.vOuterParallax()
-				// 	} else {
-				// 		flick.hOuterParallax()
-				// 	}
-
-
-			// property int _rows: isHorizontal ?
-			// wallpaperController.hexCols : wallpaperController.hexRows 
-			// property int _cols: isHorizontal ?
-			// wallpaperController.hexRows : wallpaperController.hexCols
-			// property int contentCols: isHorizontal
-			// 	? WallpaperService.rows
-			// 	: WallpaperService.columns
-
-			// property int contentRows: isHorizontal
-			// 	? WallpaperService.columns
-			// 	: WallpaperService.rows
-			// property int _scrollGen: 0
 			onOrientationChanged: {
 
 				flick.cancelFlick()
 
-				wallpaperController.currentIndex = 0
+				flick.currentIndex = 0
 				wallpaperController.previousIndex = 0
 
 				contentX = 0
@@ -961,13 +876,9 @@ Scope {
 				listViewFade.from = 0
 				listViewFade.to = 1
 				listViewFade.restart()
-			}
-		
 
-			// property int visibleCols:
-			// Math.floor((flick.width ? flick.width : 0) / flick._stepX)
-			// property int visibleRows:
-			// Math.ceil((flick.height ? flick.height : 0) / flick._stepY)
+				flick.forceActiveFocus()
+			}
 			
 			property int _rows: WallpaperService.rows
 			property int _cols: WallpaperService.columns
@@ -990,11 +901,11 @@ Scope {
 				Math.floor((contentX + _colStep * 0.5) / _colStep)
 
 			property int hStartIndex:
-				hStartCol * _rows
+				hStartCol * _rows 
 				
 			property int hEndIndex: Math.min(
 				filteredModel,
-				hStartIndex + _rows * _cols
+				(hStartIndex + _rows * _cols)
 			)
 			
 			property int vStartRow:
@@ -1003,27 +914,25 @@ Scope {
 			property int vStartIndex:
 				vStartRow * _cols
 
+			onMovementEnded: {
+
+				if (filteredModel <= 0) return
+				if (_contentWidth <= 0) return
+				if (_contentHeight <= 0) return
+
+				if (isHorizontal) {
+					contentX = Math.round(contentX / _colStep) * _colStep
+				} else {
+					contentY = Math.round(contentY / _rowStep) * _rowStep
+				}
+			}
+
 			property int vEndIndex:
 				Math.min(
 					filteredModel,
 					vStartIndex + _cols * _rows
 				)
 
-			onMovementEnded: {
-				if (filteredModel <= 0) return
-				if (_contentWidth <= 0) return
-				if (_contentHeight <= 0) return
-
-				Qt.callLater(() => {
-					if (isHorizontal) {
-					contentX = Math.round(contentX / _colStep) * _colStep
-					}
-					else {
-					contentY = Math.round(contentY / _rowStep) * _rowStep
-					}
-					// requestFrame()
-				})
-			}
 
 			
 			Behavior on contentX {
@@ -1046,66 +955,111 @@ Scope {
 			
 	
 			
-				property real lastContentX: 0
-				property int scrollDirX: 0
-				property int lastDirX: 0
-				property real dirThreshold: 0.5
+			// 	property real lastContentX: 0
+			// 	property int scrollDirX: 0
+			// 	property int lastDirX: 0
+			// 	property real dirThreshold: 0.5
 
-				property real lastContentY: 0
-				property int scrollDirY: 0
-				property int lastDirY: 0
+			// 	property real lastContentY: 0
+			// 	property int scrollDirY: 0
+			// 	property int lastDirY: 0
 			
 
-				Connections {
-					target: flick
+			
 					
 
-					function onContentXChanged() {
+			// onContentXChanged: {
+			// 	if (!isHorizontal) return
+			// 	if (filteredModel <= 0) return
 
-						if (flick.filteredModel <= 0) return
-						if (flick._contentWidth <= 0) return
-						if (flick._contentHeight <= 0) return
-						var dx = flick.contentX - flick.lastContentX
+			// 	var dx = contentX - lastContentX
 
-						if (Math.abs(dx) > flick.dirThreshold) {
+			// 	if (Math.abs(dx) > dirThreshold) {
 
-							// RIGHT = +
-							// LEFT = -
-							flick.scrollDirX = dx > 0 ? 1 : -1
+			// 		scrollDirX = dx > 0 ? 1 : -1
 
-							if (flick.scrollDirX !== flick.lastDirX) {
-								flick.lastDirX = flick.scrollDirX
-							}
+			// 		console.log(scrollDirX > 0 ? "scroll →" : "scroll ←")
 
-							flick.lastContentX = flick.contentX
+			// 		if (scrollDirX !== lastDirX)
+			// 			lastDirX = scrollDirX
+			// 	} else {
+			// 		scrollDirX = 0
+			// 	}
+
+			// 	lastContentX = contentX
+			// 	wallpaperController.requestFrame()
+			// }
+
+			// 	onContentYChanged: {
+			// 		if (isHorizontal) return
+			// 		if (filteredModel <= 0) return
+
+			// 		var dy = contentY - lastContentY
+
+			// 		if (Math.abs(dy) > dirThreshold) {
+
+			// 			scrollDirY = dy > 0 ? 1 : -1
+
+			// 			console.log(scrollDirY > 0 ? "scroll ↓" : "scroll ↑")
+
+			// 			lastDirY = scrollDirY
+			// 		}
+
+			// 		lastContentY = contentY
+
+			// 		wallpaperController.requestFrame()
+			// 	}
+			property real dirThreshold: 0.5
+
+			property real lastContentY: 0
+			property int scrollDirY: 0
+			property int lastDirY: 0
+
+			property real lastContentX: 0
+			property int scrollDirX: 0
+			property int lastDirX: 0
+
+			Connections {
+				target: flick
+				property int lastDirY: 0
+				property int lastDirX: 0
+
+				function onContentYChanged() {
+					var dy = flick.contentY - flick.lastContentY
+
+					if (Math.abs(dy) > flick.dirThreshold) {
+						flick.scrollDirY = dy > 0 ? 1 : -1
+
+						if (flick.scrollDirY !== lastDirY) {
+							// console.log(flick.scrollDir > 0 ? "scroll ↓" : "scroll ↑")
+							lastDirY = flick.scrollDirY
 						}
 
-						wallpaperController.requestFrame()
+						flick.lastContentY = flick.contentY
 					}
 
-					function onContentYChanged() {
-						if (flick.filteredModel <= 0) return
-						if (flick._contentWidth <= 0) return
-						if (flick._contentHeight <= 0) return
-						var dy = flick.contentY - flick.lastContentY
-
-						if (Math.abs(dy) > flick.dirThreshold) {
-
-							flick.scrollDirY = dy > 0 ? 1 : -1
-
-							// console.log(flick.scrollDirY > 0 ? "DOWN" : "UP")
-
-							if (flick.scrollDirY !== flick.lastDirY) {
-								flick.lastDirY = flick.scrollDirY
-							}
-
-							flick.lastContentY = flick.contentY
-						}
-
-						wallpaperController.requestFrame()
-					}
+					wallpaperController.requestFrame()
 				}
-		
+
+				function onContentXChanged() {
+					var dx = flick.contentX - flick.lastContentX
+
+					if (Math.abs(dx) > flick.dirThreshold) {
+						flick.scrollDirX = dx > 0 ? 1 : -1
+
+						if (flick.scrollDirX !== lastDirX) {
+							// console.log(flick.scrollDirX > 0 ? "scroll →" : "scroll ←")
+							lastDirX = flick.scrollDirX
+						}
+
+						flick.lastContentX = flick.contentX
+					}
+
+					wallpaperController.requestFrame()
+				}
+				
+			}
+	
 				
 
 				// horizontal ripple
@@ -1180,7 +1134,7 @@ Scope {
 						return
 					}
 
-					var selIndex = wallpaperController.currentIndex
+					var selIndex = flick.currentIndex
 					
 
 					if (selIndex < 0) return
@@ -1228,7 +1182,7 @@ Scope {
 						return
 					}
 
-					var selIndex = wallpaperController.currentIndex
+					var selIndex = flick.currentIndex
 					
 
 					if (selIndex < 0) return
@@ -1280,20 +1234,7 @@ Scope {
 						easing.bezierCurve: [0.25, 0.1, 0.25, 1.0]
 					}
 				}
-					// width:
-					// 	(WallpaperService.columns - 1) * _colStep + flick.hCellWidth
-					
-					// height: cardContainer.height
-
-					// width: parent.width 
-
-					// height:
-					// 	(WallpaperService.rows - 1) * _rowStep
-					// 	+ flick.cellHeight
-
-					// width: (WallpaperService.columns - 1) * _colStep + flick.hCellWidth
-					
-					// height: cardContainer.height
+			
 
 					property real hWidth:
 						(WallpaperService.columns - 1) * _colStep
@@ -1346,8 +1287,6 @@ Scope {
 					Math.max((
 						((WallpaperService.rows - 1) * _rowStep + flick.vCellHeight) - vGridHeight) / 2, 0) + _gridInset
 					
-
-
 					
 					property real cellHeightFactor: 0.95
 					property real spacingYFactor: 0.8
@@ -1376,23 +1315,7 @@ Scope {
 					property int cellWidth: wallpaperController.isHorizontal
 					? hCellWidth : vCellWidth
 					
-					// property real hGridHeight:
-					// (totalRows - 1) * _rowStep + vCellHeight
-					// property real hOffset: Math.max((flick.width - hGridWidth) / 2, 0)
-					// property real vOffset:
-					// Math.max((flick.height - hGridHeight) / 2, 0)
-					// Behavior on hCellHeight { NumberAnimation { duration: 350; } }
-					// Behavior on hCellWidth { NumberAnimation { duration: 350; } }
-					// Behavior on vCellHeight { NumberAnimation { duration: 350; } }
-					// Behavior on vCellWidth { NumberAnimation { duration: 350; } }
-					// 	Behavior on cellHeight { NumberAnimation { duration: 200; 
-					// 	 easing.type: Easing.BezierSpline
-					// easing.bezierCurve: [0.25, 0.1, 0.25, 1.0]
-					// 	} }
-					// 	Behavior on cellWidth { NumberAnimation { duration: 200; 
-					// 	 easing.type: Easing.BezierSpline
-					// easing.bezierCurve: [0.25, 0.1, 0.25, 1.0]
-					// 	} }
+		
 
 					property real _base: _r * 2	
 					property int spacingX: 10
@@ -1407,9 +1330,7 @@ Scope {
 				
 
 			property real stepX: flick._colStep
-			// function visibleCols() {
-			// 	return Math.ceil(flick.width / flick._colStep)
-			// }
+		
 
 		property bool _wheelMode: false
 
@@ -1418,10 +1339,10 @@ Scope {
 			focus: true
 
 			propagateComposedEvents: true
-
 			onWheel: (wheel) => {
 
 				const isH = isHorizontal
+
 
 				const max = isH
 					? flick.contentWidth - flick.width
@@ -1431,6 +1352,7 @@ Scope {
 
 				if ((pos <= 0 && wheel.angleDelta.y > 0) ||
 					(pos >= max - 0.5 && wheel.angleDelta.y < 0)) {
+		
 					return
 				}
 
@@ -1442,38 +1364,14 @@ Scope {
 				const v = wheel.angleDelta.y * scale
 
 				if (isH) flick.flick(v, 0)
-				else      flick.flick(0, v)
+				else flick.flick(0, v)
 
 				wheel.accepted = true
 			}
-
-		// onWheel: (wheel) => {
-		// 	if (!flick.listViewShown) return
-
-		// 	const isH = isHorizontal
-
-		// 	const bias = 7
-
-		// 	const base = isH
-		// 		? Math.round(flick.width / flick._colStep) + bias
-		// 		: Math.round(flick.height / flick._rowStep) + bias
-
-		// 	const dir = (wheel.angleDelta.y > 0 || wheel.angleDelta.x > 0) ? -1 : 1
-
-		// 	const v = wheel.angleDelta.y * base
-
-		// 	if (isH)
-		// 		flick.flick(v, 0)
-		// 	else
-		// 		flick.flick(0, v)
-
-		// 	wheel.accepted = true
-		// }
 			// onWheel: (wheel) => {
-			// 	if(!flick.listViewShown) return
-			// 	flick._wheelMode = true
-			// 	const isH = isHorizontal
 
+			// 	const isH = isHorizontal
+			// 	flick.snapLock = true
 			// 	const max = isH
 			// 		? flick.contentWidth - flick.width
 			// 		: flick.contentHeight - flick.height
@@ -1493,30 +1391,15 @@ Scope {
 			// 	const v = wheel.angleDelta.y * scale
 
 			// 	if (isH) flick.flick(v, 0)
-			// 	else flick.flick(0, v)
+			// 	else      flick.flick(0, v)
 
+			// 	Qt.callLater(() => {
+			// 		flick.snapLock = false
+			// 	})
 			// 	wheel.accepted = true
 			// }
 
-				// onWheel: (wheel) => {
-
-				// 	const maxX = flick.contentWidth - flick.width
-
-				// 	if ((flick.contentX <= 0 && wheel.angleDelta.y > 0) ||
-				// 		(flick.contentX >= maxX - 0.5 && wheel.angleDelta.y < 0)) {
-				// 		return
-				// 	}
-
-				// 	const scrollBias = 8
-				// 	let scale = Math.round(flick.width / flick._colStep) + scrollBias
-
-				// 	// KEEP RAW SIGN (CRITICAL)
-				// 	let v = wheel.angleDelta.y * scale
-
-				// 	flick.flick(v, 0)
-
-				// 	wheel.accepted = true
-				// }
+		
 		
 
 			onClicked: (mouse) => {
@@ -1526,31 +1409,20 @@ Scope {
 		}
 
    		Keys.enabled: true
-	
-		function snapTo(i) {
-
-			flick.cancelFlick()
-			flick.contentX = flick.contentX
-			flick.contentY = flick.contentY
-
-			let rows = WallpaperService.rows
-			let cols = WallpaperService.columns
-
-			if (isHorizontal) {
-				let col = Math.floor(i / rows)
-				flick.contentX = col * flick._colStep
-			} else {
-				let row = Math.floor(i / cols)
-				flick.contentY = row * flick._rowStep
-			}
+		function setScrollX(v) {
+			contentX = v
 		}
 
+		function setScrollY(v) {
+			contentY = v
+		}
+
+		highlightFollowsCurrentItem: false
+		highlightRangeMode: ListView.NoHighlightRange
 		Keys.onPressed: function(event) {
 			if(!flick.listViewShown) return
 
-			flick._wheelMode = false
-
-			let oldIndex = wallpaperController.currentIndex
+			let oldIndex = flick.currentIndex
 
 			let ctx = {
 				size: filteredModel,
@@ -1564,13 +1436,14 @@ Scope {
 
 				onMove: (i) => {
 					flick.cancelFlick()
-					wallpaperController.previousIndex = wallpaperController.currentIndex
-					wallpaperController.currentIndex = i
+					wallpaperController.previousIndex = flick.currentIndex
+					flick.currentIndex = i
 					
 
 					Qt.callLater(() => {
 
 						smartScroll(i, oldIndex)
+
 					})
 					
 				}
@@ -1583,6 +1456,7 @@ Scope {
 			if (handled)
 				event.accepted = true
 		}
+
 
 		function smartScroll(i, oldIndex) {
 
@@ -1649,82 +1523,26 @@ Scope {
 		}
 
 
-		// function snap() {
-		// 	flick.contentY =
-		// 		Math.round(flick.contentY / flick._rowStep) * flick._rowStep
-		// }
-
-					
-					// model: Math.ceil(filteredModel / WallpaperService.rows)
-					// model: Math.ceil(
-					// 	filteredModel /
-					// 	WallpaperService.rows
-					// )
-					// model: Math.ceil(
-					// 	filteredModel /
-					// 	Math.min(
-					// 		WallpaperService.rows,
-					// 		WallpaperService.columns
-					// 	)
-					// )
-					// property real _fadeZone: flick._rowStep
-
-					// function colRows(c) {
-					// 	let C = WallpaperService.columns
-					// 	let r = WallpaperService.rows
-					// 	let center = Math.floor((C - 1) / 2)
-
-					// 	let d = Math.min(
-					// 		Math.abs(c - center),
-					// 		Math.abs(c - (C - 1 - center))
-					// 	)
-
-					// 	return r + (center - d)
-					// }
-					// function totalItems() {
-					// 	let sum = 0
-					// 	for (let c = 0; c < WallpaperService.columns; c++) {
-					// 		sum += colRows(c)
-					// 	}
-					// 	return sum
-					// }
-
-					// model: totalItems()
-					// 	Behavior on model {
-					// 	NumberAnimation { duration: 150 }
-					// }
-					
-					// model: isHorizontal ?
-					// Math.ceil(filteredModel / WallpaperService.rows):
-					// Math.ceil(filteredModel / WallpaperService.columns)
+		
 
 					model: isHorizontal 
 					? Math.ceil((filteredModel) / Math.max(1, _rows))
 					: Math.ceil((filteredModel) / Math.max(1, _cols))
 				
-
-
-					// model: isHorizontal
-					// ? Math.ceil(filteredModel / Math.max(1, WallpaperService.rows))
-					// : Math.ceil(filteredModel / Math.max(1, WallpaperService.columns))
 					add: Transition {
 						NumberAnimation { property: "opacity"; duration: Style.animEnter; easing.type: Easing.OutCubic }
 						NumberAnimation { property: "scale"; duration: Style.animEnter; easing.type: Easing.OutCubic }
 					}
 
 					remove: Transition {
-						ParallelAnimation {
-							NumberAnimation { property: "opacity"; to: 0; duration: Style.animNormal; easing.type: Easing.InCubic }
-							NumberAnimation { property: "scale"; to: 0.9; duration: Style.animNormal; easing.type: Easing.InCubic }
-						}
+						NumberAnimation { property: "opacity"; to: 0; duration: Style.animNormal; easing.type: Easing.InCubic }
+						NumberAnimation { property: "scale"; to: 0.9; duration: Style.animNormal; easing.type: Easing.InCubic }
 					}
 
-					displaced: Transition {
-						NumberAnimation { properties: "x,y"; duration: Style.animMedium; easing.type: Easing.OutCubic }
-					}
-					// remove: Transition {
-					// 	NumberAnimation { property: "opacity"; to: 0; duration: Style.animNormal; easing.type: Easing.InCubic }
+					// displaced: Transition {
+					// 	NumberAnimation { properties: "x,y"; duration: Style.animMedium; easing.type: Easing.OutCubic }
 					// }
+				
 
 					delegate: Item {
 						id: hexDelegate
@@ -1738,53 +1556,22 @@ Scope {
 							if (flick.filteredModel <= 0) return 0
 							if (flick._contentWidth <= 0) return 0
 							if (flick._contentHeight <= 0) return 0
-							if (ready)  {
-								return 1 
-							}
-							else {
-							 	return 0
-							}
-
+							return ready ? 1 : 0
 						}
 
-						// Behavior on opacity { 
-						// NumberAnimation { 
-						// 	duration: 250; 
-						// 	easing.type: Easing.InOutQuad  
-						// }
-						// }
-						// property bool ready: 
-						// cardVisible && filteredModel > 0 && WatcherService.thumbsGenerated 
-						// Component.onCompleted: {
-						// 	ready = true
-						// }
-						// opacity: ready ? 1 : 0
-						// property bool allowAnim: true
-		
-						// NumberAnimation {
-						// 	id: hexDelegateFade
-						// 	target: hexDelegate
-						// 	property: "opacity"
-						// 	duration: 50
-						// 	easing.type: Easing.OutQuad
-						// 	onStarted: {
-						// 		hexDelegate.allowAnim = false
-						// 	}
-						// 	onStopped: {
-						// 		hexDelegate.allowAnim = true
-						// 	}
-						// }
+						readonly property real _hexCenterX: (x - flick.contentX) + width * 0.5
+						readonly property real _hexCenterY: (y - flick.contentY) + height * 0.5
+						// readonly property bool _nearLeft: _hexCenterX < flick.width / 2
 
-						// Component.onCompleted: {
-						// 	hexDelegateFade.start()
-						// }
+						// readonly property bool _insideView: _hexCenterX > -flick.effectiveCellStepX && _hexCenterX < flick.width + flick.effectiveCellStepX
+						// readonly property bool _nearEdge: _hexCenterX < flick._fadeZone || _hexCenterX> (flick.width - flick._fadeZone)
 						
-						// opacity: WatcherService.thumbsGenerated && allowAnim
-						//  ? 1 : 0
-						// opacity: allowAnim ? 1:0
-						// opacity: flick.listViewShown ? 1:0
-
-
+						// readonly property bool _visible: _insideView && !_nearEdge
+						// property real _hexScale: _visible ? 1 : 0
+						// Behavior on _hexScale { enabled: !flick._initialSnap; NumberAnimation { duration: Style.animExpand; easing.type: Easing.OutCubic }}
+						// readonly property bool _nearLeft: _colCenter < hexListView.width / 2
+						
+						
 						readonly property real _arcX: (x - flick.contentX) + width * 0.5
 						readonly property real _arcY: (y - flick.contentY) + height * 0.5
 						
@@ -1811,7 +1598,7 @@ Scope {
 								* flick._r
 								* _arcFactor
 						}
-
+					   readonly property bool _nearLeft: _hexCenterX < flick.width / 2
 						Repeater {
 							id: hexRepeater
 			
@@ -1833,53 +1620,76 @@ Scope {
 							
 							delegate: HexItem {
 								id: hexItem
-								// visible: flick.listViewShown
+							
 								controller: wallpaperController
 								property int hRowIndex: index
 								property int vColIndex: index
 
 								
-				
-								// property int flatIndex:
-								// Math.floor(hColIndex * WallpaperService.rows,
-								// vRowIndex * WallpaperService.columns) + index
-								// property int flatIdx: hexCol.colIdx * hexListView._rows + rowIdx
-								property int flatIndex: isHorizontal 
-								? hexDelegate.hColIndex * flick._rows + hRowIndex
-								: hexDelegate.vRowIndex * flick._cols + vColIndex
-								// property int flatIndex: isHorizontal
-								// ? hColIndex * WallpaperService.rows + index:	
-								// vRowIndex * WallpaperService.columns + index
-
-								property bool _isSelected: wallpaperController.currentIndex === flatIndex
-
 								
-									
-							
-
-								
-								readonly property real _hexCenterX: (baseX - flick.contentX) + width * 0.5
-								readonly property real _hexCenterY: (baseY - flick.contentY) + height * 0.5
-								readonly property bool _nearLeft: _hexCenterX < flick.width * 0.5
-								readonly property bool _nearTop: _hexCenterY < flick.height * 0.5
-								
+								// readonly property bool _nearTop: _hexCenterY < flick.height / 2
+								property real deadZone: 20
 								
 								property real itemCenterY: y + height * 0.5
 								property real viewCenterY: flick.contentY + flick.height * 0.5
+								property bool _nearTop: itemCenterY < viewCenterY - deadZone
 								
-									
+								property real itemCenterX: y + width * 0.5
+								property real viewCenterX: flick.contentX + flick.width * 0.5
+								// property bool _nearLeft: itemCenterX < viewCenterX - deadZone
 
+
+
+								property int flatIndex: isHorizontal 
+								? hexDelegate.hColIndex * flick._rows + hRowIndex
+								: hexDelegate.vRowIndex * flick._cols + vColIndex
+								
+								// property bool _inView: _visible
 								property bool _inView: isHorizontal
-								? (flatIndex >= flick.hStartIndex &&
-								flatIndex <  flick.hEndIndex)
+								? ((flatIndex >= flick.hStartIndex) &&
+								(flatIndex <  flick.hEndIndex))
 
 								: (flatIndex >= flick.vStartIndex &&
 								flatIndex <  flick.vEndIndex)
 
+								property bool _isSelected: flick.currentIndex === flatIndex
+
+								
+								
+								// readonly property real _colCenter: (x - flick.contentX) + width * 0.5
+								// readonly property bool _insideViewX: _colCenter > -flick._hexW && _colCenter < flick.width + flick._hexW
+
+								readonly property bool _insideViewX: _hexCenterX > -flick.hCellWidth && _hexCenterX < flick.width + flick.hCellWidth
+								readonly property bool _nearEdgeX: _hexCenterX < flick._fadeZone || _hexCenterX > (flick.width - flick._fadeZone)
+								// readonly property bool _nearLeft: _hexCenterX < flick.width / 2
+								
+
+				
+								// property real _hexScale: _inView ? 1 : Math.min(1, dist / flick._fadeZone)
+								
+								// property real dist:
+								// Math.min(_hexCenterX, flick.width - _hexCenterX)
+
+								// // opacity: Math.min(1, dist / flick._fadeZone)
+								// property real _hexScale: 0.8 + 0.2 * Math.min(1, dist / flick._fadeZone)
+								
+								
+								
+								
+								property real _hexScale: _inView ? 1 : 0
+								Behavior on _hexScale { enabled: flick.listViewShown; NumberAnimation { duration: Style.animExpand; easing.type: Easing.OutCubic } }
+								
+								
+								// property real itemCenterY: y + height * 0.5
+								// property real viewCenterY: flick.contentY + flick.height * 0.5
+								
+									
+								
+
 								
 								
 								property int rows: WallpaperService.rows
-								property int selIndex: wallpaperController.currentIndex
+								property int selIndex: flick.currentIndex
 				
 								
 
@@ -1909,9 +1719,9 @@ Scope {
 
 								property real hoverStr: 0.6
 								property real rippleStr: 1.0
+								property var _rippleH: flick.hRipple(dx, dy, sx, sy, rippleStr)
 
 								property var _hoverRippleH: flick.hRipple(hdx, hdy, hx, hy, hoverStr)
-								property var _rippleH: flick.hRipple(dx, dy, sx, sy, rippleStr)
 
 
 								property int columns: WallpaperService.columns
@@ -1934,10 +1744,8 @@ Scope {
 									hoveredIdx < flick.vStartIndex || hoveredIdx >= flick.vEndIndex
 
 
-								property int vHoveredIdx: wallpaperController.hoveredIndex
-
-								property int vhx: vHoveredIdx % columns
-								property int vhy: Math.floor(vHoveredIdx / columns)
+								property int vhx: hoveredIdx % columns
+								property int vhy: Math.floor(hoveredIdx / columns)
 
 								property int vhdx: vx - vhx
 								property int vhdy: vy - vhy
@@ -1951,16 +1759,27 @@ Scope {
 									
 								property int cols: WallpaperService.columns
 
-								// property real _hexScale: 0
-								property real _hexScale: _inView ? 1 : 0
-								Behavior on _hexScale { enabled: flick.listViewShown; NumberAnimation { duration: Style.animExpand; easing.type: Easing.OutCubic } }
+
+								
 								
 								scale: _hexScale
-
-								opacity: _hexScale < 0.01 ? 0 : 1
 								// opacity: _inView ? 1 : 0
-								Behavior on opacity { NumberAnimation { duration: Style.animNormal; easing.type: Easing.OutCubic } }
-								property real baseX: isHorizontal
+								// Behavior on opacity { 
+								// 	NumberAnimation { 
+								// 		duration: 350; 
+								// 		easing.type: Easing.InOutQuad 
+								// 	} 
+								// }
+								opacity: _hexScale < 0.01 ? 0 : 1
+								Behavior on opacity { 
+									enabled: !isHorizontal
+									NumberAnimation { 
+										duration: 350; 
+										easing.type: Easing.InOutQuad 
+									} 
+								}
+								// Behavior on opacity { NumberAnimation { duration: Style.animExpand; easing.type: Easing.OutCubic } }
+								viewX: isHorizontal
 									? flick.hOffset
 									: (((flick.width ? flick.width : 0) - flick.vGridWidth) / 2)
 										+ vColIndex * flick.effectiveCellStepX
@@ -1968,7 +1787,7 @@ Scope {
 											? flick.effectiveCellStepX / 2
 											: 0)
 
-								property real baseY: isHorizontal
+								viewY: isHorizontal
 									? (((flick.height ? flick.height : 0) - flick.hGridHeight) / 2)
 										+ hRowIndex * flick.effectiveCellStepY
 										+ (hexDelegate.hColIndex % 2
@@ -1976,10 +1795,10 @@ Scope {
 											: 0)
 									: flick.vOffset
 
-
-								viewX: baseX
+								
+								// viewX: baseX
 											
-								viewY: baseY
+								// viewY: baseY
 								
 								hArcOffset: isHorizontal ? _hArcOffset : 0
 								vArcOffset: isHorizontal ? 0: _vArcOffset
@@ -1987,28 +1806,6 @@ Scope {
 								shiftX: filteredModel > 0 ? flick.globalShiftX : 0
 								shiftY: filteredModel > 0 ? flick.globalShiftY : 0
 
-								// Behavior on shiftX {
-							
-								// 	NumberAnimation {
-									
-								// 		duration: 350
-								// 		easing.type: Easing.BezierSpline
-								// 		easing.bezierCurve: [0.25, 0.1, 0.25, 1.0]
-										
-								// 	}
-								// }
-
-								// Behavior on shiftY {
-							
-								// 	NumberAnimation {
-									
-								// 		duration: 350
-								// 		easing.type: Easing.BezierSpline
-								// 		easing.bezierCurve: [0.25, 0.1, 0.25, 1.0]
-										
-								// 	}
-								// }
-								// rowScale: _hexScale
 								container: flick
 								flickRef: flick
 
@@ -2025,33 +1822,55 @@ Scope {
 								nearLeft: _nearLeft
 								nearTop: _nearTop
 
+								property real normX: {
+									let c = flick.width * 0.5
+									return Math.max(-1, Math.min(1,
+										((x + width * 0.5) - c) / Math.max(1, c)
+									))
+								}
+
+								property real normY: {
+									let c = flick.height * 0.5
+									return Math.max(-1, Math.min(1,
+										((y + height * 0.5) - c) / Math.max(1, c)
+									))
+								}
+
 								innerParallaxX: {
-									var viewCenterX = flick.width * 0.5
-									var hexCenterX = x + width * 0.5
-
-									var normalized = (hexCenterX - viewCenterX) / Math.max(1, viewCenterX)
-									normalized = Math.max(-1, Math.min(1, normalized))
-
-									var falloff = 1.0 + Math.abs(normalized) * 0.2
-
-									return -normalized * flick._r * 0.45 * falloff
+									var f = 1.0 + Math.abs(normX) * 0.2
+									return -normX * flick._r * 0.45 * f
 								}
 
 								innerParallaxY: {
-									var viewCenterY = flick.height * 0.5
-									var hexCenterY = y + height * 0.5
+									var f = 1.0 + Math.abs(normY) * 0.2
+									return -normY * flick._r * 0.45 * f
+								}	
 
-									var normalized = (hexCenterY - viewCenterY) / Math.max(1, viewCenterY)
-									normalized = Math.max(-1, Math.min(1, normalized))
-
-									var falloff = 1.0 + Math.abs(normalized) * 0.2
-
-									return -normalized * flick._r * 0.45 * falloff
-								}
-				
 								// transformOrigin: {
 								// 	if (!flick.listViewShown) return Item.Center
-								// 	if (isHorizontal) return Item.Center
+						
+								// 	if(isHorizontal) {
+								// 		return hexDelegate._nearLeft ? Item.Left : Item.Right	
+								// 	} else {
+								// 		return Item.Center
+								// 	}
+							
+								// }					
+								transformOrigin: {
+									if (!flick.listViewShown) return Item.Center
+									// if (isSelected) return Item.Center
+
+									if (isHorizontal) {
+										return _nearLeft ? Item.Left : Item.Right
+									} else {
+										if (flick.scrollDirY < 0) {
+											return _nearTop ? Item.Top : Item.Bottom
+										} else {
+											return _nearTop ? Item.Bottom : Item.Top
+										}
+									}
+								}
+								// transformOrigin: {
 								// 	if (isSelected) return Item.Center
 								// 	if (flick.scrollDirY < 0) {
 								// 		// scroll up - original
@@ -2061,20 +1880,42 @@ Scope {
 								// 		return _nearTop ? Item.Bottom : Item.Top
 								// 	}
 								// }
-								
+
 								itemData: filteredWallpapers[flatIndex]
 								itemIndex: flatIndex
 								inView: _inView
-								clampDirX: flick.scrollDirX === 0 ? 1 : flick.scrollDirX
-								clampDirY: flick.scrollDirY === 0 ? 1 : flick.scrollDirY
+								// clampDirX: flick.scrollDirX === 0 ? 1 : flick.scrollDirX
+								// clampDirY: flick.scrollDirY === 0 ? 1 : flick.scrollDirY
 								
-							
 							}
-
-								
+	
 								
 						}
 					}
+									// innerParallaxX: {
+								// 	var viewCenterX = flick.width * 0.5
+								// 	var hexCenterX = x + width * 0.5
+
+								// 	var normalized = (hexCenterX - viewCenterX) / Math.max(1, viewCenterX)
+								// 	normalized = Math.max(-1, Math.min(1, normalized))
+
+								// 	var falloff = 1.0 + Math.abs(normalized) * 0.2
+
+								// 	return -normalized * flick._r * 0.45 * falloff
+								// }
+
+								// innerParallaxY: {
+								// 	var viewCenterY = flick.height * 0.5
+								// 	var hexCenterY = y + height * 0.5
+
+								// 	var normalized = (hexCenterY - viewCenterY) / Math.max(1, viewCenterY)
+								// 	normalized = Math.max(-1, Math.min(1, normalized))
+
+								// 	var falloff = 1.0 + Math.abs(normalized) * 0.2
+
+								// 	return -normalized * flick._r * 0.45 * falloff
+								// }
+							
 			}
 			
 	

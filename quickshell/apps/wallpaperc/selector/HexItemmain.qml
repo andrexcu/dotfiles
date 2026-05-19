@@ -47,9 +47,10 @@ Item {
     property var ripple
     property bool hasEntered: false
     property real rowScale
-    property real enterT: inView ? 0 : 1
-    property bool entering: scale < 1 && inView
-    
+    // property real enterT: inView ? 0 : 1
+    // property bool entering: scale < 1 && inView
+    property real enterT: 1 - scale
+property bool entering: scale > 0 && scale < 1
     function clamp(v) {
         return Math.sign(v) * Math.min(Math.abs(v), 2)
     }

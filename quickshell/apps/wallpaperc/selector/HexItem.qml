@@ -39,67 +39,62 @@ Item {
     property bool inView
     property bool isHovered: controller.hoveredIndex === itemIndex
     property bool isHoveredPrevious: controller.previousHoveredIndex === itemIndex
-    property bool isSelected: controller.currentIndex === itemIndex
+    property bool isSelected: flick.currentIndex === itemIndex
     property bool isPrevious: controller.previousIndex === itemIndex
+
     property real hexDir: controller.isHorizontal ? 1 : 0
-    Behavior on hexDir { 
-            NumberAnimation { duration: Style.animFast
-            easing.type: Easing.OutCubic
-			// 								easing.overshoot: 1.4
-            // easing.type: Easing.BezierSpline
-            // easing.bezierCurve: [0.2, 0.8, 0.2, 1.0]
-            // easing.bezierCurve: [0.22, 1.0, 0.36, 1.0]
-
-            }
-        }
-
-          // function n(i) {
-    //     var x = Math.sin(i * 12.9898 + seed) * 43758.5453
-    //     return x - Math.floor(x)
-    // }
-    property real expand: 0
-    property real shrink: 0.05
-
-    width: container.cellWidth - 10 
-								
-    height: container.cellHeight - 10
     
-    property real breakT: 1 - _hexScale
-
-Behavior on breakT {
-    NumberAnimation {
-        duration: Style.animExpand
+    Behavior on hexDir { 
+        NumberAnimation { duration: Style.animFast
         easing.type: Easing.OutCubic
+        }
     }
-}
 
-property real seed: index * 91.17
+  
 
-property real cx: width * 0.5
-property real cy: height * 0.5
 
-function n(i) {
-    var s = seed + i * 13.13
-    var x = Math.sin(s) * 43758.5453
-    return x - Math.floor(x)
-}
+    property real padding: container.cellWidth * 0.04
 
-function px(i) {
-    switch(i) {
-    case 0: return [0.5, 0.0]
-    case 1: return [1.0, 0.25]
-    case 2: return [1.0, 0.75]
-    case 3: return [0.5, 1.0]
-    case 4: return [0.0, 0.75]
-    case 5: return [0.0, 0.25]
-    }
-}
+    width: container.cellWidth - padding
+								
+    height: container.cellHeight - padding
+    
+//     property real breakT: 1 - _hexScale
 
-function toWorld(p) {
-    return hexItem.hexDir
-        ? [p[1] * width, p[0] * height]
-        : [p[0] * width, p[1] * height]
-}
+// Behavior on breakT {
+//     NumberAnimation {
+//         duration: Style.animExpand
+//         easing.type: Easing.OutCubic
+//     }
+// }
+
+// property real seed: index * 91.17
+
+// property real cx: width * 0.5
+// property real cy: height * 0.5
+
+// function n(i) {
+//     var s = seed + i * 13.13
+//     var x = Math.sin(s) * 43758.5453
+//     return x - Math.floor(x)
+// }
+
+    // function px(i) {
+    //     switch(i) {
+    //     case 0: return [0.5, 0.0]
+    //     case 1: return [1.0, 0.25]
+    //     case 2: return [1.0, 0.75]
+    //     case 3: return [0.5, 1.0]
+    //     case 4: return [0.0, 0.75]
+    //     case 5: return [0.0, 0.25]
+    //     }
+    // }
+
+    // function toWorld(p) {
+    //     return hexItem.hexDir
+    //         ? [p[1] * width, p[0] * height]
+    //         : [p[0] * width, p[1] * height]
+    // }
 
     property int currentScale
     property bool isHidden: false
@@ -129,7 +124,6 @@ function toWorld(p) {
     property bool entering: scale < 1 && inView
     
     
-    
     property real dirX: clampDirX
     property real dirY: clampDirY
 
@@ -137,25 +131,26 @@ function toWorld(p) {
     property bool nearTop: false
 
     property real phaseDirX:
-        entering ? dirX : -dirX
+        entering ? dirX : dirX
 
     property real phaseDirY:
         entering ? dirY : -dirY
 
-    property real hDir: nearLeft ? -1 : 1
-    property real vDir: nearTop ? -1 : 1
+    property real hDir: nearLeft ? -1 : -1
+    property real vDir: nearTop ? -1 : -1
 
-    property real layoutX: controller.isHorizontal
-        ? clamp(dx) * 36 * enterT * phaseDirX * hDir
-        : 0
+    // property real layoutX: controller.isHorizontal
+    //     ? clamp(dx) * 36 * enterT * phaseDirX * hDir
+    //     : 0
 
-    property real layoutY: !controller.isHorizontal
-        ? clamp(dy) * 36 * enterT * phaseDirY * vDir
-        : 0
-
+    // property real layoutY: !controller.isHorizontal
+    //     ? clamp(dy) * 36 * enterT * phaseDirY * vDir
+    //     : 0
+    property real layoutX: 0
+    property real layoutY: 0
 
     property bool hoverBlocked:
-    controller.hoveredIndex === controller.currentIndex
+    controller.hoveredIndex === flick.currentIndex
 
     property real viewX
     property real viewY
@@ -184,16 +179,16 @@ function toWorld(p) {
     property real targetY: viewY + layoutY + (entering ? 0 : ry)
        
     
-    property real animX: targetX
-    property real animY: targetY
+    // property real animX: targetX
+    // property real animY: targetY
 
-    x: animX + vArcOffset + shiftX
-    y: animY + hArcOffset + shiftY
+    x: targetX + vArcOffset + shiftX
+    y: targetY + hArcOffset + shiftY
 
     property bool allowAnim: true
     property bool snapHex: flick.listViewShown
     
-    Behavior on animX {
+    Behavior on targetX {
         enabled: snapHex && allowAnim
         NumberAnimation {
             duration: Style.animExpand
@@ -203,7 +198,7 @@ function toWorld(p) {
         }
     }
 
-    Behavior on animY {
+    Behavior on targetY {
         enabled: snapHex && allowAnim
         NumberAnimation {
             duration: Style.animExpand
@@ -288,7 +283,7 @@ function toWorld(p) {
     // Connections {
 	// 	target: Config.options.orientation
 	// 	function oncontroller.isHorizontalChanged() {
-	// 		wallpaperController.currentIndex = 0
+	// 		flick.currentIndex = 0
 			
 	// 		// if(controller.isHorizontal) {
 	// 		// 	flick.vOuterParallax()
@@ -353,7 +348,7 @@ function toWorld(p) {
     
     Shape {
         id: selectedHexBorder
-        // visible: false
+        visible: false
         // opacity: _inView && (isPrevious || isSelected || isHovered)
         //     ? Math.min(1, selectedHexBorder.t * 1.2)
         //     : 0
@@ -417,7 +412,7 @@ function toWorld(p) {
     onLeavingChanged: {
         if (!leaving) return
         animIn.stop()
-        animOut.from = 1
+        animOut.from = 0
         animOut.to = 0
         animOut.restart()
     }
@@ -589,8 +584,8 @@ function toWorld(p) {
     Shape {
         id: selectedDefaultBorder
         z: 10
-        visible: inView ? 1 : 0
-        // visible: false
+        // visible: inView ? 1 : 0
+        visible: false
      
 
         width: hexItem.width
@@ -754,7 +749,7 @@ function toWorld(p) {
 
 
     //     property bool moveLeft: {
-    //     var selected = controller.currentIndex
+    //     var selected = flick.currentIndex
     //     var totalCols = container.columns
     //     var selRow = Math.floor(selected / totalCols)
     //     var selCol = selected % totalCols
@@ -783,7 +778,7 @@ function toWorld(p) {
     // }
 
     // property bool moveRight: {
-    //     var selected = controller.currentIndex
+    //     var selected = flick.currentIndex
     //     var totalCols = container.columns
     //     var selRow = Math.floor(selected / totalCols)
     //     var selCol = selected % totalCols
@@ -812,7 +807,7 @@ function toWorld(p) {
     // }
 
     //     property int dirScore: {
-    //         var selected = controller.currentIndex
+    //         var selected = flick.currentIndex
     //         var cols = container.columns
 
     //         var sx = selected % cols
@@ -886,8 +881,8 @@ function toWorld(p) {
         Item {
         id: visualWrapper
   
-        width: hexItem.width
-        height: hexItem.height
+        width: parent.width
+        height: parent.height
         clip: true
         // rotation: isSelected ? 90:0
         // Behavior on rotation {
@@ -1007,7 +1002,7 @@ function toWorld(p) {
     //         WallpaperCacheService.thumbnailPaths[itemData] || ""
 
     //     property bool isSelected:
-    //         wallpaperController.currentIndex === itemIndex
+    //         flick.currentIndex === itemIndex
 
     //     source: WatcherService.thumbsGenerated
     //         ? "file://" + Config.cacheDir + "/" + thumbName
@@ -1032,7 +1027,7 @@ function toWorld(p) {
     //     layer.effect: MultiEffect {
     //         blurEnabled: true
 
-    //         blur: wallpaperController.currentIndex === itemIndex &&
+    //         blur: flick.currentIndex === itemIndex &&
     //             wallpaperController.blurTransition ? 1 : 0
 
     //         blurMax: 32
@@ -1053,196 +1048,393 @@ function toWorld(p) {
         // anchors.centerIn: parent
 
       
-  Item {
-    anchors.fill: parent
+//   Item {
+//     anchors.fill: parent
     
-    Image {
-        id: thumbImage
-        // visible: false
-        width: hexItem.width * 1.7
-        height: hexItem.height * 1.7
-        sourceSize.width: Math.ceil(Math.max(container.hCellWidth, container.vCellWidth) * 1.7)
-        sourceSize.height: Math.ceil(Math.max(container.hCellHeight, container.vCellHeight) * 1.7)
+//     Image {
+//         id: thumbImage
+//         // visible: false
+//         width: hexItem.width * 1.7
+//         height: hexItem.height * 1.7
+//         sourceSize.width: Math.ceil(Math.max(container.hCellWidth, container.vCellWidth) * 1.7)
+//         sourceSize.height: Math.ceil(Math.max(container.hCellHeight, container.vCellHeight) * 1.7)
 
-        // sourceSize.width: inView ? Math.ceil(thumbImage.width) : 0
-        // sourceSize.height: inView ? Math.ceil(thumbImage.height) : 0
-        // sourceSize.width: inView ? Math.ceil(hexItem.width * 1.7) : 0
-        // sourceSize.height: inView ? Math.ceil(hexItem.height * 1.7) : 0
-        // Behavior on width { NumberAnimation { duration: 150; } }
-        // Behavior on height { NumberAnimation { duration: 150 } }
-
-        property real visualX: hexItem.width / 2 - width / 2
-        property real visualY: hexItem.height / 2 - height / 2
+        // property real visualX: hexItem.width / 2 - width / 2
+        // property real visualY: hexItem.height / 2 - height / 2
         
-        x: inView ? visualX + innerParallaxX : 0
-        y: inView ? visualY + innerParallaxY : 0
-
+        // x: inView ? visualX + innerParallaxX : 0
+        // y: inView ? visualY + innerParallaxY : 0
         
-        // Behavior on visualX {
-        //     NumberAnimation {
-        //            duration: 150
-                    
-                
-        //         }
-        // }
-
-        // Behavior on visualY {
-        //     NumberAnimation {
-        //        duration: 150
+//         property string thumbName: WallpaperCacheService.thumbnailPaths[itemData] || ""
         
-        //     }
-        // }
+//         source: thumbName && WatcherService.thumbsGenerated
+//             ? "file://" + Config.cacheDir + "/" + thumbName
+//             : ""
+
+//         fillMode: Image.PreserveAspectCrop
+//         smooth: true
+//         asynchronous: false
+//         cache: false 
         
-        property string thumbName: WallpaperCacheService.thumbnailPaths[itemData] || ""
+//         property bool isSelected:
+//             flick.currentIndex === itemIndex
+
+
+//         scale: isSelected ? 1.1 : 1.0
+
+//         Behavior on scale {
+//             NumberAnimation {
+//                 duration: Style.animExpand
+//                 easing.type: Easing.BezierSpline
+//                 easing.bezierCurve: [0.22, 1.0, 0.36, 1.0]
+//             }
+//         }
+
+
+//         layer.enabled: true
+//         layer.effect: MultiEffect {
+//             blurEnabled: Config.options.effects.blur
+//             blur: (flick.currentIndex === itemIndex &&
+//              wallpaperController.blurTransition) ? 1 : 0
+//             blurMax: 32
+
+//             Behavior on blur {
+//                 NumberAnimation {
+//                     duration: Style.animFast
+//                     easing.type: Easing.InOutQuad
+//                 }
+//             }
+//         }
+//     }
+
+//     // source
+//     Image {
+//         id: grabImage
+//         anchors.fill: parent
+//         visible: false
+//         fillMode: Image.PreserveAspectCrop
+//         source:  thumbImage.thumbName
+//             ? "file://" + Config.cacheDir + "/" + thumbImage.thumbName
+//             : ""
+//     }
+
+//     // PIXEL OVERLAY
+//     Canvas {
+//         id: pixelCanvas
+//         anchors.fill: parent
+//         z: 10
+//         // visible: thumbImage.isSelected && Config.options.effects.pixel && inView
+//         visible: Config.options.effects.pixel
+//         opacity: visible && thumbImage.isSelected && Config.options.effects.pixel ? 1 : 0
+
+//         Behavior on opacity { 
+//             NumberAnimation { 
+//                 duration: Style.animNormal; 
+//                 easing.type: Easing.OutCubic 
+//             } 
+//         }
         
-        source: thumbName && WatcherService.thumbsGenerated
-            ? "file://" + Config.cacheDir + "/" + thumbName
-            : ""
+//         property var grabResult: null
+//         property real pixelSize: 1
 
-        fillMode: Image.PreserveAspectCrop
-        smooth: true
-        asynchronous: false
-        cache: false
-  
-     
-       
-        
-        property bool isSelected:
-            wallpaperController.currentIndex === itemIndex
+//         Behavior on pixelSize {
+//             NumberAnimation {
+//                 duration: Style.animEnter
+//                 easing.type: Easing.InOutQuad
+//             }
+//         }
 
+//         onPixelSizeChanged: requestPaint()
 
-        scale: isSelected ? 1.1 : 1.0
+//         onOpacityChanged: {
+//             if (!visible) {
+//                 grabResult = null
+//                 pixelSize = 1
+//                 return
+//             }
 
-        Behavior on scale {
-            NumberAnimation {
-                duration: Style.animExpand
-                easing.type: Easing.BezierSpline
-                easing.bezierCurve: [0.22, 1.0, 0.36, 1.0]
-            }
-        }
+//             // NEW: feature OFF → hard stop
+//             if (!Config.options.effects.pixel) {
+//                 grabResult = null
+//                 pixelSize = 1
+//                 return
+//             }
 
+//             if (grabResult !== null) return
+//             if (grabImage.status !== Image.Ready) return
 
+//            grabImage.grabToImage(function(res) {
+//                 grabResult = res
+
+//                 pixelSize = 1
+//                 requestPaint()
+
+//                 // IMPORTANT: next frame only
+//                 Qt.callLater(() => {
+//                     pixelSize = 10
+//                 })
+//             })
+//         }
+
+//         onPaint: {
+//             if (!grabResult) return
+
+//             var ctx = getContext("2d")
+//             var w = width
+//             var h = height
+//             var pixel = Math.max(1, pixelSize)
+
+//             ctx.clearRect(0, 0, w, h)
+
+//             // downscale
+//             ctx.drawImage(grabResult.url, 0, 0, w/pixel, h/pixel)
+
+//             // upscale blocky
+//             ctx.imageSmoothingEnabled = false
+//             ctx.drawImage(pixelCanvas,
+//                 0, 0, w/pixel, h/pixel,
+//                 0, 0, w, h)
+//         }
+//     }
+// }
+    Item {
+        id: hexMask
+        width: hexItem.width; height: hexItem.height
+        visible: false
         layer.enabled: true
-        layer.effect: MultiEffect {
-            blurEnabled: Config.options.effects.blur
-            blur: (wallpaperController.currentIndex === itemIndex &&
-             wallpaperController.blurTransition) ? 1 : 0
-            blurMax: 32
+        Shape {
+            anchors.fill: parent
+            antialiasing: true
+            preferredRendererType: Shape.CurveRenderer
+            ShapePath {
+                    fillColor: "white"
+                    strokeWidth: 0
 
-            Behavior on blur {
-                NumberAnimation {
-                    duration: Style.animFast
-                    easing.type: Easing.InOutQuad
+                    // P1
+                    PathMove {
+                        x: width * (0.5 - 0.25 * hexItem.hexDir)
+                        y: 0
+                    }
+
+                    // P2
+                    PathLine {
+                        x: width * (1 - 0.25 * hexItem.hexDir)
+                        y: height * (0.25 - 0.25 * hexItem.hexDir)
+                    }
+
+                    // P3
+                    PathLine {
+                        x: width
+                        y: height * (0.75 - 0.25 *hexItem.hexDir)
+                    }
+
+                    // P4
+                    PathLine {
+                        x: width * (0.5 + 0.25 * hexItem.hexDir)
+                        y: height
+                    }
+
+                    // P5
+                    PathLine {
+                        x: width * (0.25 * hexItem.hexDir)
+                        y: height * (0.75 + 0.25 * hexItem.hexDir)
+                    }
+
+                    // P6
+                    PathLine {
+                        x: 0
+                        y: height * (0.25 + 0.25 * hexItem.hexDir)
+                    }
+
+                    PathLine {
+                        x: width * (0.5 - 0.25 * hexItem.hexDir)
+                        y: 0
+                    }
+                }
+        }
+    }
+    
+Item {
+        id: imageContainer
+        anchors.fill: parent
+        // opacity: isSelected ? 0.6 : 1
+        // Behavior on opacity { NumberAnimation { duration: Style.animFast } }
+            Rectangle {
+                id: selectedOpacity
+                z: 99999
+                anchors.fill: parent
+                color: "#000000"
+                opacity: isSelected ? 0.6 : 0
+                Behavior on opacity { NumberAnimation { duration: Style.animFast } }
+                // Behavior on opacity { NumberAnimation { duration: Style.animNormal; easing.type: Easing.OutCubic  } }
+            }
+
+            Rectangle {
+                id: hexPlaceholder
+                anchors.centerIn: parent
+                width: hexItem.width * 1.7
+                height: hexItem.height * 1.7
+                color: Colors.primary
+                opacity: (thumbImage.status === Image.Ready && thumbImage.source != "") ? 0 : 0.08
+                Behavior on opacity { NumberAnimation { duration: Style.animNormal; easing.type: Easing.OutCubic } }
+                visible: opacity > 0
+
+                Text {
+                    anchors.centerIn: parent
+                    text: "\u{f0553}"
+                    font.family: Style.fontFamilyNerdIcons; font.pixelSize: 22
+                    color: Qt.rgba(1, 1, 1, 0.1)
+                    visible: thumbImage.status !== Image.Ready
                 }
             }
-        }
-    }
 
-    // source
-    Image {
-        id: grabImage
-        anchors.fill: parent
-        visible: false
-        fillMode: Image.PreserveAspectCrop
-        source:  thumbImage.thumbName
-            ? "file://" + Config.cacheDir + "/" + thumbImage.thumbName
-            : ""
-    }
-
-    // PIXEL OVERLAY
-    Canvas {
-        id: pixelCanvas
-        anchors.fill: parent
-        z: 10
-        // visible: thumbImage.isSelected && Config.options.effects.pixel && inView
-        visible: Config.options.effects.pixel
-        opacity: visible && thumbImage.isSelected && Config.options.effects.pixel ? 1 : 0
-
-        Behavior on opacity { 
-            NumberAnimation { 
-                duration: Style.animNormal; 
-                easing.type: Easing.OutCubic 
-            } 
-        }
+            Image {
+                id: thumbImage
+                width: hexItem.width * 1.7
+                height: hexItem.height * 1.7
+                property real visualX: hexItem.width / 2 - width / 2
+                property real visualY: hexItem.height / 2 - height / 2
+                
+                x: inView ? visualX + innerParallaxX : 0
+                y: inView ? visualY + innerParallaxY : 0
+                 property string thumbName: WallpaperCacheService.thumbnailPaths[itemData] || ""
         
-        property var grabResult: null
-        property real pixelSize: 1
+                source: thumbName && WatcherService.thumbsGenerated
+                    ? "file://" + Config.cacheDir + "/" + thumbName
+                    : ""
+                // source: hexItem.itemData && hexItem.itemData.thumb ? ImageService.fileUrl(hexItem.itemData.thumb) : ""
+                // property string thumbName:
+                // (itemData && itemData.filePath)
+                // ? WallpaperCacheService.thumbnailPaths[itemData] || ""
+                // : ""
 
-        Behavior on pixelSize {
-            NumberAnimation {
-                duration: Style.animEnter
-                easing.type: Easing.InOutQuad
-            }
-        }
-
-        onPixelSizeChanged: requestPaint()
-
-        onOpacityChanged: {
-            if (!visible) {
-                grabResult = null
-                pixelSize = 1
-                return
-            }
-
-            // NEW: feature OFF → hard stop
-            if (!Config.options.effects.pixel) {
-                grabResult = null
-                pixelSize = 1
-                return
+                // source: WatcherService.thumbsGenerated
+                //     ? "file://" + Config.cacheDir + "/" + thumbName
+                //     : ""
+                fillMode: Image.PreserveAspectCrop
+                smooth: true
+                asynchronous: true
+                cache: false
+                sourceSize.width: Math.ceil(hexItem.width * 1.3)
+                sourceSize.height: Math.ceil(hexItem.height)
+                opacity: status === Image.Ready ? 1 : 0
+                Behavior on opacity { NumberAnimation { duration: Style.animNormal; easing.type: Easing.OutCubic } }
             }
 
-            if (grabResult !== null) return
-            if (grabImage.status !== Image.Ready) return
-
-           grabImage.grabToImage(function(res) {
-                grabResult = res
-
-                pixelSize = 1
-                requestPaint()
-
-                // IMPORTANT: next frame only
-                Qt.callLater(() => {
-                    pixelSize = 10
-                })
-            })
-        }
-
-        onPaint: {
-            if (!grabResult) return
-
-            var ctx = getContext("2d")
-            var w = width
-            var h = height
-            var pixel = Math.max(1, pixelSize)
-
-            ctx.clearRect(0, 0, w, h)
-
-            // downscale
-            ctx.drawImage(grabResult.url, 0, 0, w/pixel, h/pixel)
-
-            // upscale blocky
-            ctx.imageSmoothingEnabled = false
-            ctx.drawImage(pixelCanvas,
-                0, 0, w/pixel, h/pixel,
-                0, 0, w, h)
-        }
+            layer.enabled: true
+            layer.smooth: true
+            layer.effect: MultiEffect {
+                maskEnabled: true
+                maskSource: hexMask
+                maskThresholdMin: 0.3
+                maskSpreadAtMin: 0.3
+            }
+            
     }
-}
 
-    
+    // Shape {
+    //     anchors.fill: parent
+    //     visible: hexItem.pulledOut
+    //     opacity: hexItem.pulledOut ? 1 : 0
+    //     Behavior on opacity { NumberAnimation { duration: Style.animFast } }
+    //     antialiasing: true
+    //     preferredRendererType: Shape.CurveRenderer
+    //     ShapePath {
+    //         fillColor: hexItem.colors ? Qt.rgba(hexItem.colors.primary.r, hexItem.colors.primary.g, hexItem.colors.primary.b, 0.08) : Qt.rgba(1,1,1,0.05)
+    //         strokeColor: hexItem.colors ? Qt.rgba(hexItem.colors.primary.r, hexItem.colors.primary.g, hexItem.colors.primary.b, 0.4) : Qt.rgba(1,1,1,0.2)
+    //         strokeWidth: 2
+    //         strokeStyle: ShapePath.DashLine
+    //         dashPattern: [4, 4]
+    //         startX: hexItem._cx + hexItem._r;                          startY: hexItem._cy
+    //         PathLine { x: hexItem._cx + hexItem._r * hexItem._sin30;  y: hexItem._cy - hexItem._r * hexItem._cos30 }
+    //         PathLine { x: hexItem._cx - hexItem._r * hexItem._sin30;  y: hexItem._cy - hexItem._r * hexItem._cos30 }
+    //         PathLine { x: hexItem._cx - hexItem._r;                   y: hexItem._cy }
+    //         PathLine { x: hexItem._cx - hexItem._r * hexItem._sin30;  y: hexItem._cy + hexItem._r * hexItem._cos30 }
+    //         PathLine { x: hexItem._cx + hexItem._r * hexItem._sin30;  y: hexItem._cy + hexItem._r * hexItem._cos30 }
+    //         PathLine { x: hexItem._cx + hexItem._r;                   y: hexItem._cy }
+    //     }
+    // }
 
+    Shape {
+        id: hexBorder
+        anchors.fill: parent
+        antialiasing: true
+        preferredRendererType: Shape.CurveRenderer
+        ShapePath {
+            fillColor: "transparent"
+                 strokeColor: hexItem.isSelected
+                ? Colors.primary
+                : Qt.rgba(0, 0, 0, 0.5)
+            strokeWidth: hexItem.isSelected ? 3 : 1.5
 
+            // P1
+            PathMove {
+                x: width * (0.5 - 0.25 * hexItem.hexDir)
+                y: 0
+            }
+
+            // P2
+            PathLine {
+                x: width * (1 - 0.25 * hexItem.hexDir)
+                y: height * (0.25 - 0.25 * hexItem.hexDir)
+            }
+
+            // P3
+            PathLine {
+                x: width
+                y: height * (0.75 - 0.25 *hexItem.hexDir)
+            }
+
+            // P4
+            PathLine {
+                x: width * (0.5 + 0.25 * hexItem.hexDir)
+                y: height
+            }
+
+            // P5
+            PathLine {
+                x: width * (0.25 * hexItem.hexDir)
+                y: height * (0.75 + 0.25 * hexItem.hexDir)
+            }
+
+            // P6
+            PathLine {
+                x: 0
+                y: height * (0.25 + 0.25 * hexItem.hexDir)
+            }
+
+            PathLine {
+                x: width * (0.5 - 0.25 * hexItem.hexDir)
+                y: 0
+            }
+        }
+        // ShapePath {
+        //     fillColor: "transparent"
+            // strokeColor: hexItem.isSelected
+            //     ? (hexItem.colors ? hexItem.colors.primary : Style.fallbackAccent)
+            //     : Qt.rgba(0, 0, 0, 0.5)
+        //     Behavior on strokeColor { ColorAnimation { duration: Style.animFast } }
+        //     strokeWidth: hexItem.isSelected ? 3 : 1.5
+        //     startX: hexItem._cx + hexItem._r;                          startY: hexItem._cy
+        //     PathLine { x: hexItem._cx + hexItem._r * hexItem._sin30;  y: hexItem._cy - hexItem._r * hexItem._cos30 }
+        //     PathLine { x: hexItem._cx - hexItem._r * hexItem._sin30;  y: hexItem._cy - hexItem._r * hexItem._cos30 }
+        //     PathLine { x: hexItem._cx - hexItem._r;                   y: hexItem._cy }
+        //     PathLine { x: hexItem._cx - hexItem._r * hexItem._sin30;  y: hexItem._cy + hexItem._r * hexItem._cos30 }
+        //     PathLine { x: hexItem._cx + hexItem._r * hexItem._sin30;  y: hexItem._cy + hexItem._r * hexItem._cos30 }
+        //     PathLine { x: hexItem._cx + hexItem._r;                   y: hexItem._cy }
+        // }
+    }
   
 
         
-        Rectangle {
-            anchors.fill: parent
-            visible: controller.cardVisible
-            color: "#000000"
-            opacity: isSelected ? 0.6 : 0
-            // visible: false
-            Behavior on opacity { NumberAnimation { duration: Style.animNormal; easing.type: Easing.OutCubic  } }
-        }
+        // Rectangle {
+        //     anchors.fill: parent
+        //     visible: controller.cardVisible
+        //     color: "#000000"
+        //     opacity: isSelected ? 0.6 : 0
+        //     // visible: false
+        //     Behavior on opacity { NumberAnimation { duration: Style.animNormal; easing.type: Easing.OutCubic  } }
+        // }
         // Rectangle {
         //     anchors.fill: parent
         //     visible: hexItem.controller.cardVisible
@@ -1301,65 +1493,15 @@ function toWorld(p) {
         // rotation: -visualWrapperRef.rotation
         // anchors.centerIn: parent
        
-       layer.effect: OpacityMask {
-        maskSource: Shape {
-        id: hexShape
+//        layer.effect: OpacityMask {
+//         maskSource: Shape {
+//         id: hexShape
         
-        width: hexItem.width
-        height: hexItem.height
-        preferredRendererType: Shape.CurveRenderer
-        antialiasing: true
-        
-        ShapePath {
-
-    fillColor: "white"
-    strokeWidth: 0
-
-    PathMove {
-        property var p: hexItem.toWorld(hexItem.px(0))
-        x: p[0]
-        y: p[1]
-    }
-
-    PathLine {
-        property var p: hexItem.toWorld(hexItem.px(1))
-        x: p[0]
-        y: p[1]
-    }
-
-    PathLine {
-        property var p: hexItem.toWorld(hexItem.px(2))
-        x: p[0]
-        y: p[1]
-    }
-
-    PathLine {
-        property var p: hexItem.toWorld(hexItem.px(3))
-        x: p[0]
-        y: p[1]
-    }
-
-    PathLine {
-        property var p: hexItem.toWorld(hexItem.px(4))
-        x: p[0]
-        y: p[1]
-    }
-
-    PathLine {
-        property var p: hexItem.toWorld(hexItem.px(5))
-        x: p[0]
-        y: p[1]
-    }
-
-    PathLine {
-        property var p: hexItem.toWorld(hexItem.px(0))
-        x: p[0]
-        y: p[1]
-    }
-}
-    }
-}
-// ShapePath {
+//         width: hexItem.width
+//         height: hexItem.height
+//         preferredRendererType: Shape.CurveRenderer
+//         antialiasing: true
+//         ShapePath {
 //                     fillColor: "white"
 //                     strokeWidth: 0
 
@@ -1404,6 +1546,10 @@ function toWorld(p) {
 //                         y: 0
 //                     }
 //                 }
+
+//     }
+// }
+
 
 
 
@@ -1667,8 +1813,8 @@ function toWorld(p) {
                 return
             }
             
-            controller.previousIndex = controller.currentIndex
-            controller.currentIndex = itemIndex
+            controller.previousIndex = flick.currentIndex
+            flick.currentIndex = itemIndex
             flickRef.forceActiveFocus() 
             // Qt.callLater(() => flickRef.forceActiveFocus())
         }
