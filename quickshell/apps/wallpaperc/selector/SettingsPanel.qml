@@ -116,25 +116,19 @@ ColumnLayout {
                         onPressed: Qt.callLater(() => searchBox.forceActiveFocus())
                     }
 
-                   onTextChanged: {
+                    onTextChanged: {
                     if (!WallpaperService || !WallpaperService.wallpapers)
                         return
 
                     let list = WallpaperService.wallpapers
+                    let query = text ? text.toLowerCase() : ""
 
-                    if (!text || text.length === 0) {
+                    if (!query || query.length === 0) {
                         filteredWallpapers = list
                     } else {
-
-                        let query = text.toLowerCase()
-
                         filteredWallpapers = list.filter(function(filePath) {
-
                             let fileName = filePath.split("/").pop()
-
-                            // remove extension
                             fileName = fileName.replace(/\.[^/.]+$/, "")
-
                             return fileName.toLowerCase().indexOf(query) !== -1
                         })
                     }
@@ -142,13 +136,60 @@ ColumnLayout {
                     if (!wallpaperController)
                         return
 
-                    wallpaperController.currentIndex = 0
+                    flick.cancelFlick()
 
-                    if (filteredWallpapers.length > 0)
-                        selectedWallpaper = filteredWallpapers[0]
+                    filteredWallpapersChanged()
 
-                    wallpaperController.requestFrame()
+                    Qt.callLater(() => {
+                        wallpaperController.currentIndex = 0
+                        flick.contentX = 0
+                        flick.contentY = 0
+
+                        flick.positionViewAtIndex(0, ListView.Beginning)
+
+                        if (filteredWallpapers.length > 0)
+                            selectedWallpaper = filteredWallpapers[0]
+
+                        wallpaperController.requestFrame()
+                    })
                 }
+                //    onTextChanged: {
+                //     if (!WallpaperService || !WallpaperService.wallpapers)
+                //         return
+
+                //     let list = WallpaperService.wallpapers
+
+                //     if (!text || text.length === 0) {
+                //         filteredWallpapers = list
+                //     } else {
+
+                //         let query = text.toLowerCase()
+
+                //         filteredWallpapers = list.filter(function(filePath) {
+
+                //             let fileName = filePath.split("/").pop()
+
+                //             // remove extension
+                //             fileName = fileName.replace(/\.[^/.]+$/, "")
+
+                //             return fileName.toLowerCase().indexOf(query) !== -1
+                //         })
+                //     }
+
+                //     if (!wallpaperController)
+                //         return
+
+                //     wallpaperController.currentIndex = 0
+                //     flick.cancelFlick()
+                //     flick.contentX = 0
+                //     flick.contentY = 0
+                        
+                      
+                //     if (filteredWallpapers.length > 0)
+                //         selectedWallpaper = filteredWallpapers[0]
+
+                //     wallpaperController.requestFrame()
+                // }
                 }
             }
         }
@@ -319,7 +360,7 @@ ColumnLayout {
                             WatcherService.wallpaperModel.folder = "file://" + newPath
 
                             wallpaperController.currentIndex = 0  
-
+                            
                            
                         }
 
@@ -333,13 +374,8 @@ ColumnLayout {
                                 pathTextBox.applyFilter()
                             }
                         }
-                       
                     }
                 }
             }
-
-          
-
-        
         }
     }

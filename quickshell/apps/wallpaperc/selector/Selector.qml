@@ -405,23 +405,18 @@ Scope {
 	// }
 	property bool _flipLock: false
 	Connections {
-    target: wallpaperController
+    target: flick
 	
     function onCurrentIndexChanged() {
 			if(Config.options.effects.blur) {
 				wallpaperController.blurTransition = true
 				imgBlurInTimer.restart()
 			}
-
-			
 			
 		}
-	// function onhoveredIndexChanged() {
-	// 	console.log("hovered: ", hoveredIndex)
-	// }
 	}
 	
-	property int hexRadius: 95
+	property int hexRadius: 90
 	Behavior on hexRadius { NumberAnimation { duration: Style.animExpand; easing.type: Easing.OutCubic } }
 	property int hexRows: WallpaperService.rows
 	property int hexCols: WallpaperService.columns
@@ -471,6 +466,7 @@ Scope {
         id: selectorPanel
 		objectName: "wallpaper-selector"
         screen: Quickshell.screens[0]
+			visible: wallpaperController.cardVisible
 		anchors {
 			top: true
 			bottom: true
@@ -501,10 +497,13 @@ Scope {
 			sequence: "Escape"
 			onActivated: {
 				wallpaperController.cardVisible = false
-				
-				WallpaperService.selectorQuit()
+				// flick.model = null
+				Qt.callLater(() => {
+					WallpaperService.selectorQuit()
+				})
 			}
 		}
+
 		DimOverlay {
 			active: wallpaperController.cardVisible
 			// active: false
@@ -541,6 +540,7 @@ Scope {
 	// width: paddingX
 	// height: flick.height + paddingY * 1.5
 	// Layout.fillWidth: true
+	
 	width: wallpaperController.cardWidth
 	height: wallpaperController.cardHeight
 	anchors.centerIn: parent
@@ -588,8 +588,8 @@ Scope {
 		}
 
 		onIsLoadingChanged: {
-			flick.globalShiftX = 0
-			flick.globalShiftY = 0
+			// flick.globalShiftX = 0
+			// flick.globalShiftY = 0
 			stateAnim.from = 0
 			stateAnim.to = 1
 			stateAnim.restart()
@@ -597,8 +597,8 @@ Scope {
 		}
 
 		onIsEmptyChanged: {
-			flick.globalShiftX = 0
-			flick.globalShiftY = 0
+			// flick.globalShiftX = 0
+			// flick.globalShiftY = 0
 			stateAnim.from = 0
 			stateAnim.to = 1
 			stateAnim.restart()
@@ -606,8 +606,8 @@ Scope {
 		}
 
 		onIsDoneChanged: {
-			flick.globalShiftX = 0
-			flick.globalShiftY = 0
+			// flick.globalShiftX = 0
+			// flick.globalShiftY = 0
 		}
 		
 		
@@ -758,7 +758,13 @@ Scope {
 	// 	clip: false
 		ListView {
 			id: flick
-			visible: wallpaperController.cardVisible
+			// anchors.top: cardContainer.top
+			// anchors.bottom: cardContainer.bottom
+			// anchors.topMargin: 20
+			// anchors.bottomMargin: 20
+			// anchors.left: cardContainer.left
+			// anchors.right: cardContainer.right
+			// visible: wallpaperController.cardVisible
 
 			anchors.horizontalCenter: cardContainer.horizontalCenter
 			anchors.verticalCenter: cardContainer.verticalCenter
@@ -772,13 +778,15 @@ Scope {
 			// anchors.right: cardContainer.right
 			property bool listViewShown: true
 			property bool _firstLoad: true
-			
-		Rectangle {
-			anchors.fill: parent
-			color: "transparent" 
-			border.color: "green"       
-			border.width: 1
-		}
+
+			Component.onDestruction: { flick.model = null }
+
+			Rectangle {
+				anchors.fill: parent
+				color: "transparent" 
+				border.color: "green"       
+				border.width: 1
+			}
 	
 			NumberAnimation {
 				id: listViewFade
@@ -789,8 +797,8 @@ Scope {
 
 				onStarted: {	
 					flick.listViewShown = false	
-					flick.globalShiftX = 0
-					flick.globalShiftY = 0
+					// flick.globalShiftX = 0
+					// flick.globalShiftY = 0
 				}
 
     			onStopped: {
@@ -823,18 +831,19 @@ Scope {
 				}
 			}
 
-
+			// reuseItems: true
 			orientation: isHorizontal 
 			? ListView.Horizontal : ListView.Vertical
-		
-
-			flickableDirection: isHorizontal
-			? Flickable.HorizontalFlick
-			: Flickable.VerticalFlick
+			flickableDirection: Flickable.AutoFlickDirection
+			cacheBuffer: isHorizontal ?
+			effectiveCellStepX * 2 : effectiveCellStepY * 2
+			// flickableDirection: isHorizontal
+			// ? Flickable.HorizontalFlick
+			// : Flickable.VerticalFlick
 
 			
-			Layout.fillHeight: true
-			Layout.fillWidth: true
+			// Layout.fillHeight: true
+			// Layout.fillWidth: true
 	
 			property real _r: wallpaperController.hexRadius
 			property real _gridSpacing: 6
@@ -1289,15 +1298,30 @@ Scope {
 					
 					
 					property real cellHeightFactor: 0.95
+					Behavior on cellHeightFactor {
+						NumberAnimation { duration: Style.animExpand; easing.type: Easing.OutCubic }
+					}
+
 					property real spacingYFactor: 0.8
+					Behavior on spacingYFactor {
+						NumberAnimation { duration: Style.animExpand; easing.type: Easing.OutCubic }
+					}
 
 					property real effectiveCellStepY:
 						hCellHeight * cellHeightFactor + spacingY * spacingYFactor
-					
 
 					property real cellWidthFactor: 0.95
+					Behavior on cellWidthFactor {
+						NumberAnimation { duration: Style.animExpand; easing.type: Easing.OutCubic }
+					}
+
 					property real spacingXFactor: 0.8
-					property real effectiveCellStepX: cellWidth * cellWidthFactor + spacingX * spacingXFactor
+					Behavior on spacingXFactor {
+						NumberAnimation { duration: Style.animExpand; easing.type: Easing.OutCubic }
+					}
+
+					property real effectiveCellStepX:
+						cellWidth * cellWidthFactor + spacingX * spacingXFactor
 					
 					
 
@@ -1419,6 +1443,18 @@ Scope {
 
 		highlightFollowsCurrentItem: false
 		highlightRangeMode: ListView.NoHighlightRange
+	//   highlightFollowsCurrentItem: true
+    //   highlightMoveDuration: Style.animExpand
+    //   highlight: Item {}
+    //   preferredHighlightBegin: (width - effectiveCellStepX) / 2
+    //   preferredHighlightEnd: (width + effectiveCellStepX) / 2
+    //   highlightRangeMode: ListView.StrictlyEnforceRange
+	  
+
+    //   header: Item { width: (flick.width - flick.effectiveCellStepX) / 2 }
+    //   footer: Item { width: (flick.width - flick.effectiveCellStepX) / 2 }
+	
+		// Keys.onEscapePressed: wallpaperController.cardVisible = false
 		Keys.onPressed: function(event) {
 			if(!flick.listViewShown) return
 
@@ -1443,7 +1479,6 @@ Scope {
 					Qt.callLater(() => {
 
 						smartScroll(i, oldIndex)
-
 					})
 					
 				}
@@ -1529,15 +1564,86 @@ Scope {
 					? Math.ceil((filteredModel) / Math.max(1, _rows))
 					: Math.ceil((filteredModel) / Math.max(1, _cols))
 				
+					populate: Transition {
+						NumberAnimation {
+							properties: "opacity,scale"
+							from: 0.92
+							to: 1
+							duration: Style.animExpand
+						
+							easing.type: Easing.BezierSpline
+							easing.bezierCurve: [0.25, 0.1, 0.25, 1.0]
+						}
+					}
+
 					add: Transition {
-						NumberAnimation { property: "opacity"; duration: Style.animEnter; easing.type: Easing.OutCubic }
-						NumberAnimation { property: "scale"; duration: Style.animEnter; easing.type: Easing.OutCubic }
+						ParallelAnimation {
+							PropertyAction { property: "opacity"; value: 0 }
+
+							NumberAnimation {
+								properties: "opacity"
+								from: 0
+								to: 1
+								duration: Style.animExpand
+								easing.type: Easing.OutCubic
+							}
+
+							NumberAnimation {
+								properties: "scale"
+								from: 0.94
+								to: 1
+								duration: Style.animExpand
+								easing.type: Easing.OutBack
+								easing.overshoot: 1.2
+							}
+						}
 					}
 
 					remove: Transition {
-						NumberAnimation { property: "opacity"; to: 0; duration: Style.animNormal; easing.type: Easing.InCubic }
-						NumberAnimation { property: "scale"; to: 0.9; duration: Style.animNormal; easing.type: Easing.InCubic }
+						ParallelAnimation {
+							NumberAnimation {
+								properties: "opacity"
+								to: 0
+								duration: Style.animNormal
+								easing.type: Easing.InCubic
+							}
+
+							NumberAnimation {
+								properties: "scale"
+								to: 0.96
+								duration: Style.animNormal
+								easing.type: Easing.InCubic
+							}
+						}
 					}
+
+					displaced: Transition {
+						NumberAnimation {
+							properties: "x,y"
+							duration: Style.animMedium
+							easing.type: Easing.OutCubic
+						}
+					}
+
+					addDisplaced: displaced
+					removeDisplaced: displaced
+					move: displaced
+					moveDisplaced: displaced
+
+				
+						
+
+				
+
+					// add: Transition {
+					// 	NumberAnimation { property: "opacity"; duration: Style.animEnter; easing.type: Easing.OutCubic }
+					// 	NumberAnimation { property: "scale"; duration: Style.animEnter; easing.type: Easing.OutCubic }
+					// }
+
+					// remove: Transition {
+					// 	NumberAnimation { property: "opacity"; to: 0; duration: Style.animNormal; easing.type: Easing.InCubic }
+					// 	NumberAnimation { property: "scale"; to: 0.9; duration: Style.animNormal; easing.type: Easing.InCubic }
+					// }
 
 					// displaced: Transition {
 					// 	NumberAnimation { properties: "x,y"; duration: Style.animMedium; easing.type: Easing.OutCubic }
@@ -1546,9 +1652,45 @@ Scope {
 
 					delegate: Item {
 						id: hexDelegate
-						
 						width: Math.min(flick._colStep, flick.width)
 						height: Math.min(flick._rowStep, flick.height)
+
+						
+						// SequentialAnimation {
+						// 	id: removeAnim
+
+						// 	PropertyAction {
+						// 		target: hexDelegate
+						// 		property: "ListView.delayRemove"
+						// 		value: true
+						// 	}
+
+						// 	ParallelAnimation {
+						// 		NumberAnimation {
+						// 			target: hexDelegate
+						// 			property: "opacity"
+						// 			to: 0
+						// 			duration: Style.animExpand
+						// 			easing.type: Easing.InCubic
+						// 		}
+
+						// 		NumberAnimation {
+						// 			target: hexDelegate
+						// 			property: "scale"
+						// 			to: 0.9
+						// 			duration: Style.animExpand
+						// 			easing.type: Easing.InCubic
+						// 		}
+						// 	}
+
+						// 	PropertyAction {
+						// 		target: hexDelegate
+						// 		property: "ListView.delayRemove"
+						// 		value: false
+						// 	}
+						// }
+
+						// ListView.onRemove: removeAnim.start()
 						property int hColIndex: index
 						property int vRowIndex: index
 						property bool ready: WatcherService.thumbsGenerated
@@ -1624,8 +1766,8 @@ Scope {
 								controller: wallpaperController
 								property int hRowIndex: index
 								property int vColIndex: index
-
-								
+								// property bool _currentItem: ListView.isCurrentItem
+								// currentItem: _currentItem
 								
 								// readonly property bool _nearTop: _hexCenterY < flick.height / 2
 								property real deadZone: 20
@@ -1677,7 +1819,29 @@ Scope {
 								
 								
 								property real _hexScale: _inView ? 1 : 0
-								Behavior on _hexScale { enabled: flick.listViewShown; NumberAnimation { duration: Style.animExpand; easing.type: Easing.OutCubic } }
+								// Behavior on _hexScale {
+								// 	enabled: flick.listViewShown
+
+								// 	SequentialAnimation {
+								// 		PauseAnimation {
+								// 			duration: flatIndex * 8
+								// 		}
+
+								// 		NumberAnimation {
+								// 			duration: Style.animExpand
+								// 			easing.type: Easing.OutCubic
+								// 		}
+								// 	}
+								// }
+								Behavior on _hexScale {
+									//  enabled: flick.listViewShown; 
+									 NumberAnimation { 
+										duration: Style.animExpand;
+										easing.type: Easing.OutCubic 
+										// easing.type: Easing.OutBack
+										// easing.overshoot: 1.4
+									} 
+								}
 								
 								
 								// property real itemCenterY: y + height * 0.5
@@ -1771,6 +1935,7 @@ Scope {
 								// 	} 
 								// }
 								opacity: _hexScale < 0.01 ? 0 : 1
+				
 								Behavior on opacity { 
 									enabled: !isHorizontal
 									NumberAnimation { 
