@@ -4,22 +4,14 @@
 exec 200>/tmp/wlogout.lock
 flock -n 200 || exit 0
 
-# Minimal environment for hotkeys/panel
-export DISPLAY=:0
-export XAUTHORITY=/run/user/1000/xauth_ZfjUVo   # adjust to your session
-export DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus
-export WAYLAND_DISPLAY=wayland-0
-
 # Path to single TXT file
 TXT_FILE="$HOME/.config/wlogout/images/current_image.txt"
 
 # Get current wallpaper
-WALLPAPER=$(qdbus org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.evaluateScript "
-var d = desktops()[0];
-d.currentConfigGroup = ['Wallpaper','org.kde.image','General'];
-print(d.readConfig('Image'));
-")
+WALLPAPER=$(awww query | awk -F'image: ' '/image:/ {print $2}')
+echo  $WALLPAPER
 WALLPAPER="${WALLPAPER#file://}"
+
 WAL_NAME="$(basename "$WALLPAPER")"
 
 # Wait for TXT file's first line to match current wallpaper
@@ -40,7 +32,7 @@ wait_for_blur() {
 }
 
 if wait_for_blur; then
-    wlogout
+    wlogout --buttons-per-row 5
 fi
 # while (( ITER < MAX_ITER )); do
 #     if [[ -f "$TXT_FILE" ]]; then

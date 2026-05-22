@@ -18,42 +18,62 @@ generate_thumbnail() {
         -gravity center -extent "${THUMB_WIDTH}x${THUMB_HEIGHT}" "$output"
 }
 
+# generate_menu() {
+#     mapfile -t wallpapers_list < <(
+#         find "$WALLPAPERS" -maxdepth 1 -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" \) | shuf
+#     )
+
+#     for img in "${wallpapers_list[@]}"; do
+#         fname=$(basename "$img")
+#         thumb="$CACHE_DIR/${fname%.*}.png"
+
+#         [[ -f "$thumb" ]] || generate_thumbnail "$img" "$thumb"
+#         # generate_thumbnail "$img" "$thumb"3
+#         # Use full path as the label so Rofi returns it directly
+#         printf '%s\0icon\x1f%s\n' "$img" "$thumb"
+#     done
+# }
+
+
 generate_menu() {
     mapfile -t wallpapers_list < <(
         find "$WALLPAPERS" -maxdepth 1 -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" \) | shuf
     )
 
     for img in "${wallpapers_list[@]}"; do
-        fname=$(basename "$img")
-        thumb="$CACHE_DIR/${fname%.*}.png"
+        fname=$(basename "$img")   # use basename for label/filter
+        fname=$(echo "$fname" | tr -cd '[:print:]') # sanitize
 
+        thumb="$CACHE_DIR/${fname%.*}.png"
         [[ -f "$thumb" ]] || generate_thumbnail "$img" "$thumb"
-        # generate_thumbnail "$img" "$thumb"3
-        # Use full path as the label so Rofi returns it directly
-         printf '%s\0icon\x1f%s\0full_path\x1f%s\n' "$fname" "$thumb" "$img"
+
+        # Give Rofi the basename as the label, full path is preserved for selection
+        # Null-separated with icon metadata
+        printf '%s\0icon\x1f%s\0full_path\x1f%s\n' "$fname" "$thumb" "$img"
     done
 }
 
 CONFIG2="$HOME/.config/rofi/wallpaper-config2.rasi"
 CONFIG1="$HOME/.config/rofi/wallpaper-config.rasi"
 
-SELECTED=$(generate_menu | rofi -dmenu \
+# Use the label (fname) only
+SELECTED_LABEL=$(generate_menu | rofi -dmenu \
     -no-layers \
     -no-lazy-grab \
     -i -p "Search" \
-    -config "$HOME/.config/rofi/wallpaper-config2.rasi")
+    -config "$CONFIG2")
 
-WAL_NAME=$(basename "$WALLPAPERS/$SELECTED")
+# Extract the full path corresponding to that label
+SELECTED_IMG=$(generate_menu | awk -v label="$SELECTED_LABEL" '
+BEGIN{RS="\0"} 
+$0 ~ label { 
+    match($0,/full_path\x1f([^\0]+)/,a); 
+    print a[1]; exit 
+}')
 
+~/Scripts/matugen.sh "$SELECTED_IMG"
 
-[[ -f "$WALLPAPERS/$SELECTED" ]] || { echo "Invalid wallpaper: $SELECTED"; exit 1; }
-
-
-# ~/Scripts/matugen.sh "$WALLPAPERS/$SELECTED" &
-~/Scripts/matugen.sh "$WALLPAPERS/$SELECTED" &>/dev/null &
-
-img=("$WALLPAPERS/$SELECTED")  # store as array
-# apply wallpaper
+img=("$SELECTED_IMG") 
 FPS=60
 TYPE="any"
 DURATION=1.4
@@ -66,11 +86,14 @@ AWWW_PARAMS=(
   --transition-bezier "$BEZIER"
 )
 
-awww img "${img[@]}" "${AWWW_PARAMS[@]}"
+awww img "${img[@]}" "${AWWW_PARAMS[@]}" &
 
 # awww img "${img[@]}" --transition-type any --transition-duration 1.75
 # --transition-type grow --transition-pos top-right
-~/Scripts/wlogout-sync.sh 
+~/Scripts/wlogout-sync.sh
+
+
+
 
 # # Path to the txt file
 TXT_FILE="$HOME/.config/wlogout/images/current_image.txt"

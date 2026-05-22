@@ -1,0 +1,248 @@
+#!/usr/bin/env bash
+
+SELECTED="$1"
+[[ -z "$SELECTED" ]] && exit 1
+# [[ -z "$SELECTED" ]] && { echo "Usage: $0 /path/to/wallpaper.png"; exit 1; }
+
+CACHE="$HOME/.cache/matugen"
+mkdir -p "$CACHE"
+INPUT_JSON="$CACHE/colors.json"
+
+OUTPUT_JSON="$CACHE/quickshell-colors.json"
+
+# Generate JSON palette
+# matugen image "$SELECTED" -j hex > "$INPUT_JSON"
+matugen image "$SELECTED" -j hex --source-color-index 0 > "$INPUT_JSON"
+# matugen image "$SELECTED" -j hex --source-color-index 0 > "$INPUT_JSON"
+# matugen image "$SELECTED" -j hex --source-color-index 0 --show-colors false > "$INPUT_JSON"
+
+jq '{
+  primary: .colors.primary.dark.color,
+  primaryLight: .colors.primary.default.color,
+  primaryText: .colors.on_primary.dark.color,
+  primaryContainer: .colors.primary_container.dark.color,
+  primaryContainerText: "#ffffff",
+  onPrimary: .colors.on_primary.dark.color,
+  secondary: .colors.secondary.dark.color,
+  secondaryText: .colors.on_secondary.dark.color,
+  secondaryContainer: .colors.secondary_container.dark.color,
+  secondaryContainerText: "#ffffff",
+  tertiary: .colors.tertiary.dark.color,
+  tertiaryText: .colors.on_tertiary.dark.color,
+  tertiaryContainer: .colors.tertiary_container.dark.color,
+  tertiaryContainerText: "#ffffff",
+  background: .colors.background.dark.color,
+  backgroundText: .colors.on_background.dark.color,
+  surface: .colors.surface.dark.color,
+  surfaceText: "#f7ddd9",
+  surfaceVariant: .colors.surface_variant.dark.color,
+  surfaceVariantText: "#e2beba",
+  surfaceContainer: .colors.surface_container.dark.color,
+  error: .colors.error.dark.color,
+  errorText: .colors.on_error.dark.color,
+  errorContainer: .colors.error_container.dark.color,
+  errorContainerText: "#ffdad6",
+  outline: .colors.outline.dark.color,
+  shadow: .colors.shadow.dark.color,
+  inverseSurface: .colors.inverse_surface.dark.color,
+  inverseSurfaceText: .colors.inverse_on_surface.dark.color,
+  inversePrimary: .colors.inverse_primary.dark.color
+}' "$INPUT_JSON" > "$OUTPUT_JSON"
+# Extract colors from JSON
+# BG=$(jq -r '.colors.background.dark' "$CACHE/colors.json")
+# FG=$(jq -r '.colors.on_background.dark' "$CACHE/colors.json")
+# ACC=$(jq -r '.colors.primary.dark' "$CACHE/colors.json")
+BG=$(jq -r '.colors.background.dark.color // "#000000"' "$CACHE/colors.json")
+FG=$(jq -r '.colors.on_background.dark.color // "#ffffff"' "$CACHE/colors.json")
+ACC=$(jq -r '.colors.primary.dark.color // "#ffffff"' "$CACHE/colors.json")
+
+# --- Extract colors from JSON ---
+# BG=$(jq -r '.colors.background // ""' "$CACHE/colors.json")
+# FG=$(jq -r '.colors.on_background // "#ffffff"' "$CACHE/colors.json")
+# ACC=$(jq -r '.colors.primary // ""' "$CACHE/colors.json")
+# Convert hex to RGB
+# hex2rgb() {
+#     local HEX=$1
+#     echo "$((16#${HEX:1:2})), $((16#${HEX:3:2})), $((16#${HEX:5:2}))"
+# }
+hex2rgb() {
+    local HEX=$1
+
+    # Trim whitespace
+    HEX="${HEX//[[:space:]]/}"
+
+    # Check if non-empty, starts with #, length is 7
+    if [[ -z "$HEX" || "${HEX:0:1}" != "#" || ${#HEX} -ne 7 ]]; then
+        echo "0, 0, 0"  # fallback to black
+        return
+    fi
+
+    # Convert to decimal
+    echo "$((16#${HEX:1:2})), $((16#${HEX:3:2})), $((16#${HEX:5:2}))"
+}
+
+# Convert RGB to rgba() string
+rgba() {
+    local RGB=$1
+    local ALPHA=$2
+    echo "rgba($RGB, $ALPHA)"
+}
+
+BG_RGB=$(hex2rgb "$BG")
+FG_RGB=$(hex2rgb "$FG")
+ACC_RGB=$(hex2rgb "$ACC")
+
+# Launcher colors
+BG_LAUNCHER=$(rgba "$BG_RGB" 0.85)
+FG_LAUNCHER=$(rgba "$FG_RGB" 1)
+ACC_LAUNCHER=$(rgba "$ACC_RGB" 0.1)
+
+# Wallpaper picker colors
+BG_T90=$(rgba "$BG_RGB" 0.9)
+BG_T40=$(rgba "$BG_RGB" 0.4)
+FG_T70=$(rgba "$FG_RGB" 0.7)
+ACC_T100=$(rgba "$ACC_RGB" 1)
+
+
+cat > "$CACHE/rofi-colors.rasi" <<EOF
+* {
+    /* App launcher */
+    bg: rgba($BG_RGB, 0.85);
+    bg-opaque: rgba($BG_RGB, 1);
+    fg: rgba($FG_RGB, 1);
+    acc: rgba($ACC_RGB, 0.1);
+
+    /* Wallpaper picker */
+    background-t90: rgba($BG_RGB, 0.9);
+    background-t80: rgba($BG_RGB, 0.8);
+    background-t75: rgba($BG_RGB, 0.75);
+    background-t70: rgba($BG_RGB, 0.7);
+    background-t60: rgba($BG_RGB, 0.6);
+    background-t40: rgba($BG_RGB, 0.4);
+    foreground-t70: rgba($FG_RGB, 0.7);
+    active: rgba($ACC_RGB, 1);
+}
+EOF
+
+# ACC_HEX="${ACC#"#"}"
+# BG_HEX="${BG#"#"}"
+
+# Alpha in hex (FF = 100%, 99 ≈ 60%)
+# ACTIVE_BORDER="0xFF$ACC_HEX"
+# INACTIVE_BORDER="0x99$BG_HEX"
+
+ACC_HEX="${ACC#"#"}"     
+ACTIVE_BORDER="0xFF$ACC_HEX"   
+cat > "$CACHE/hypr-colors.conf" <<EOF
+general {
+    col.active_border = $ACTIVE_BORDER
+}
+EOF
+
+hyprctl reload
+
+cat > "$CACHE/rofi-colors.css" <<EOF
+:root {
+    @define-color bg rgba($BG_RGB, 0.85);
+    @define-color fg rgba($FG_RGB, 1);
+    @define-color acc rgba($ACC_RGB, 0.3);
+
+    @define-color background_t90 rgba($BG_RGB, 0.9);
+    @define-color background_t80 rgba($BG_RGB, 0.8);
+    @define-color background_t75 rgba($BG_RGB, 0.75);
+    @define-color background_t70 rgba($BG_RGB, 0.7);
+    @define-color background_t60 rgba($BG_RGB, 0.6);
+    @define-color background_t50 rgba($BG_RGB, 0.4);
+    @define-color background_t40 rgba($BG_RGB, 0.4);
+
+    @define-color foreground_t70 rgba($FG_RGB, 0.7);
+    @define-color active rgba($ACC_RGB, 1);
+}
+EOF
+
+# wlogout
+
+STYLE="$HOME/.config/wlogout/style.css"
+
+cat > "$STYLE" <<EOF
+/* === Generated by matugen === */
+
+@define-color bg rgba($BG_RGB, 0.85);
+@define-color fg rgba($FG_RGB, 1);
+@define-color acc rgba($ACC_RGB, 0.3);
+
+@define-color background_t90 rgba($BG_RGB, 0.9);
+@define-color background_t80 rgba($BG_RGB, 0.8);
+@define-color background_t75 rgba($BG_RGB, 0.75);
+@define-color background_t70 rgba($BG_RGB, 0.7);
+@define-color background_t60 rgba($BG_RGB, 0.6);
+@define-color background_t50 rgba($BG_RGB, 0.4);
+@define-color background_t40 rgba($BG_RGB, 0.4);
+
+@define-color foreground_t70 rgba($FG_RGB, 0.7);
+@define-color active rgba($ACC_RGB, 1);
+
+
+/* === wlogout UI === */
+
+* {
+    font-size: 20px;
+    font-family: "Hurmit Nerd Font Mono";
+}
+
+window {
+    background-image: image(url("./images/wallpaper_blurred.png"));
+}
+
+button {
+    border-radius: 20px;
+    margin: 120px 8px ; /* top right bottom left */
+    color: @fg;
+    border-color: @fg;
+    background-color: @background_t50;
+    outline-style: none;
+    border-style: solid;
+    border-width: 0px;
+    background-size: 20%;
+    background-repeat: no-repeat;
+    background-position: center;
+    padding: 0px;
+    box-shadow: none;
+    text-shadow: none;
+}
+
+button:hover,
+button:focus {
+    background-color: transparent;
+    color: @fg;
+    background-size: 30%;
+    transition: all 0.3s cubic-bezier(.55,0.0,.28,1.682);
+}
+
+button span {
+    font-size: 1.2em;
+}
+
+
+#lock {
+    background-image: image(url("./icons/lock.png"));
+}
+
+#logout {
+    background-image: image(url("./icons/logout.png"));
+}
+
+#sleep {
+    background-image: image(url("./icons/sleep3.png"));
+}
+
+#shutdown {
+    background-image: image(url("./icons/power.png"));
+}
+
+#reboot {
+    background-image: image(url("./icons/restart.png"));
+}
+
+EOF
+
