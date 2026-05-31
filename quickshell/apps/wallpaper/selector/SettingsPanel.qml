@@ -10,8 +10,7 @@ import qs.colors
 
 ColumnLayout {
     id: settingsPanel
-    Layout.fillWidth: true
-    Layout.alignment: Qt.AlignHCenter
+    // anchors.top: flick.Bottom
     
 
     RowLayout {

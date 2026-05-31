@@ -207,16 +207,6 @@ property string setupCmd:
     // function onListThumbsExited() {
     //     let files = listThumbsCollector.text.trim().split("\n")
     //     let data = {}
-    //     for (let i = 0; i < files.length; i++) {
-    //         if (files[i].length > 0) data[files[i]] = true
-    //     }
-        
-    //     thumbData = data
-    //     console.log("Using thumbModel.count: " + WatcherService.thumbModel.count)
-    //     // check missing thumbnails
-    // }
-
-    // sibling process
 	property QtObject listThumbsProcess: Io.Process {
 		command: []
 		stdout: Io.StdioCollector { id: listThumbsCollector }
@@ -227,6 +217,16 @@ property string setupCmd:
 			}
 		}
 	}
+    //     for (let i = 0; i < files.length; i++) {
+    //         if (files[i].length > 0) data[files[i]] = true
+    //     }
+        
+    //     thumbData = data
+    //     console.log("Using thumbModel.count: " + WatcherService.thumbModel.count)
+    //     // check missing thumbnails
+    // }
+
+    // sibling process
     // onStarted: console.log("Generating thumbnails...")
     // property int thumbPid: -1
     // property bool ready: false

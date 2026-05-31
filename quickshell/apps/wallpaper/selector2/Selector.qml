@@ -879,6 +879,13 @@ Scope {
 
 								inView: flatIndex >= flick.startIndex &&
 										flatIndex < flick.endIndex
+								scale: hexCol._colScale
+								transformOrigin: hexCol._nearLeft ? Item.Left : Item.Right
+								opacity: hexCol._colScale < 0.01 ? 0 : 1
+								onHoverSelected: {
+								hexListView._selectedCol = hexCol.colIdx
+								hexListView._selectedRow = rowIdx
+								}
 							}
 						}
 					}
