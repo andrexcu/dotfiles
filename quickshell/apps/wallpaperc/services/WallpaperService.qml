@@ -127,188 +127,10 @@ QtObject {
         actions.applyWallpaper(chosen);
     }
 
-//    function makeKey(filePath) {
-//     let parts = filePath.split("/")
-
-//     let base = parts[parts.length - 1] || ""
-//     let folder = parts.length > 1 ? parts[parts.length - 2] : ""
-
-//     let name = base.split(".")[0]
-
-//     return folder ? (folder + "-" + name + ".png") : (name + ".png")
-// }
-
-// function startListingFromModel() {
-//     if (!WatcherService.wallpaperModel.count) {
-//         lastError = "No wallpapers found in " + Config.options.wallpaperDir
-//         NotificationService.show("Error", lastError, 0, "dialog-error")
-//         return
-//     }
-
-//     let processed = []
-//     let paths = {}
-
-//     for (let i = 0; i < WatcherService.wallpaperModel.count; i++) {
-
-//         let filePath = WatcherService.wallpaperModel.get(i, "filePath")
-//         if (!filePath) continue
-
-//         processed.push(filePath)
-
-//         paths[filePath] = makeKey(filePath)
-//     }
-
-//     wallpapers = shuffleArray(processed)
-
-//     WallpaperCacheService.thumbnailPaths = paths
-//     WallpaperCacheService.updateThumbs()
-// }
-
-    // function startListingFromModel() {
-    //     if (!WatcherService.wallpaperModel.count) {
-    //         lastError = "No wallpapers found in " + Config.options.wallpaperDir
-    //         NotificationService.show("Error", lastError, 0, "dialog-error")
-    //         return
-    //     }
-
-    //     let processed = []
-    //     let paths = {}
-
-    //     for (let i = 0; i < WatcherService.wallpaperModel.count; i++) {
-    //         let filename = WatcherService.wallpaperModel.get(i, "fileName")
-    //         if (filename.length > 0) {
-    //             processed.push(filename)
-
-    //             let parts = filename.split(".")
-    //             let baseName = parts.length > 1 ? parts.slice(0, -1).join(".") : filename
-    //             paths[filename] = baseName + ".png"
-    //         } 
-    //     }
-        
-    //     wallpapers = shuffleArray(processed)
-    //     WallpaperCacheService.thumbnailPaths = paths
-
-    //     WallpaperCacheService.updateThumbs()
-    // }
-
-    // function startListingFromModel() {
-    //     if (!WatcherService.wallpaperModel.count) {
-    //         lastError = "No wallpapers found in " + Config.options.wallpaperDir
-    //         NotificationService.show("Error", lastError, 0, "dialog-error")
-    //         return
-    //     }
-
-    //     let processed = []
-    //     let paths = {}
-
-    //     for (let i = 0; i < WatcherService.wallpaperModel.count; i++) {
-
-    //         let file = WatcherService.wallpaperModel.get(i, "filePath")
-    //         if (!file) continue
-
-    //         processed.push(file)
-
-    //         let hash = WallpaperCacheService.hashPath(file)
-
-    //         paths[file] = hash
-    //     }
-
-    //     wallpapers = shuffleArray(processed)
-
-    //     WallpaperCacheService.thumbnailPaths = paths
-
-    //     WallpaperCacheService.updateThumbs()
-    // }
-    // function relevantCount() {
-    //     let set = {}
-
-    //     for (let i = 0; i < WatcherService.thumbModel.count; i++) {
-    //         let name = WatcherService.thumbModel.get(i, "fileName")
-    //         set[name.replace("  -.png", "")] = true
-    //     }
-
-    //     let c = 0
-
-    //     for (let key in WallpaperCacheService.thumbnailPaths) {
-    //         let hash = WallpaperCacheService.thumbnailPaths[key]
-    //         if (set[hash]) c++
-    //     }
-
-    //     return c
-    // }
-
 function makeKey(fileName, fileSize) {
     let base = fileName.replace(/\.[^/.]+$/, "")
     return base + "_" + fileSize + ".png"
 }
-
-// property ListModel wallpapers: ListModel {}
-// function startListingFromModel() {
-
-//     const m = WatcherService.wallpaperModel
-//     const count = m.count
-//     if (!count) return
-
-//     let tmp = new Array(count)
-//     let paths = {}
-
-//     // faster loop (no dynamic push)
-//     for (let i = 0; i < count; i++) {
-
-//         const filePath = m.get(i, "filePath")
-//         const fileName = m.get(i, "fileName")
-//         const fileSize = m.get(i, "fileSize")
-
-//         if (!filePath || !fileName || fileSize === undefined)
-//             continue
-
-//         tmp[i] = {
-//             filePath,
-//             fileName,
-//             fileSize
-//         }
-
-//         paths[filePath] = makeKey(fileName, fileSize)
-//     }
-
-//     tmp = tmp.filter(x => x) // remove holes
-//     tmp = shuffleArray(tmp)
-
-//     // 🔥 FAST RESET (key improvement)
-//     wallpapers.clear()
-//     wallpapers.append(tmp)   // batch insert (IMPORTANT)
-
-//     WallpaperCacheService.thumbnailPaths = paths
-//     WallpaperCacheService.updateThumbs()
-// }
-
-// array
-// function startListingFromModel() {
-
-//     if (!WatcherService.wallpaperModel.count) return
-
-//     let processed = []
-//     let paths = {}
-
-//     for (let i = 0; i < WatcherService.wallpaperModel.count; i++) {
-
-//         let filePath = WatcherService.wallpaperModel.get(i, "filePath")
-//         let fileName = WatcherService.wallpaperModel.get(i, "fileName")
-//         let fileSize = WatcherService.wallpaperModel.get(i, "fileSize")
-
-//         if (!filePath || !fileName || fileSize === undefined) continue
-
-//         processed.push(filePath)
-
-//         paths[filePath] = makeKey(fileName, fileSize)   // 🔥 FIX
-//     }
-
-//     wallpapers = shuffleArray(processed)
-
-//     WallpaperCacheService.thumbnailPaths = paths
-//     WallpaperCacheService.updateThumbs()
-// }
-
 function startListingFromModel() {
 
     const m = WatcherService.wallpaperModel
@@ -339,8 +161,12 @@ function startListingFromModel() {
 
     wallpapers = shuffleArray(processed)
 
-    WallpaperCacheService.thumbnailPaths = paths
-    WallpaperCacheService.updateThumbs()
+    wallpapers = processed
+    Qt.callLater(() => {
+        WallpaperCacheService.thumbnailPaths = paths
+        WallpaperCacheService.updateThumbs()
+    })
+
 }
 
 
@@ -431,7 +257,10 @@ function relevantCount() {
             // WallpaperService.killAll()
             Qt.callLater(() => {
 
-            WallpaperCacheService.updateThumbs()
+         
+                WallpaperCacheService.rebuildThumbData()
+                WallpaperCacheService.updateThumbs()
+     
             })
         }
     }    

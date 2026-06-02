@@ -32,17 +32,17 @@ QtObject {
 
 
 
-    property Connections _thumbCon: Connections {
-        target: WatcherService.thumbModel       
+    // property Connections _thumbCon: Connections {
+    //     target: WatcherService.thumbModel       
 
-        function onCountChanged() {
+    //     function onCountChanged() {
 
-            // let current = WallpaperService.relevantCount()
-            // let total = WatcherService.wallpaperModel.count
-            console.log("thumbs updated:", current, "/", total)
+    //         // let current = WallpaperService.relevantCount()
+    //         // let total = WatcherService.wallpaperModel.count
+    //         console.log("thumbs updated:", current, "/", total)
             
-        }
-    }
+    //     }
+    // }
     
     property Connections _setupCon: Connections { 
 		target: WatcherService.wallpaperModel
@@ -56,7 +56,10 @@ QtObject {
 
 			if (m.count > 0) {
 				// lastError = ""
-				WallpaperService.startListingFromModel()
+				// WallpaperService.startListingFromModel()
+                Qt.callLater(() => {
+                    WallpaperService.startListingFromModel()
+                })
 				// wallpaperController.requestFrame()
 			} else {
 				// lastError = "No wallpapers found in " + Config.options.wallpaperDir

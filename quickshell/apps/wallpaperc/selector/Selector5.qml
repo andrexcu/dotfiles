@@ -1520,8 +1520,8 @@ Scope {
       preferredHighlightBegin: (width - _hexW) / 2
       preferredHighlightEnd: (width + _hexW) / 2
 	  highlightFollowsCurrentItem: true
-      header: Item { width: (hexListView.width - hexListView._hexW) / 2 }
-      footer: Item { width: (hexListView.width - hexListView._hexW) / 2 }
+      header: Item { width: (flick.width - flick._hexW) / 2 }
+      footer: Item { width: (flick.width - flick._hexW) / 2 }
 	  
 
 // 	// property real shift: (flick._hexW - flick._colStep) / 2

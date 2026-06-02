@@ -5,6 +5,8 @@ import qs
 import qs.services
 import Quickshell.Io as Io
 import Qt.labs.folderlistmodel
+import Quickshell.Io
+
 QtObject {
     id: wallpaperCacheService
 
@@ -126,16 +128,6 @@ property string setupCmd:
 
     property var thumbnailPaths: ({})
     property bool forceRescan: false
-
-
-   Component.onCompleted: {
-    const t = thumbData || {}
-    const k = Object.keys(t)[0]
-
-    console.log("thumb sample:", k)
-    console.log("path sample:", Object.keys(thumbnailPaths || {})[0])
-}
-
     // function updateThumbs() {
 
     //     if (thumbsGenerating && !forceRescan)
@@ -170,97 +162,41 @@ property string setupCmd:
     // }
 
     // function rebuildThumbData() {
-    //     let data = {}
+    //     let data = new Set()
 
     //     let m = WatcherService.thumbModel
     //     for (let i = 0; i < m.count; i++) {
-    //         let name = m.get(i, "fileName")
-    //         data[name] = true
+    //         data.add(m.get(i, "fileName"))
     //     }
 
     //     thumbData = data
-        // console.log("thumb count:", WatcherService.thumbModel.count)
     // }
-
-    // function rebuildThumbData() {
-    //     let data = {}
-
-    //     let m = WatcherService.wallpaperModel   // NOT thumbModel
-             
-    //     for (let i = 0; i < m.count; i++) {
-    //         let filePath = m.get(i, "filePath")
-    //         let fileName = filePath.split("/").pop()
-    //         data[fileName] = true
-    //     }
-
-    //     thumbData = data
-    //      console.log("thumb count:", WatcherService.wallpaperModel.count)
-    // }
-
-    function rebuildThumbData() {
+    function updateThumbs() {
+        pendingUpdate = false
         let data = {}
-
-        let m = WatcherService.wallpaperModel
-        let count = m.count
-
-        for (let i = 0; i < count; i++) {
-            let filePath = m.get(i, "filePath")
-
-            let slash = filePath.lastIndexOf("/")
-            let fileName = slash >= 0 ? filePath.substring(slash + 1) : filePath
-
-            data[fileName] = true
+        for (var i = 0; i < WatcherService.thumbModel.count; i++) {
+            let name = WatcherService.thumbModel.get(i, "fileName")
+            data[name] = true
         }
 
         thumbData = data
-    }
 
-    function updateThumbs() {
-        if (!thumbData) return
-
+        // check for missing thumbnails
         let allExist = true
-
         for (let key in thumbnailPaths) {
             if (!thumbData[thumbnailPaths[key]]) {
                 allExist = false
                 break
             }
         }
-
+        
         if (!allExist && !thumbnailProcess.running) {
+            // console.log("Missing thumbnails, generating...")
             thumbnailProcess.exec(["sh", "-c", setupCmd])
+        } else {
+            console.log("All thumbnails exist, skipping generation")
         }
     }
-
-    property Connections _thumbCon: Connections {
-        target: WatcherService.thumbModel
-
-        function onStatusChanged() {
-            if (target.status !== FolderListModel.Ready)
-                return
-
-            Qt.callLater(() => {
-                rebuildThumbData()
-                updateThumbs()
-            })
-        }
-            // function onCountChanged() {
-            //     Qt.callLater(() => {
-            //         rebuildThumbData()
-            //         updateThumbs()
-            //     })
-            // }
-
-            // function onStatusChanged() {
-            //     if (target.status === FolderListModel.Ready) {
-            //         rebuildThumbData()
-            //         updateThumbs()
-            //     }
-            // }
-            
-    }
-  
-   
 
    function onListThumbsExited() {
     let files = listThumbsCollector.text.trim().split("\n")
@@ -308,11 +244,9 @@ property string setupCmd:
                 return
 
             Qt.callLater(() => {
-                rebuildThumbData()
+                
                 updateThumbs()
-                thumbsGenerating = false 
-                // updateThumbs()
-                // thumbsGenerating = false
+                thumbsGenerating = false
                 
                  
             })

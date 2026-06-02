@@ -56,9 +56,9 @@ Item {
 
     property real padding: container.cellWidth * 0.04
 
-    width: container._hexW - padding
+    width: container.cellWidth - padding
 								
-    height: container._hexH - padding
+    height: container.cellHeight - padding
     
 //     property real breakT: 1 - _hexScale
 
@@ -139,65 +139,41 @@ Item {
     property bool nearLeft: false
     property bool nearTop: false
 
-    // property real visualScale:
-    property bool hovered: mouseArea.containsMouse
-    // property real realScale:
-    // isSelected ? 1.1 :
-    // (hovered ? 1.06 : 1)
-	property real itemLeft: x
-    property real itemRight: x + flick._hexW * 0.6
-    
-  
+    // property real phaseDirX:
+    //     entering ? dirX : dirX
 
-    property real realScale:
-    isSelected ? 1.1 : 1
+    // property real phaseDirY:
+    //     entering ? dirY : -dirY
 
-    property real _hexScale: _inView ? realScale : 0
+    // property real hDir: nearLeft ? -1 : -1
+    // property real vDir: nearTop ? -1 : -1
 
-    scale: _hexScale
-    opacity: scale < 0.01 ? 0 : 1
+    // property real layoutX: controller.isHorizontal
+    //     ? clamp(dx) * 36 * enterT * phaseDirX * hDir
+    //     : 0
 
-    Behavior on scale {  NumberAnimation { duration: Style.animExpand; easing.type: Easing.OutCubic }}
-    //  Behavior on realScale {					
-    //     NumberAnimation {
-    //         duration: 250
-    //         easing.type: Easing.BezierSpline
-    //         easing.bezierCurve: [0.25, 0.1, 0.25, 1.0]
-            
-    //     }
-
-    // }
-    // Behavior on scale {					
-    //     NumberAnimation {
-    //         duration: 250
-    //         easing.type: Easing.BezierSpline
-    //         easing.bezierCurve: [0.25, 0.1, 0.25, 1.0]
-            
-    //     }
-
-    // }
-
-
-
+    // property real layoutY: !controller.isHorizontal
+    //     ? clamp(dy) * 36 * enterT * phaseDirY * vDir
+    //     : 0
     property real layoutX: 0
     property real layoutY: 0
 
     property bool hoverBlocked:
-    controller.hoveredIndex === wallpaperController.currentIndex
+    controller.hoveredIndex === flick.currentIndex
 
     property real viewX
     property real viewY
 
-    property real horizontalRippleX: (rippleOffH ? 0 : rippleH.x)
-        //  + (hoverRippleOffH || hoverBlocked ? 0 : hoverRippleH.x))
-    property real verticalRippleX:(rippleOffV ? 0 : rippleV.x)
-        //  + (hoverRippleOffV || hoverBlocked ? 0 : hoverRippleV.x))
+    property real horizontalRippleX: ((rippleOffH ? 0 : rippleH.x)
+         + (hoverRippleOffH || hoverBlocked ? 0 : hoverRippleH.x))
+    property real verticalRippleX:((rippleOffV ? 0 : rippleV.x)
+         + (hoverRippleOffV || hoverBlocked ? 0 : hoverRippleV.x))
 
-    property real horizontalRippleY:(rippleOffH ? 0 : rippleH.y)
-        //  + (hoverRippleOffH || hoverBlocked ? 0 : hoverRippleH.y))
+    property real horizontalRippleY:((rippleOffH ? 0 : rippleH.y)
+         + (hoverRippleOffH || hoverBlocked ? 0 : hoverRippleH.y))
 
-    property real verticalRippleY: (rippleOffV ? 0 : rippleV.y)
-        //  + (hoverRippleOffV || hoverBlocked ? 0 : hoverRippleV.y))
+    property real verticalRippleY: ((rippleOffV ? 0 : rippleV.y)
+         + (hoverRippleOffV || hoverBlocked ? 0 : hoverRippleV.y))
 
     property real t: controller.isHorizontal ? 1 : 0
     property real rx: mix(verticalRippleX, horizontalRippleX, t)
@@ -207,57 +183,36 @@ Item {
         return a*(1-t) + b*t
     }
     
-    property real targetX: viewX + rx
-    property real targetY: viewY + ry
+    property real targetX: viewX + layoutX + rx
+      
+    property real targetY: viewY + layoutY + ry
        
     
     // property real animX: targetX
     // property real animY: targetY
 
-    // property real baseX: targetX + vArcOffset 
-    // property real baseY: targetY + hArcOffset 
+    x: targetX + vArcOffset + shiftX
+    y: targetY + hArcOffset + shiftY
 
-    x: targetX
-    y: targetY
-    
     property bool allowAnim: true
     property bool snapHex: flick.listViewShown
     property bool targetXanim: false
-    
-    // Behavior on shiftX {
-    //     // enabled: snapHex && allowAnim
-    //     NumberAnimation {
-    //         duration: Style.animNormal
-    //         easing.type: Easing.BezierSpline
-    //         easing.bezierCurve: [0.25, 0.1, 0.25, 1.0]
-    //         // onRunningChanged: {
-    //         //     hexItem.targetXanim = running
-    //         //     console.log(hexItem.targetXanim)
-    //         // }
-
-    //     }
-    // }
-
-    // Behavior on shiftY {
-    //     // enabled: snapHex && allowAnim
-    //     NumberAnimation {
-    //         duration: Style.animExpand
-    //         easing.type: Easing.BezierSpline
-    //         easing.bezierCurve: [0.25, 0.1, 0.25, 1.0]
-    //     }
-    // }
-
-    Behavior on x {
-        // enabled: allowAnim
+    Behavior on targetX {
+        enabled: snapHex && allowAnim
         NumberAnimation {
             duration: Style.animNormal
             easing.type: Easing.BezierSpline
             easing.bezierCurve: [0.25, 0.1, 0.25, 1.0]
+            // onRunningChanged: {
+            //     hexItem.targetXanim = running
+            //     console.log(hexItem.targetXanim)
+            // }
+
         }
     }
 
-    Behavior on y {
-        // enabled: allowAnim
+    Behavior on targetY {
+        enabled: snapHex && allowAnim
         NumberAnimation {
             duration: Style.animExpand
             easing.type: Easing.BezierSpline
@@ -295,14 +250,14 @@ Item {
     // flickRef.baseY(itemIndex)
     // + (entering ? 0 : (hoverRippleOff ? 0 : hoverRipple.y))
 
-    // property real hexRadius: 90
+    property real hexRadius: 90
 
 
-    // readonly property real _r: hexRadius
-    // readonly property real _cx: _r
-    // readonly property real _cy: height / 2
-    // readonly property real _cos30: 0.866025
-    // readonly property real _sin30: 0.5
+    readonly property real _r: hexRadius
+    readonly property real _cx: _r
+    readonly property real _cy: height / 2
+    readonly property real _cos30: 0.866025
+    readonly property real _sin30: 0.5
   
     
   
@@ -341,7 +296,7 @@ Item {
     // Connections {
 	// 	target: Config.options.orientation
 	// 	function oncontroller.isHorizontalChanged() {
-	// 		wallpaperController.currentIndex = 0
+	// 		flick.currentIndex = 0
 			
 	// 		// if(controller.isHorizontal) {
 	// 		// 	flick.vOuterParallax()
@@ -404,7 +359,234 @@ Item {
     //  strokeColor: "#FAF9F6"
     property bool _visibleState: true
     
+    Shape {
+        id: selectedHexBorder
+        visible: false
+        // opacity: _inView && (isPrevious || isSelected || isHovered)
+        //     ? Math.min(1, selectedHexBorder.t * 1.2)
+        //     : 0
+        property bool showBorder: 
+        entering && isSelected
+
+        opacity: showBorder ? 1 : 0
+        
+        scale: visualWrapperRef.visualScale
+
+        Behavior on scale {
+            NumberAnimation {
+                // duration: Style.animExpand
+                duration: Style.animNormal
+                easing.type: Easing.OutCubic
+                // easing.type: Easing.BezierSpline
+                // easing.bezierCurve: [0.25, 0.1, 0.25, 1.0]
+            }
+        }
+        width: hexItem.width
+        height: hexItem.height
+
+        z: 9999
+
+        property real t: 0
+        property real tt: Math.min(1, selectedHexBorder.t * 1.2)
+
+        property bool active:showBorder
+        property bool leaving: (isPrevious) && !isSelected
+
+        preferredRendererType: Shape.CurveRenderer
+        antialiasing: true
+
+        // ======================
+        // ANIMATION DRIVER
+        // ======================
+
+    NumberAnimation {
+        id: animIn
+        target: selectedHexBorder
+        property: "t"
+        duration: 300
+        easing.type: Easing.BezierSpline
+        easing.bezierCurve: [0.25, 0.1, 0.25, 1.0]
+        }
+
+        NumberAnimation {
+            id: animOut
+            target: selectedHexBorder
+            property: "t"
+            duration: 600 // different
+            easing.type: Easing.InOutQuad
+        }
+
+    onActiveChanged: {
+        if (!active) return
+        animOut.stop()
+        animIn.from = 0
+        animIn.to = 1
+        animIn.restart()
+    }
+
+    onLeavingChanged: {
+        if (!leaving) return
+        animIn.stop()
+        animOut.from = 0
+        animOut.to = 0
+        animOut.restart()
+    }
+
+        // ======================
+        // PATHS (ALL USE SELECTEDHEX)
+        // ======================
+    ShapePath {
+        strokeWidth: isSelected ? 2 : 1.125
+        strokeColor: Colors.primary
+        fillColor: "transparent"
+
+        PathMove {
+            x: controller.isHorizontal ? 0 : width * 0.5
+            y: controller.isHorizontal ? height * 0.5 : 0
+        }
+
+        PathLine {
+            x: controller.isHorizontal
+                ? width * (0.25 * selectedHexBorder.tt)
+                : width * 0.5 - (width * 0.5) * selectedHexBorder.t
+
+            y: controller.isHorizontal
+                ? height * (0.5 - 0.5 * selectedHexBorder.tt)
+                : height * (0.25 * selectedHexBorder.t)
+        }
+    }
+
+    ShapePath {
+        strokeWidth: (isSelected) ? 2 : 1.125
+        strokeColor: Colors.primary
+        fillColor: "transparent"
+
+        PathMove {
+            x: controller.isHorizontal ? width : width * 0.5
+            y: controller.isHorizontal ? height * 0.5 : height
+        }
+
+        PathLine {
+            x: controller.isHorizontal
+                ? width - width * (0.25 * selectedHexBorder.tt)
+                : width * 0.5 + (width * 0.5) * selectedHexBorder.t
+
+            y: controller.isHorizontal
+                ? height * (0.5 - 0.5 * selectedHexBorder.tt)
+                : height - (height * 0.25 * selectedHexBorder.t)
+        }
+    }
+
+    ShapePath {
+        strokeWidth: (isSelected || isHovered) ? 2 : 1.125
+        strokeColor: Colors.primary
+        fillColor: "transparent"
+
+        PathMove {
+            x: controller.isHorizontal ? width * 0.25 : 0
+            y: controller.isHorizontal ? 0 : height * 0.25
+        }
+
+        PathLine {
+            x: controller.isHorizontal
+                ? width * (0.25 + 0.5 * selectedHexBorder.t)
+                : 0
+
+            y: controller.isHorizontal
+                ? 0
+                : height * (0.25 + 0.5 * selectedHexBorder.tt)
+        }
+    }
+
+    ShapePath {
+        strokeWidth: (isSelected || isHovered) ? 2 : 1.125
+        strokeColor: Colors.primary
+        fillColor: "transparent"
+
+        PathMove {
+            x: controller.isHorizontal ? width * 0.25 : width
+            y: controller.isHorizontal ? height : height * 0.75
+        }
+
+        PathLine {
+            x: controller.isHorizontal
+                ? width * (0.25 + 0.5 * selectedHexBorder.t)
+                : width
+
+            y: controller.isHorizontal
+                ? height
+                : height * (0.75 - 0.5 * selectedHexBorder.tt)
+        }
+    }
+
+    ShapePath {
     
+        strokeWidth: (isSelected || isHovered) ? 2 : 1.125
+        strokeColor: controller.isHorizontal ? Colors.primary : "transparent"
+        fillColor: "transparent"
+
+        PathMove {
+            x: 0
+            y: height * 0.5
+        }
+
+        PathLine {
+            x: width * (0.25 * selectedHexBorder.tt)
+            y: height * (0.5 + 0.5 * selectedHexBorder.tt)
+        }
+    }
+    ShapePath {
+        
+        strokeWidth: (isSelected || isHovered) ? 2 : 1.125
+        strokeColor: controller.isHorizontal ? Colors.primary : "transparent"
+        fillColor: "transparent"
+
+        PathMove {
+            x: width
+            y: height * 0.5
+        }
+
+        PathLine {
+            x: width - width * (0.25 * selectedHexBorder.tt)
+            y: height * (0.5 + 0.5 * selectedHexBorder.tt)
+        }
+    }
+
+
+    ShapePath {
+        strokeWidth: (isSelected || isHovered) ? 2 : 1.125
+        strokeColor: !controller.isHorizontal ? Colors.primary : "transparent"
+        fillColor: "transparent"
+
+        PathMove {
+            x: width * 0.5
+            y: 0
+        }
+
+        PathLine {
+            x: width * 0.5 + (width * 0.5) * selectedHexBorder.t
+            y: height * (0.25 * selectedHexBorder.t)
+        }
+    }
+
+    ShapePath {
+        strokeWidth: (isSelected || isHovered) ? 2 : 1.125
+        strokeColor: !controller.isHorizontal ? Colors.primary : "transparent"
+        fillColor: "transparent"
+
+        PathMove {
+            x: width * 0.5
+            y: height
+        }
+
+        PathLine {
+            x: width * 0.5 - (width * 0.5) * selectedHexBorder.t
+            y: height - height * (0.25 * selectedHexBorder.t)
+        }
+    }
+    
+    // visible: false
+    }
 
 
 
@@ -417,8 +599,8 @@ Item {
     Shape {
         id: selectedDefaultBorder
         z: 10
-        
-        // visible: WatcherService.thumbsGenerated
+     
+        visible: WatcherService.thumbsGenerated
         width: hexItem.width
         height: hexItem.height
 
@@ -442,10 +624,12 @@ Item {
         ShapePath {
             
             fillColor: "transparent"
-                strokeColor: Qt.rgba(0, 0, 0, 0.5)
+                strokeColor: hexItem.isSelected
+                ? Colors.primary
+                : Qt.rgba(0, 0, 0, 0.5)
 
                 
-            strokeWidth: 1.5
+            strokeWidth: hexItem.isSelected ? 2 : 1.5
             pathHints: ShapePath.PathLinear
             strokeStyle: ShapePath.SolidLine
             cosmeticStroke: true
@@ -514,18 +698,19 @@ Item {
         // Behavior on width { NumberAnimation { duration: 150; } }
         // Behavior on height { NumberAnimation { duration: 150; } }
         
-     
+        property alias flipAnim: flipAnim
 
      
-    
-        property real visualScale: 1
-        // property real visualScale:
-        // isSelected ? 1.12 :
-        // (hovered ? 1.06 : 1)
-        // scale: visualScale
+        property bool hovered: mouseArea.containsMouse
+        // property real visualScale: 1
+        property real visualScale:
+        isSelected ? 1.12 :
+        (hovered ? 1.06 : 1)
+
+        scale: visualScale
 
         Behavior on visualScale {
-            
+            // enabled: targetXAnim.running
             NumberAnimation {
                 duration: Style.animExpand
                 easing.type: Easing.BezierSpline
@@ -540,7 +725,13 @@ Item {
         property real flipAngle: 0
 
 
-      
+        NumberAnimation {
+            id: flipAnim
+            target: visualWrapper
+            property: "flipAngle"
+            duration: Style.animExpand
+            easing.type: Easing.InOutQuad
+        }
 
    
                 // opacity: (thumbImage.status === Image.Ready && thumbImage.source != "") ? 0 : 0.08
@@ -586,9 +777,9 @@ Item {
                 width: hexItem.width * 1.3
                 height: hexItem.height * 1.3
                 color: Style.fallbackAccent
-                // opacity: thumbImage.opacity < 0.99 ? 0.15 : 0
+                opacity: thumbImage.opacity < 0.99 ? 0.15 : 0
                 
-                 opacity: (thumbImage.status === Image.Ready && thumbImage.source != "") ? 0 : 0.08
+                
 
                 Behavior on opacity { NumberAnimation { duration: Style.animNormal; easing.type: Easing.OutCubic } }
                 visible: opacity > 0
@@ -605,50 +796,17 @@ Item {
             Image {
                 id: thumbImage
                 // visible: false
-                width: isSelected 
-                ? hexItem.width * 1.5
-                : hexItem.width * 1.5
-                height: isSelected
-                ? hexItem.height * 1.5
-                : hexItem.height * 1.5
-                // Behavior on width { NumberAnimation { duration: Style.animExpand; easing.type: Easing.OutCubic } }
-                // Behavior on height { NumberAnimation { duration: Style.animExpand; easing.type: Easing.OutCubic } }
-                
-                sourceSize.width: isSelected 
-                ? Math.ceil(Math.max(container.hCellWidth, container.vCellWidth) * 1.5)
-                : Math.ceil(Math.max(container.hCellWidth, container.vCellWidth) * 1.5)
-                sourceSize.height: isSelected 
-                ? Math.ceil(Math.max(container.hCellHeight, container.vCellHeight) * 1.5)
-                : Math.ceil(Math.max(container.hCellHeight, container.vCellHeight) * 1.5)
+                width: hexItem.width * 1.5
+                height: hexItem.height * 1.5
+                sourceSize.width: Math.ceil(Math.max(container.hCellWidth, container.vCellWidth) * 1.5)
+                sourceSize.height: Math.ceil(Math.max(container.hCellHeight, container.vCellHeight) * 1.5)
            
                 property real visualX: hexItem.width / 2 - width / 2
                 property real visualY: hexItem.height / 2 - height / 2
                 
-                x: visualX + innerParallaxX
-                y: visualY + innerParallaxY
-                // Behavior on x { NumberAnimation { duration: Style.animExpand; easing.type: Easing.OutCubic } }
-                // Behavior on y { NumberAnimation { duration: Style.animExpand; easing.type: Easing.OutCubic } }
-                // Behavior on x {
-                //     enabled: allowAnim
-                //     NumberAnimation {
-                //         duration: Style.animNormal
-                //         easing.type: Easing.BezierSpline
-                //         easing.bezierCurve: [0.25, 0.1, 0.25, 1.0]
-                //     }
-                // }
+                x: inView ? visualX + innerParallaxX : 0
+                y: inView ? visualY + innerParallaxY : 0
 
-                // Behavior on y {
-                //     enabled: allowAnim
-                //     NumberAnimation {
-                //         duration: Style.animExpand
-                //         easing.type: Easing.BezierSpline
-                //         easing.bezierCurve: [0.25, 0.1, 0.25, 1.0]
-                //     }
-                // }
-                // x: visualX
-                // y: visualY
-                // anchors.centerIn: parent
-                // Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
                 property string thumbName: WallpaperCacheService.thumbnailPaths[itemData] || ""
                 
                 source: thumbName && WatcherService.thumbsGenerated
@@ -660,11 +818,9 @@ Item {
                 asynchronous: true
                 cache: false
 
-                scale: isSelected ? 0.8 : 1
-                Behavior on scale {  NumberAnimation { duration: Style.animExpand; easing.type: Easing.OutCubic }}
+                scale: visualWrapperRef.visualScale
 
                 opacity:
-                // visualWrapperRef.showThumb &&
                 status === Image.Ready
                 ? 1 : 0
                 Behavior on opacity { NumberAnimation { duration: Style.animEnter; easing.type: Easing.InCubic } }
@@ -753,9 +909,147 @@ Item {
 
         property real dirBias: nearLeft ? -1 : 1
        
+
+
+
+
+
+                // ShapePath {
+                //     fillColor: "white"
+  
+                //     PathMove { x: width * 0.25; y: 0 }
+                //     PathLine { x: width * 0.75; y: 0 }
+                //     PathLine { x: width;        y: height * 0.5 }
+                //     PathLine { x: width * 0.75; y: height }
+                //     PathLine { x: width * 0.25; y: height }
+                //     PathLine { x: 0;            y: height * 0.5 }
+                //     PathLine { x: width * 0.25; y: 0 }
+                // }
+
+        // VERTICAL HEX
+        // layer.effect: OpacityMask {
+        //     maskSource: Shape {
+        //         width: visualWrapper.width
+        //         height: visualWrapper.height
+        //         opacity: inView ? 1 : 0
+        //         Behavior on opacity { NumberAnimation { duration: 150 } }
+        //         anchors.centerIn: parent
+        //         preferredRendererType: Shape.CurveRenderer
+        //         antialiasing: true
+                
+                // ShapePath {
+                //     fillColor: "white"
+                //     strokeColor: fillColor
+                //     strokeWidth: 0
+                //     PathMove { x: width * 0.5; y: 0 }
+                //     PathLine { x: width; y: height * 0.25 }
+                //     PathLine { x: width; y: height * 0.75 }
+                //     PathLine { x: width * 0.5; y: height }
+                //     PathLine { x: 0; y: height * 0.75 }
+                //     PathLine { x: 0; y: height * 0.25 }
+                //     PathLine { x: width * 0.5; y: 0 }
+                // }
+        //     }
+        // }
     }
     
+  	// Connections {
+    //     target: wallpaperController
+
+    //     function onCurrentIndexChanged() {
+    //         controller.currentItem = hexItem
+
+    //         console.log(
+	// 		"current index: ", currentIndex,
+	// 		// "current item: ", currentItem,
+	// 		"current scale: ", currentItem.visualWrapperRef.visualScale,
+	// 		// "current opacity: ", currentItem.visualWrapperRef.fadeOpacity
+			
+	// 		)
+    //     }
+    // }
   
+    
+    // Connections {
+    //     target: wallpaperController
+
+    //     function onCurrentIndexChanged() {
+    //         anim.restart()
+        
+    //     }
+    // }
+
+
+    // SequentialAnimation {
+    //     id: waveAnim
+
+    //     NumberAnimation {
+    //         target: visualWrapper
+    //         property: "wavePhase"
+    //         from: 0
+    //         to: 2
+    //         duration: 250
+    //     }
+    //     NumberAnimation {
+    //         target: visualWrapper
+    //         property: "wave"
+    //         from: 1
+    //         to: 0
+    //         duration: 600
+    //     }
+    // }
+//   Connections {
+//     target: wallpaperController
+
+//     function onCurrentIndexChanged() {
+
+//         var prev = controller.currentItem
+//         var curr = hexItem
+
+//         if (!isSelected)
+//             return
+
+//         controller.previousItem = prev
+//         controller.currentItem = curr
+
+//        controller.flipHex()
+//     }
+// }
+  
+	function flipHex() {
+
+		var wSelected = controller.currentItem
+		var wPrevious = controller.previousItem
+
+		if (!wSelected?.visualWrapperRef || !wPrevious?.visualWrapperRef)
+			return
+
+		var cx = wSelected.mapToItem(null, 0, 0).x
+		var px = wPrevious.mapToItem(null, 0, 0).x
+
+		var dir = (cx > px) ? 1 : -1
+        var vPrev = wPrevious.visualWrapperRef
+        var v = wSelected.visualWrapperRef
+        Qt.callLater(() => {
+
+            if (wPrevious?.visualWrapperRef) {
+			
+
+			vPrev.flipAnim.stop()
+			vPrev.flipAnim.from = 180 * dir
+			vPrev.flipAnim.to = 0
+			vPrev.flipAnim.start()
+            }
+
+            if(wSelected?.visualWrapperRef) {
+                
+			v.flipAnim.stop()
+			v.flipAnim.from = 0
+			v.flipAnim.to = -180 * dir
+			v.flipAnim.start()
+            }
+		})
+	}
     
     property bool _flipLock: false
     property bool _flipQueued: false
@@ -765,20 +1059,22 @@ Item {
         // property string thumbName:
         // WallpaperCacheService.thumbnailPaths[itemData] || ""
 
- 
+     Timer {
+        id: animTimer
+        interval: 50
+        repeat: false
+        running: false
+        onTriggered: allowAnim = true
+    }
 
-    // Component.onCompleted: {
-    //     // wallpaperController.currentIndex = 0
-    //     // allowAnim = false
-    //     // Qt.callLater(() => {
-    //     //     allowAnim = true
-    //     // })
-    //     // console.log("x:", hexItem.targetX, "y:", hexItem.targetY)
-    //     // console.log(itemIndex)
-    //     // console.log("hex create", index)
-    //     // animTimer.start()
-    // }
-        // console.log(flatIndex)
+    Component.onCompleted: {
+        // allowAnim = false
+        // Qt.callLater(() => {
+        //     allowAnim = true
+        // })
+        
+        animTimer.start()
+    }
 
         //  if (itemIndex === 0) {
             
@@ -793,41 +1089,65 @@ Item {
     // }
 
     // property bool flipColor: false
-
     onIsSelectedChanged: {
         if (!isSelected) return
-        // console.log(wallpaperController.currentIndex)
-        // var p = flick.contentItem.mapFromItem(flick.currentItem, 0, 0)
-        // console.log("item position: ", p.x, p.y)
-        //  console.log(flickRef.currentIndex)
-        // console.log("current index: ", flick.currentItem.x)
+        //  console.log(flickRef.currentItem)
+        // console.log("current index: ", flick.currentIndex,
         // "selected col: ", flick._selectedCol)
         // anim.restart()
-        controller.previousItem = controller.currentItem
-        controller.currentItem = hexItem 
-      
-  
+        // controller.previousItem = controller.currentItem
+        // controller.currentItem = hexItem 
+       
+        if(Config.options.effects.flip) {
+            // Qt.callLater(() => {
+                hexItem.flipHex()
+            // })
+
+        }   
+        
+        controller.requestFrame()
+        // if(controller.isHorizontal) {
+        //     container.hOuterParallax() 
+        // } else {
+        //     container.vOuterParallax() 
+        // }
     }
             // console.log("previous: ", controller.previousItem.itemIndex)
             // console.log("item: ", controller.currentItem.itemIndex)
-    
+    // property Item currentItem: null
+    // property Item previousItem: null
+    // Connections {
+    //     target: wallpaperController
+
+    //     function onCurrentIndexChanged() {
+    //         anim.restart()
+    //         if (!isSelected) return
+    //         controller.previousItem = controller.currentItem
+    //         controller.currentItem = hexItem        
+    //         console.log("previous: ", controller.previousItem.itemIndex)
+    //         console.log("item: ", controller.currentItem.itemIndex)
+    //         Qt.callLater(() => {
+    //             flipHex()
+    //         })
+    //     }
+    // }
 
     MouseArea {
         id: mouseArea
         anchors.fill: parent
         hoverEnabled: flickRef.listViewShown ? true : false
 
-    
+        
         onClicked: {
-            // if(!inView || !flickRef.listViewShown) {
-            //     flickRef.forceActiveFocus() 
-            //     return
-            // }
+            if(!inView || !flickRef.listViewShown) {
+                flickRef.forceActiveFocus() 
+                return
+            }
             
-            // controller.previousIndex = wallpaperController.currentIndex
-            flickRef.forceActiveFocus()
-            wallpaperController.currentIndex = itemIndex
-            // flickRef.forceActiveFocus() 
+            // controller.previousIndex = flick.currentIndex
+            // flick.currentIndex = itemIndex
+            flickRef.forceActiveFocus() 
+            // Qt.callLater(() => flickRef.forceActiveFocus())
         }
 
         onDoubleClicked: {
@@ -835,14 +1155,14 @@ Item {
             WallpaperApplyService.applyWallpaper(itemData)
         }
 
-        // onEntered: {
-        //     if(!inView) return
-        //     // controller.previousHoveredIndex = controller.hoveredIndex
-        //     // controller.hoveredIndex = itemIndex
-        // }
-        // onExited: {
-        //     // if (controller.hoveredIndex === itemIndex)
-        //     //     controller.hoveredIndex = -1
-        // }
+        onEntered: {
+            if(!inView) return
+            controller.previousHoveredIndex = controller.hoveredIndex
+            controller.hoveredIndex = itemIndex
+        }
+        onExited: {
+            if (controller.hoveredIndex === itemIndex)
+                controller.hoveredIndex = -1
+        }
     }
 }
