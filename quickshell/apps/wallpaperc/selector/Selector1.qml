@@ -772,8 +772,6 @@ Scope {
 			anchors.horizontalCenter: cardContainer.horizontalCenter
 			anchors.verticalCenter: cardContainer.verticalCenter
 			// reuseItems: true
-
-			property bool _animatingNav: false
 			// anchors.topMargin: 20
 			// anchors.bottomMargin: 20
 		 	// anchors.top: cardContainer.top
@@ -785,7 +783,7 @@ Scope {
 			property bool listViewShown: true
 			property bool _firstLoad: true
 
-			Component.onDestruction: { flick.model = null }
+			// Component.onDestruction: { flick.model = null }
 
 			Rectangle {
 				anchors.fill: parent
@@ -1053,12 +1051,12 @@ Scope {
 
 			// 		wallpaperController.requestFrame()
 			// 	}
-			property real dirThreshold: 0.5
 
 			property real lastContentY: 0
 			property int scrollDirY: 0
 			property int lastDirY: 0
 
+			property real dirThreshold: 0.5
 			property real lastContentX: 0
 			property int scrollDirX: 0
 			property int lastDirX: 0
@@ -1703,7 +1701,7 @@ Scope {
 							if (flick._contentHeight <= 0) return 0
 							return ready ? 1 : 0
 						}
-
+						readonly property bool _nearLeft: _hexCenterX < flick.width / 2
 						readonly property real _hexCenterX: (x - flick.contentX) + width * 0.5
 						readonly property real _hexCenterY: (y - flick.contentY) + height * 0.5
 						// readonly property bool _nearLeft: _hexCenterX < flick.width / 2
@@ -1743,7 +1741,7 @@ Scope {
 								* flick._r
 								* _arcFactor
 						}
-					   readonly property bool _nearLeft: _hexCenterX < flick.width / 2
+					   
 						Repeater {
 							id: hexRepeater
 			

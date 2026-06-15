@@ -1074,7 +1074,6 @@ Item {
         // Qt.callLater(() => {
         //     allowAnim = true
         // })
-        console.log("item index: ", itemIndex)
         // console.log("x:", hexItem.targetX, "y:", hexItem.targetY)
         animTimer.start()
     }

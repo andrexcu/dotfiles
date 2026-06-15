@@ -874,8 +874,8 @@ Scope {
 	
 			property real _r: wallpaperController.hexRadius
 			property real _gridSpacing: 6
-			property real _hexW: _r * 2
-			property real _hexH: Math.ceil(_r * 1.73205)
+			property real _hexW: hCellWidth
+			property real _hexH: hCellHeight
 			property real _stepX: 1.5 * _r + _gridSpacing
 			property real _stepY: _hexH + _gridSpacing
 			property real _gridContentH: (_rows - 1) * _stepY + _hexH + _hexH / 2

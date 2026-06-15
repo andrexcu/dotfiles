@@ -294,11 +294,12 @@ Scope {
 	// }
 
 	function runFrame() {
-		if(isHorizontal) {
-			flick.hOuterParallax()
-		} else {
-			flick.vOuterParallax()
-		}
+		flick.hOuterParallax()
+		// if(isHorizontal) {
+			
+		// } else {
+		// 	flick.vOuterParallax()
+		// }
 	}
 	
 	function requestFrame() {
@@ -813,10 +814,10 @@ Scope {
 			// anchors.horizontalCenter: cardContainer.horizontalCenter
 			// anchors.verticalCenter: cardContainer.verticalCenter
 
-			anchors.horizontalCenter: cardContainer.horizontalCenter
-			anchors.verticalCenter: cardContainer.verticalCenter
+			// anchors.horizontalCenter: cardContainer.horizontalCenter
+			// anchors.verticalCenter: cardContainer.verticalCenter
 			// reuseItems: true
-
+			anchors.centerIn: cardContainer
 			property bool _animatingNav: false
 			// anchors.topMargin: 20
 			// anchors.bottomMargin: 20
@@ -828,6 +829,7 @@ Scope {
 			// anchors.right: cardContainer.right
 			property bool listViewShown: true
 			property bool _firstLoad: true
+			
 
 			
 
@@ -965,7 +967,7 @@ Scope {
 			// }
 
 			property real _rightPadding: hCellWidth * 0.2
-			property real _contentWidth: Math.ceil(filteredModel / _rows) * _colStep
+			property real _contentWidth: Math.ceil(filteredModel / _rows) * _colStep + _rightPadding
 			contentWidth:  _contentWidth
 		    // property real _contentHeight: Math.ceil(filteredModel / _rows) * _rowStep
 			// property real _contentHeight:
@@ -1062,22 +1064,29 @@ Scope {
 		
 
 			Behavior on contentX {
-				enabled: flick.listViewShown && isHorizontal
 				NumberAnimation {
 					duration: Style.animNormal
 					easing.type: Easing.BezierSpline
-					easing.bezierCurve: [0.25, 0.1, 0.25, 1.0]
+					easing.bezierCurve: [0.22, 0.08, 0.28, 0.98]
+					// easing.bezierCurve: [0.42, 0.0, 0.58, 1.0]
+					// easing.bezierCurve: [0.4, 0.0, 0.2, 1.0]
+					// easing.bezierCurve: [0.22, 1.0, 0.36, 1.0]
+					// easing.bezierCurve: [0.4, 0.0, 0.2, 1.0]
+					// easing.bezierCurve: [0.33, 1.0, 0.68, 1.0]
+					// easing.bezierCurve: [0.25, 0.1, 0.25, 1.0]
 				}
 			}
+					// easing.type: Easing.OutCubic
+				// enabled: flick.listViewShown && isHorizontal
 
-			Behavior on contentY {
-				enabled: flick.listViewShown && !isHorizontal
-				NumberAnimation {
-					duration: Style.animNormal
-					easing.type: Easing.BezierSpline
-					easing.bezierCurve: [0.25, 0.1, 0.25, 1.0]
-				}
-			}
+			// Behavior on contentY {
+			// 	enabled: flick.listViewShown && !isHorizontal
+			// 	NumberAnimation {
+			// 		duration: Style.animEnter
+			// 		easing.type: Easing.BezierSpline
+			// 		easing.bezierCurve: [0.25, 0.1, 0.25, 1.0]
+			// 	}
+			// }
 			
 	
 			
@@ -1093,7 +1102,29 @@ Scope {
 
 			
 					
+			onContentXChanged: {
+			
+				wallpaperController.requestFrame()
+			}
 
+
+				// Behavior on globalShiftX {
+				
+				// 	NumberAnimation {
+				// 		duration: Style.animSlow
+				// 		easing.type: Easing.BezierSpline
+				// 		easing.bezierCurve: [0.25, 0.1, 0.25, 1.0]
+				// 	}
+				// }
+				
+				// Behavior on globalShiftY {
+					
+				// 	NumberAnimation {
+				// 		duration: Style.animSlow
+				// 		easing.type: Easing.BezierSpline
+				// 		easing.bezierCurve: [0.25, 0.1, 0.25, 1.0]
+				// 	}
+				// }
 			// onContentXChanged: {
 			// 	if (!isHorizontal) return
 			// 	if (filteredModel <= 0) return
@@ -1135,63 +1166,48 @@ Scope {
 
 			// 		wallpaperController.requestFrame()
 			// 	}
-			// property real dirThreshold: 0.5
+			property real dirThreshold: 0.5
 
 			// property real lastContentY: 0
 			// property int scrollDirY: 0
 			// property int lastDirY: 0
-
-			// property real lastContentX: 0
-			// property int scrollDirX: 0
-			// property int lastDirX: 0
 
 			// // Component.onCompleted: {
 			// // 	// flick.prune()
 			// // 	console.log("repeater count:", wallpaperRepeater.count)
 				
 			// // }
-			// Connections {
-			// 	target: flick
-			// 	property int lastDirY: 0
-			// 	property int lastDirX: 0
 
-			// 	function onContentYChanged() {
-			// 		var dy = flick.contentY - flick.lastContentY
+			property real lastContentX: 0
+			property int scrollDirX: 0
+			property int lastDirX: 0
+			Connections {
+				target: flick
 
-			// 		if (Math.abs(dy) > flick.dirThreshold) {
-			// 			flick.scrollDirY = dy > 0 ? 1 : -1
+				property int lastDirX: 0
 
-			// 			if (flick.scrollDirY !== lastDirY) {
-			// 				// console.log(flick.scrollDir > 0 ? "scroll ↓" : "scroll ↑")
-			// 				lastDirY = flick.scrollDirY
-			// 			}
-
-			// 			flick.lastContentY = flick.contentY
-			// 		}
-
-			// 		// wallpaperController.requestFrame()
-			// 	}
+		
 
 				
-			// 	function onContentXChanged() {
-			// 		// flick.prune()
-			// 		var dx = flick.contentX - flick.lastContentX
+				function onContentXChanged() {
+					// flick.prune()
+					var dx = flick.contentX - flick.lastContentX
 
-			// 		if (Math.abs(dx) > flick.dirThreshold) {
-			// 			flick.scrollDirX = dx > 0 ? 1 : -1
+					if (Math.abs(dx) > flick.dirThreshold) {
+						flick.scrollDirX = dx > 0 ? 1 : -1
 
-			// 			if (flick.scrollDirX !== lastDirX) {
-			// 				// console.log(flick.scrollDirX > 0 ? "scroll →" : "scroll ←")
-			// 				lastDirX = flick.scrollDirX
-			// 			}
+						if (flick.scrollDirX !== lastDirX) {
+							// console.log(flick.scrollDirX > 0 ? "scroll →" : "scroll ←")
+							lastDirX = flick.scrollDirX
+						}
 
-			// 		}
-			// 			flick.lastContentX = flick.contentX
+					}
+						flick.lastContentX = flick.contentX
 
-			// 		// wallpaperController.requestFrame()
-			// 	}
+					// wallpaperController.requestFrame()
+				}
 				
-			// }
+			}
 	
 				
 
@@ -1254,7 +1270,56 @@ Scope {
 				
 				property real globalShiftX: 0
 				property real globalShiftY: 0
+				// property real parallaxX: globalShiftX
+				// property real parallaxY: globalShiftY
 				property bool parallaxAnimating: false
+				function hOuterParallax() {
+					if (flick.filteredModel <= 0) return
+					if (flick._contentWidth <= 0) return
+					if (flick._contentHeight <= 0) return
+					
+					if (!Config.options.effects.parallax) {
+						globalShiftX = 0
+						globalShiftY = 0
+						return
+					}
+
+					var selIndex = wallpaperController.currentIndex
+					
+
+					if (selIndex < 0) return
+
+					if (selIndex < hStartIndex || selIndex >= hEndIndex) {
+						globalShiftX = 0
+						globalShiftY = 0
+						return
+					}
+
+					var localIndex = selIndex - hStartIndex
+
+					var row = localIndex % _rows
+					var col = Math.floor(localIndex / _rows)
+
+				
+
+					var centerCol = (_cols - 1) / 2
+					var centerRow = (_rows - 1) / 2
+
+					var offsetY = row - centerRow
+					var offsetX = col - centerCol
+
+					var newShiftX = -offsetX * 24
+					var newShiftY = -offsetY * 15
+
+					if (Math.abs(newShiftX - globalShiftX) < 0.01 &&
+						Math.abs(newShiftY - globalShiftY) < 0.01)
+						return
+
+					globalShiftX = newShiftX
+					globalShiftY = newShiftY
+						
+				}
+				
 				
 				
 			
@@ -1287,7 +1352,7 @@ Scope {
 					
 					width: flick.hCellWidth + (_cols - 1) * _colStep
 					height: cardContainer.height
-
+					
 					// width: isHorizontal 
 					// ? flick.hCellWidth + (_cols - 1) * _colStep
 					// : cardContainer.width
@@ -1678,6 +1743,7 @@ Scope {
 
 								z: 9999
 								clip: false
+								// visible: false
 								visible: flick.listViewShown && WatcherService.thumbsGenerated
 								
 
@@ -1764,14 +1830,17 @@ Scope {
 									// Follow current selected position
 									// property real shiftX: flick.globalShiftX 
 									// property real shiftY:  flick.globalShiftY
-									x: currentItem?  currentItem.targetX : 0
+									x: currentItem ? currentItem.targetX : 0
 									y: currentItem ? currentItem.targetY : 0
-
+									// x: animX
+									// y: animY
+									// x: currentItem ? currentItem.renderX : 0
+									// y: currentItem ? currentItem.renderY : 0
 									preferredRendererType: Shape.CurveRenderer
 									antialiasing: true
 									
 									ShapePath {
-										strokeWidth: 3
+										strokeWidth: 2
 										strokeColor: Colors.primary
 										// strokeColor: "#4fc3f7"
 										fillColor: "transparent"
@@ -1805,9 +1874,10 @@ Scope {
 										Behavior on scale {
 										
 											NumberAnimation {
-												duration: 250
+												duration: Style.animNormal
 												easing.type: Easing.BezierSpline
-												easing.bezierCurve: [0.25, 0.1, 0.25, 1.0]
+												easing.bezierCurve: [0.22, 1.0, 0.36, 1.0]
+												// easing.bezierCurve: [0.25, 0.1, 0.25, 1.0]
 												
 											}
 									
@@ -1827,17 +1897,17 @@ Scope {
 								
 								
 							}
-							Component.onDestruction: wallpaperRepeater.model = null
+							// Component.onDestruction: wallpaperRepeater.model = null
 						
 							// property int animBuffer: flick._rows * 2
 							property var filterSet: ({})
+							
 							Repeater {
 							id: wallpaperRepeater
 							model: WallpaperService.wallpapers
 							// Component.onCompleted: console.log("create", index)
 // Component.onDestruction: console.log("destroy", index)
-							// property int animBuffer: flick.dragging || flick.flicking || flick.moving
-							// ? flick._rows * 4 : flick._rows * 2
+						
 
 							// property string key: modelData.filePath ?? modelData
 							
@@ -1852,17 +1922,20 @@ Scope {
 							id: hexLoader
 
 					
-							property int animBuffer: flick._rows * 2
-
-							property bool _inViewBufferedCache:
-								index >= (flick.cachedStart) &&
-           						index <  (flick.cachedEnd)
+							// property int animBuffer: flick._rows * 2
+							property int animBuffer: flick.dragging || flick.flicking || flick.moving
+							? flick._rows * 4 : flick._rows * 2
+							
+							// property bool _inViewBufferedCache:
+							// 	index >= (flick.cachedStart) &&
+           					// 	index <  (flick.cachedEnd)
 
 							property bool _inViewBuffered:
 								index >= (flick.hStartIndex - animBuffer) &&
 								index <  (flick.hEndIndex + animBuffer)
-
-							active: flick.layoutFrozen ? _inViewBufferedCache : _inViewBuffered
+								
+							active: _inViewBuffered
+							// active: flick.layoutFrozen ? _inViewBufferedCache : _inViewBuffered
 							
 						
 							sourceComponent: HexItem {
@@ -2129,8 +2202,8 @@ Scope {
 								// hArcOffset: _hArcOffset
 								// vArcOffset: _vArcOffset
 
-								shiftX: filteredModel > 0 ? flick.globalShiftX : 0
-								shiftY: filteredModel > 0 ? flick.globalShiftY : 0
+								shiftX: flick.globalShiftX
+								shiftY: flick.globalShiftY
 
 								container: flick
 								flickRef: flick
@@ -2152,7 +2225,7 @@ Scope {
 								Math.max(-1, Math.min(1,
 									((_hexCenterX - flick.width * 0.5) / Math.max(1, flick.width * 0.5))
 								))
-								innerParallaxX: {
+								property real _innerParallaxX: {
 									var f = 1.0 + Math.abs(normX) * 0.1
 									return -normX * flick._r * 0.35 * f
 								}
@@ -2161,11 +2234,15 @@ Scope {
 									((_hexCenterY - flick.height * 0.5) / Math.max(1, flick.height * 0.5))
 								))
 
-								innerParallaxY: {
+								property real _innerParallaxY: {
 									var f = 1.0 + Math.abs(normY) * 0.1
 									return -normY * flick._r * 0.35 * f
 								}
-								
+
+								innerParallaxX: _innerParallaxX
+								innerParallaxY: _innerParallaxY
+								// Behavior on innerParallaxX { NumberAnimation { duration: Style.animExpand; easing.type: Easing.OutCubic } }
+                				// Behavior on innerParallaxY { NumberAnimation { duration: Style.animExpand; easing.type: Easing.OutCubic } }
 								// innerParallaxX: 0
 
 								// innerParallaxY: 0
@@ -2181,29 +2258,29 @@ Scope {
 								// }	
 
 								// transformOrigin: _nearLeft ? Item.Left: Item.Right
-								transformOrigin: {
-									if (scale > 0.99) {
-
-										return Item.Center
-									}
-									return _nearLeft ? Item.Left: Item.Right
-								}
 								// transformOrigin: {
-									// if (scale > 0.99)
-									// 	return Item.Center
+								// 	if (scale > 0.99) {
 
-								// 	var movingLeft = flick.scrollDirX < 0
-								// 	return movingLeft ? Item.Left: Item.Right
+								// 		return Item.Center
+								// 	}
+								// 	return _nearLeft ? Item.Left: Item.Right
 								// }
+								transformOrigin: {
+									if (scale > 0.99)
+										return Item.Center
+
+									var movingLeft = flick.scrollDirX < 0
+									return movingLeft ? Item.Left: Item.Right
+								}
 								// transformOrigin:
 								// scale > 0.99 ? Item.Center :
 								// (Math.abs(flick.scrollDirX) < 0.1
 								// 	? Item.Center
 								// 	: (flick.scrollDirX < 0 ? Item.Left : Item.Right))
 
-								// itemData: filteredWallpapers[index]
+								itemData: filteredWallpapers[index]
 								// visible: hexLoader.active
-								itemData: modelData
+								// itemData: modelData
 								// visible: flick.filterSet[itemData] === true
 								itemIndex: index
 								inView: _inView

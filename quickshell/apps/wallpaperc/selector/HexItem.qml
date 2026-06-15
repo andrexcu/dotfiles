@@ -150,7 +150,7 @@ Item {
   
 
     property real realScale:
-    isSelected ? 1.1 : 1
+    isSelected ? 1.125 : 1
 
     property real _hexScale: _inView ? realScale : 0
 
@@ -211,14 +211,14 @@ Item {
     property real targetY: viewY + ry
        
     
-    // property real animX: targetX
-    // property real animY: targetY
 
     // property real baseX: targetX + vArcOffset 
     // property real baseY: targetY + hArcOffset 
 
-    x: targetX
-    y: targetY
+    property real animX: targetX
+    property real animY: targetY
+    x: animX
+    y: animY
     
     property bool allowAnim: true
     property bool snapHex: flick.listViewShown
@@ -248,20 +248,20 @@ Item {
     // }
 
     Behavior on x {
-        // enabled: allowAnim
         NumberAnimation {
             duration: Style.animNormal
             easing.type: Easing.BezierSpline
-            easing.bezierCurve: [0.25, 0.1, 0.25, 1.0]
+            easing.bezierCurve: [0.22, 1.0, 0.36, 1.0]
+            // easing.bezierCurve: [0.25, 0.1, 0.25, 1.0]
         }
     }
 
     Behavior on y {
-        // enabled: allowAnim
         NumberAnimation {
             duration: Style.animExpand
             easing.type: Easing.BezierSpline
-            easing.bezierCurve: [0.25, 0.1, 0.25, 1.0]
+            easing.bezierCurve: [0.22, 1.0, 0.36, 1.0]
+            // easing.bezierCurve: [0.25, 0.1, 0.25, 1.0]
         }
     }
 
@@ -417,7 +417,7 @@ Item {
     Shape {
         id: selectedDefaultBorder
         z: 10
-        
+        // visible: false
         // visible: WatcherService.thumbsGenerated
         width: hexItem.width
         height: hexItem.height
@@ -427,7 +427,7 @@ Item {
 
         scale: visualWrapperRef.visualScale
 
-        opacity: visualWrapperRef.showThumb 
+        // opacity: visualWrapperRef.showThumb 
 
         Behavior on opacity { 
             NumberAnimation { 
@@ -543,25 +543,25 @@ Item {
       
 
    
-                // opacity: (thumbImage.status === Image.Ready && thumbImage.source != "") ? 0 : 0.08
+    // opacity: (thumbImage.status === Image.Ready && thumbImage.source != "") ? 0 : 0.08
     property bool showThumb: false
    
-    Timer {
-        id: thumbDelay
-        interval: Style.animEnter
-        running: true
-        repeat: false
-        onTriggered: {
-            visualWrapperRef.showThumb = true
-        }
-    }
+    // Timer {
+    //     id: thumbDelay
+    //     interval: Style.animEnter
+    //     running: true
+    //     repeat: false
+    //     onTriggered: {
+    //         visualWrapperRef.showThumb = true
+    //     }
+    // }
 
-    onVisibleChanged: {
-        if (visible) {
-            showThumb = false
-            thumbDelay.restart()
-        }
-    }
+    // onVisibleChanged: {
+    //     if (visible) {
+    //         showThumb = false
+    //         thumbDelay.restart()
+    //     }
+    // }
 
     Item {
         id: imageContainer
@@ -576,19 +576,19 @@ Item {
                 // color: Style.fallbackAccent
                 opacity: isSelected ? 0.6 : 0
                
-                Behavior on opacity { NumberAnimation { duration: Style.animNormal; easing.type: Easing.OutCubic  } }
+                Behavior on opacity { NumberAnimation { duration: Style.animNormal; easing.type: Easing.OutCubic } }
             }
 
             Rectangle {
                 id: hexPlaceholder
             
                 anchors.centerIn: parent
-                width: hexItem.width * 1.3
-                height: hexItem.height * 1.3
+                width: hexItem.width * 1.5
+                height: hexItem.height * 1.5
                 color: Style.fallbackAccent
                 // opacity: thumbImage.opacity < 0.99 ? 0.15 : 0
                 
-                 opacity: (thumbImage.status === Image.Ready && thumbImage.source != "") ? 0 : 0.08
+                opacity: (thumbImage.status === Image.Ready && thumbImage.source != "") ? 0 : 0.08
 
                 Behavior on opacity { NumberAnimation { duration: Style.animNormal; easing.type: Easing.OutCubic } }
                 visible: opacity > 0
@@ -626,8 +626,8 @@ Item {
                 
                 x: visualX + innerParallaxX
                 y: visualY + innerParallaxY
-                // Behavior on x { NumberAnimation { duration: Style.animExpand; easing.type: Easing.OutCubic } }
-                // Behavior on y { NumberAnimation { duration: Style.animExpand; easing.type: Easing.OutCubic } }
+                Behavior on width { NumberAnimation { duration: Style.animExpand; easing.type: Easing.OutCubic } }
+                Behavior on height { NumberAnimation { duration: Style.animExpand; easing.type: Easing.OutCubic } }
                 // Behavior on x {
                 //     enabled: allowAnim
                 //     NumberAnimation {
@@ -660,7 +660,7 @@ Item {
                 asynchronous: true
                 cache: false
 
-                scale: isSelected ? 0.8 : 1
+                scale: isSelected ? 0.85 : 1
                 Behavior on scale {  NumberAnimation { duration: Style.animExpand; easing.type: Easing.OutCubic }}
 
                 opacity:
@@ -669,21 +669,21 @@ Item {
                 ? 1 : 0
                 Behavior on opacity { NumberAnimation { duration: Style.animEnter; easing.type: Easing.InCubic } }
                 
-                layer.enabled: true
-                    layer.effect: MultiEffect {
+                // layer.enabled: true
+                //     layer.effect: MultiEffect {
                         
-                        blurEnabled: true
-                        blur: (isSelected &&
-                        controller.blurTransition) ? 1 : 0
-                        blurMax: 32
+                //         blurEnabled: true
+                //         blur: (isSelected &&
+                //         controller.blurTransition) ? 1 : 0
+                //         blurMax: 32
 
-                        Behavior on blur {
-                            NumberAnimation {
-                                duration: Style.animFast
-                                easing.type: Easing.InOutQuad
-                            }
-                        }
-                }
+                //         Behavior on blur {
+                //             NumberAnimation {
+                //                 duration: Style.animFast
+                //                 easing.type: Easing.OutCubic
+                //             }
+                //         }
+                // }
             }
 
     }
@@ -806,8 +806,8 @@ Item {
         controller.previousItem = controller.currentItem
         controller.currentItem = hexItem 
       
-  
-    }
+        wallpaperController.requestFrame()
+    }   
             // console.log("previous: ", controller.previousItem.itemIndex)
             // console.log("item: ", controller.currentItem.itemIndex)
     

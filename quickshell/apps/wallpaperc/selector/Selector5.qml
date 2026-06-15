@@ -1883,13 +1883,13 @@ Scope {
 							: _insideViewY && !_nearEdgeY
 						
 						property real _hexScale: _visible ? 1 : 0
+						Behavior on _hexScale {  NumberAnimation { duration: Style.animExpand; easing.type: Easing.OutCubic }}
 						// Behavior on _hexScale {
 						// 			SpringAnimation {
 						// 				spring: 6
 						// 				damping: 0.9 
 						// 			}
 						// 		}
-						Behavior on _hexScale {  NumberAnimation { duration: Style.animExpand; easing.type: Easing.OutCubic }}
 						// Behavior on _hexScale {
 							
 						// 		NumberAnimation {

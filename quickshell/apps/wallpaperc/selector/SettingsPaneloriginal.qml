@@ -100,153 +100,59 @@ ColumnLayout {
                     placeholderText: "Filter Images..."
                     placeholderTextColor: Colors.backgroundText70
 
-                    // font.pixelSize: 16
-                    // font.family: "JetBrainsMono Nerd Font"
-           
+                    font.pixelSize: 16
+                    font.family: "JetBrainsMono Nerd Font"
+                    // color: "green"
                     color: Colors.backgroundText70
-                
+                    focus: true
                     cursorVisible: false
                     selectionColor: "transparent"
 
-                    // Timer {
-                    //     id: unfreezeTimer
-                    //     interval: 500
-                    //     repeat: false
-                    //     onTriggered: flick.layoutFrozen = false
-                    // }
-                    // onActiveFocusChanged: {
-                    //     if (!activeFocus) {
+                    focusPolicy: Qt.StrongFocus
+                    activeFocusOnPress: true
 
+                    MouseArea {
+                        anchors.fill: parent
+                        onPressed: Qt.callLater(() => searchBox.forceActiveFocus())
+                    }
 
-                    //         flick.cachedStart = flick.hStartIndex
-                    //         flick.cachedEnd = flick.hEndIndex
+                    onTextChanged: {
+                    if (!WallpaperService || !WallpaperService.wallpapers)
+                        return
 
-                    //         flick.layoutFrozen = true
+                    let list = WallpaperService.wallpapers
+                    let query = text ? text.toLowerCase() : ""
 
-                    
-                    //         unfreezeTimer.restart()
-                    //     }
-                    // }
-                    
-                    // onActiveFocusChanged: {
-                    //     if (!activeFocus) {
-                    //         flick.layoutFrozen = true
-                    //         Qt.callLater(() => flick.layoutFrozen = false)
-                    //     }
-                    // }
-                    // focusPolicy: Qt.StrongFocus
-                    // selectByMouse: true
-
-                    // onActiveFocusChanged: {
-                    //     flick.interactive = false
-                    //     Qt.callLater(() => flick.interactive = true)
-                    // }
-
-                    // MouseArea {
-                    //     anchors.fill: parent
-                    //     onClicked: {
-
-                    //         searchBox.forceActiveFocus()
-                    //     }
-                    // }
-
-                        // onPressed: searchBox.forceActiveFocus()
-                    // onTextChanged: {
-                    //     if (!WallpaperService?.wallpapers)
-                    //         return
-
-                    //     let list = WallpaperService.wallpapers
-                    //     let query = text ? text.toLowerCase() : ""
-
-                    //     let newSet = {}
-
-                    //     if (!query) {
-                    //         for (let i = 0; i < list.length; i++)
-                    //             newSet[list[i]] = true
-                    //     } else {
-                    //         for (let i = 0; i < list.length; i++) {
-                    //             let filePath = list[i]
-
-                    //             let fileName = filePath.split("/").pop()
-                    //             fileName = fileName.replace(/\.[^/.]+$/, "")
-
-                    //             if (fileName.toLowerCase().includes(query))
-                    //                 newSet[filePath] = true
-                    //         }
-                    //     }
-
-                    //     flick.filterSet = newSet
-
-                    //     flick.cancelFlick()
-
-                    //     Qt.callLater(() => {
-                    //         wallpaperController.currentIndex = 0
-                    //         flick.contentX = 0
-                    //         flick.contentY = 0
-                    //     })
-                    // }
-                    // onTextChanged: {
-                    //     if (!WallpaperService?.wallpapers)
-                    //         return
-
-                    //     let list = WallpaperService.wallpapers
-                    //     let query = text ? text.toLowerCase() : ""
-
-                    //     let newList = (!query)
-                    //         ? list
-                    //         : list.filter(filePath => {
-                    //             let fileName = filePath.split("/").pop()
-                    //             fileName = fileName.replace(/\.[^/.]+$/, "")
-                    //             return fileName.toLowerCase().includes(query)
-                    //         })
-
-                    //     filteredWallpapers = newList 
-
-                    //     flick.cancelFlick()
-
-                    //     Qt.callLater(() => {
-                    //         wallpaperController.currentIndex = 0
-                    //         flick.contentX = 0
-                    //         flick.contentY = 0
-                    //     })
-                    // }
-                        onTextChanged: {
-                        if (!WallpaperService || !WallpaperService.wallpapers)
-                            return
-
-                        let list = WallpaperService.wallpapers
-                        let query = text ? text.toLowerCase() : ""
-
-                        if (!query || query.length === 0) {
-                            filteredWallpapers = list
-                        } else {
-                            filteredWallpapers = list.filter(function(filePath) {
-                                let fileName = filePath.split("/").pop()
-                                fileName = fileName.replace(/\.[^/.]+$/, "")
-                                return fileName.toLowerCase().indexOf(query) !== -1
-                            })
-                        }
-
-                        if (!wallpaperController)
-                            return
-
-                        flick.cancelFlick()
-
-                        filteredWallpapersChanged()
-
-                        Qt.callLater(() => {
-                            wallpaperController.currentIndex = 0
-                            flick.contentX = 0
-                            flick.contentY = 0
-
-                            // flick.positionViewAtIndex(0, ListView.Beginning)
-
-                            if (filteredWallpapers.length > 0)
-                                selectedWallpaper = filteredWallpapers[0]
-
-                            // wallpaperController.requestFrame()
+                    if (!query || query.length === 0) {
+                        filteredWallpapers = list
+                    } else {
+                        filteredWallpapers = list.filter(function(filePath) {
+                            let fileName = filePath.split("/").pop()
+                            fileName = fileName.replace(/\.[^/.]+$/, "")
+                            return fileName.toLowerCase().indexOf(query) !== -1
                         })
                     }
+
+                    if (!wallpaperController)
+                        return
+
+                    flick.cancelFlick()
+
+                    filteredWallpapersChanged()
+
+                    Qt.callLater(() => {
+                        wallpaperController.currentIndex = 0
+                        flick.contentX = 0
+                        flick.contentY = 0
+
+                        // flick.positionViewAtIndex(0, ListView.Beginning)
+
+                        if (filteredWallpapers.length > 0)
+                            selectedWallpaper = filteredWallpapers[0]
+
+                        wallpaperController.requestFrame()
+                    })
+                }
                 //    onTextChanged: {
                 //     if (!WallpaperService || !WallpaperService.wallpapers)
                 //         return
@@ -418,7 +324,7 @@ ColumnLayout {
 
                         MouseArea {
                             anchors.fill: parent
-                            onPressed: pathTextBox.forceActiveFocus()
+                            onPressed: Qt.callLater(() => pathTextBox.forceActiveFocus())
                         }
 
                         function applyFilter() {
@@ -439,6 +345,7 @@ ColumnLayout {
 
                             wallpaperController.currentIndex = 0
                         }
+
                         onAccepted: {
                             if (!wallpaperController)
                                 return
@@ -447,44 +354,15 @@ ColumnLayout {
                             if (!newPath || newPath === Config.options.wallpaperDir)
                                 return
 
-        
                             WallpaperService.killAll()
 
                             Config.options.wallpaperDir = newPath
                             WatcherService.wallpaperModel.folder = "file://" + newPath
 
-                   
-                            Qt.callLater(() => {
-
-                                wallpaperController.currentIndex = 0
-                        
-                            })
-                        }
-                        // onAccepted: {
-                        //     if (!wallpaperController)
-                        //         return
-
-                        //     let newPath = InputHandler.normalizePath(text)
-                        //     if (!newPath || newPath === Config.options.wallpaperDir)
-                        //         return
-
-                        //     WallpaperService.killAll()
-
-                        //     Config.options.wallpaperDir = newPath
-                        //     WatcherService.wallpaperModel.folder = "file://" + newPath
-
-                        //     // wallpaperController.currentIndex = 0  
-
-                        //     Qt.callLater(() => {
-                        //         wallpaperController.currentIndex = 0
-                        //         flick.contentX = 0
-                        //         flick.contentY = 0
-
-                   
-                        //     })
+                            wallpaperController.currentIndex = 0  
                             
                            
-                        // }
+                        }
 
                         Connections {
                             target: WallpaperService

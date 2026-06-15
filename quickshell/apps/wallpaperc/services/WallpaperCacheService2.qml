@@ -5,7 +5,6 @@ import qs
 import qs.services
 import Quickshell.Io as Io
 import Qt.labs.folderlistmodel
-import Quickshell.Io
 
 QtObject {
     id: wallpaperCacheService
