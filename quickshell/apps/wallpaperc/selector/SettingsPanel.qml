@@ -10,7 +10,7 @@ import qs.colors
 
 ColumnLayout {
     id: settingsPanel
-    anchors.top: cardContainer.bottom
+    anchors.top: flick.bottom
     anchors.left: cardContainer.left
     anchors.right: cardContainer.right
     

@@ -207,18 +207,18 @@ Item {
         return a*(1-t) + b*t
     }
     
-    property real targetX: viewX + rx
-    property real targetY: viewY + ry
        
     
 
     // property real baseX: targetX + vArcOffset 
     // property real baseY: targetY + hArcOffset 
+    property real targetX: viewX + rx + shiftX
+    property real targetY: viewY + ry + shiftY
 
-    property real animX: targetX
-    property real animY: targetY
-    x: animX
-    y: animY
+    x: targetX
+    y: targetY
+    // property real animX: targetX
+    // property real animY: targetY
     
     property bool allowAnim: true
     property bool snapHex: flick.listViewShown
@@ -249,7 +249,7 @@ Item {
 
     Behavior on x {
         NumberAnimation {
-            duration: Style.animNormal
+            duration: Style.animSlow
             easing.type: Easing.BezierSpline
             easing.bezierCurve: [0.22, 1.0, 0.36, 1.0]
             // easing.bezierCurve: [0.25, 0.1, 0.25, 1.0]
@@ -258,7 +258,7 @@ Item {
 
     Behavior on y {
         NumberAnimation {
-            duration: Style.animExpand
+            duration: Style.animSlow
             easing.type: Easing.BezierSpline
             easing.bezierCurve: [0.22, 1.0, 0.36, 1.0]
             // easing.bezierCurve: [0.25, 0.1, 0.25, 1.0]
@@ -664,7 +664,6 @@ Item {
                 Behavior on scale {  NumberAnimation { duration: Style.animExpand; easing.type: Easing.OutCubic }}
 
                 opacity:
-                // visualWrapperRef.showThumb &&
                 status === Image.Ready
                 ? 1 : 0
                 Behavior on opacity { NumberAnimation { duration: Style.animEnter; easing.type: Easing.InCubic } }

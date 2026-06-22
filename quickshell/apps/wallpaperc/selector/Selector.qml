@@ -969,10 +969,10 @@ Scope {
 			property real _rightPadding: hCellWidth * 0.2
 			property real _contentWidth: Math.ceil(filteredModel / _rows) * _colStep + _rightPadding
 			contentWidth:  _contentWidth
-		    // property real _contentHeight: Math.ceil(filteredModel / _rows) * _rowStep
+		    property real _contentHeight: Math.ceil(filteredModel / _rows) * _rowStep
 			// property real _contentHeight:
     		// Math.ceil(filteredWallpapers.length / _cols) * _rowStep + cellHeight
-			contentHeight: cardContainer.height
+			contentHeight: flick.height
 
 			
 			
@@ -1120,7 +1120,7 @@ Scope {
 				// Behavior on globalShiftY {
 					
 				// 	NumberAnimation {
-				// 		duration: Style.animSlow
+						// duration: Style.animSlow
 				// 		easing.type: Easing.BezierSpline
 				// 		easing.bezierCurve: [0.25, 0.1, 0.25, 1.0]
 				// 	}
@@ -1351,7 +1351,7 @@ Scope {
 					// (WallpaperService.rows - 1) * _rowStep + flick.vCellHeight
 					
 					width: flick.hCellWidth + (_cols - 1) * _colStep
-					height: cardContainer.height
+					height: cardContainer.height * 1.1
 					
 					// width: isHorizontal 
 					// ? flick.hCellWidth + (_cols - 1) * _colStep
@@ -1830,12 +1830,13 @@ Scope {
 									// Follow current selected position
 									// property real shiftX: flick.globalShiftX 
 									// property real shiftY:  flick.globalShiftY
-									x: currentItem ? currentItem.targetX : 0
-									y: currentItem ? currentItem.targetY : 0
 									// x: animX
 									// y: animY
 									// x: currentItem ? currentItem.renderX : 0
 									// y: currentItem ? currentItem.renderY : 0
+									x: currentItem ? currentItem.targetX : 0
+									y: currentItem ? currentItem.targetY : 0
+									
 									preferredRendererType: Shape.CurveRenderer
 									antialiasing: true
 									
@@ -1918,25 +1919,23 @@ Scope {
 							// visible: !flick.layoutFrozen
 							// active: _inViewBuffered
 							// property int realIndex: index
+							// property int animBuffer: flick._rows * 2
 							Loader {
 							id: hexLoader
 
 					
-							// property int animBuffer: flick._rows * 2
-							property int animBuffer: flick.dragging || flick.flicking || flick.moving
+							property int animBuffer: (flick.dragging || flick.flicking || flick.moving)
 							? flick._rows * 4 : flick._rows * 2
 							
-							// property bool _inViewBufferedCache:
-							// 	index >= (flick.cachedStart) &&
-           					// 	index <  (flick.cachedEnd)
+
 
 							property bool _inViewBuffered:
 								index >= (flick.hStartIndex - animBuffer) &&
 								index <  (flick.hEndIndex + animBuffer)
 								
 							active: _inViewBuffered
-							// active: flick.layoutFrozen ? _inViewBufferedCache : _inViewBuffered
 							
+							// asynchronous: true
 						
 							sourceComponent: HexItem {
 								id: hexItem
