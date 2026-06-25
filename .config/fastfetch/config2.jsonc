@@ -57,85 +57,70 @@
   
       "format": "{$2}{1}{$4}{$5}@{$2}{2} {$5}"
     },
+
     {
       "type": "custom",
       "format": "~~~~~~~~~~~~~~~~~~~~~~~~~~~"
     },
-    // {
-    //   "type": "custom",
-    //   "format": "───────── ⋆⋅☽◯☾⋅⋆ ─────────",
-    //   // "outputColor": "magenta"
-    // },
 
     {
       "type": "os",
-      "key": "{$1}  ",
+      "key": "{$1}> ",
       "format": "{$5}{name} {arch} "
     },
 
     {
       "type": "kernel",
-      "key": "{$1}  ",
+      "key": "{$1}> ",
       "keyColor": "#89dceb",
       "format": "{$5}{1} {2} "
     },
 
     {
       "type": "packages",
-      "key": "{$1}  ",
+      "key": "{$1}> ",
       "format": "{$5}{all} (pacman) ",
       "keyColor": "#89dceb"
     },
 
     {
       "type": "shell",
-      "key": "{$1}  ",
+      "key": "{$1}> ",
       "keyColor": "#89dceb",
       "format": "{$5}{1} {4} " 
     },
 
     {
       "type": "terminal",
-      "key": "{$1}  ",
+      "key": "{$1}> ",
       "keyColor": "#89dceb",
       "format": "{$5}{1} {6} " 
     },
 
     {
       "type": "wm",
-      "key": "{$1}  ",
+      "key": "{$1}> ",
       "keyColor": "#89dceb",
       "format": "{$5}{2} {3} " 
     },
 
     {
       "type": "uptime",
-      "key": "{$1}  ",
+      "key": "{$1}> ",
       "format": "{$5}{minutes} mins ",
       "keyColor": "#89dceb"
     },
-       {
-      "type": "memory",
-      "key": "{$1}󰍛  ",
+    {
+      "type": "media",
+      "key": "{$1}> ",
       "keyColor": "#89dceb",
-      "format": "{$5}{1}/{2}"
+      "format": "{$5}{title:22}... "
+    },
+    {
+      "type": "player",
+      "key": "{$1}> ",
+      "keyColor": "#89dceb",
+      "format": "{$5}{1} "
     }
-    // {
-    //   "type": "custom",
-    //   "keyColor": "blue",
-    //   "format": "\u001b[90m▂▂  \u001b[32m▂▂  \u001b[33m▂▂  \u001b[34m▂▂  \u001b[35m▂▂  \u001b[36m▂▂  \u001b[37m▂▂ "
-    // }
-    // {
-    //   "type": "media",
-    //   "key": "{$1}> ",
-    //   "keyColor": "#89dceb",
-    //   "format": "{$5}{title:22}... "
-    // },
-    // {
-    //   "type": "player",
-    //   "key": "{$1}> ",
-    //   "keyColor": "#89dceb",
-    //   "format": "{$5}{1} "
-    // }
   ]
 }

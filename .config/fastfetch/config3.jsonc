@@ -118,8 +118,8 @@
       "type": "memory",
       "key": "{$1}󰍛  ",
       "keyColor": "#89dceb",
-      "format": "{$5}{1}/{2}"
-    }
+      "format": "{$5}{1}/{2} ({3})"
+    },
     // {
     //   "type": "custom",
     //   "keyColor": "blue",
