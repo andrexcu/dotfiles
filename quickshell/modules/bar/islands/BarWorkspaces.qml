@@ -386,17 +386,19 @@ Rectangle {
                     : ""   // empty string = no icon
                     
                     StyledText { // Workspace number text
-                        opacity: root.showNumbers
-                            || ((Config.options?.bar.workspaces.alwaysShowNumbers && (!Config.options?.bar.workspaces.showAppIcons || !workspaceButtonBackground.biggestWindow || root.showNumbers))
-                            || (root.showNumbers && !Config.options?.bar.workspaces.showAppIcons)
-                            )  || (button.isActiveWorkspace && !button.currentOccupied) ? 1 : 0
+                        // opacity: root.showNumbers
+                        //     || ((Config.options?.bar.workspaces.alwaysShowNumbers && (!Config.options?.bar.workspaces.showAppIcons || !workspaceButtonBackground.biggestWindow || root.showNumbers))
+                        //     || (root.showNumbers && !Config.options?.bar.workspaces.showAppIcons)
+                        //     )  || (button.isActiveWorkspace && !button.currentOccupied) ? 1 : 0
+                        
                         //  opacity: (
                         //         button.isActiveWorkspace &&
                         //         !button.currentOccupied
                         //     )
                         //  ? 1 : 0
+                        opacity: (button.isActiveWorkspace && !button.currentOccupied) ? 1 : 0
                         
-                        z: 3
+                        z: 5
                         property bool shouldBeVisible: !button.isActiveWorkspace && !activeIndicator.moving            
                         anchors.centerIn: parent
                         horizontalAlignment: Text.AlignHCenter
@@ -405,7 +407,8 @@ Rectangle {
                             pixelSize: Appearance.font.pixelSize.small - ((text.length - 1) * (text !== "10") * 2)
                             family: Config.options?.bar.workspaces.useNerdFont ? Appearance.font.family.iconNerd : defaultFont
                         }
-                        property list<string> numberMap: ["一","二","三","四","五","六","七","八","九","十","十一","十二","十三","十四","十五","十六","十七","十八","十九","二十"]
+                        
+                        // property list<string> numberMap: ["一","二","三","四","五","六","七","八","九","十","十一","十二","十三","十四","十五","十六","十七","十八","十九","二十"]
                         text: Config.options?.bar.workspaces.numberMap[button.workspaceValue - 1] || button.workspaceValue
                         elide: Text.ElideRight
                         // color: (monitor?.activeWorkspace?.id == button.workspaceValue) ? 
@@ -431,6 +434,7 @@ Rectangle {
                             || root.showNumbers
                             || (Config.options?.bar.workspaces.showAppIcons && workspaceButtonBackground.biggestWindow)
                             ) ? 0 : 1
+                        z: 5
                         visible: !button.isActiveWorkspace
                         anchors.centerIn: parent
                         width: workspaceButtonWidth * 0.18

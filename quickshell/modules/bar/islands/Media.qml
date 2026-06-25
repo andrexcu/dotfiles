@@ -114,14 +114,15 @@ Item {
         Item {
         Layout.fillWidth: true
         Layout.fillHeight: true
-
+          Layout.leftMargin: 10
+                Layout.rightMargin: 10
         Item {
             id: centerGroup
             anchors.centerIn: parent
             width: Math.min(parent.width, titleText.implicitWidth + 60)
             Layout.fillHeight: true
             Layout.fillWidth: true
-
+          
             StyledText {
                 id: titleText
 
@@ -129,7 +130,7 @@ Item {
                 Layout.fillWidth: true
                 width: centerGroup.width
                 elide: Text.ElideRight
-
+              
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter
                 
